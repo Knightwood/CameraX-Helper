@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="size" format="integer"  />
+    <attr name="maxDuration" format="integer"  />
+
+    <declare-styleable name="CaptureButton">
+        <attr name="size" />
+        <attr name="maxDuration" />
+    </declare-styleable>
+
+    <declare-styleable name="CaptureButton2">
+        <attr name="size" />
+        <attr name="maxDuration" />
+        <attr name="captureMode" format="boolean" /><!--true:拍照；false:录像-->
+    </declare-styleable>
+
+    <declare-styleable name="FocusImageView">
+        <attr name="focus_focusing_id" format="integer" />
+        <attr name="focus_success_id" format="integer" />
+        <attr name="focus_fail_id" format="integer" />
+    </declare-styleable>
+
+</resources>

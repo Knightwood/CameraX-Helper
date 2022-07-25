@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">CameraXFragment</string>
+
+    <string name="camera_permission_title">相机权限</string>
+    <string name="camera_permission_content">拍照需要你授权相机权限才能进行，请前往设置进行授权</string>
+    <string name="camera_storage_video_permission_content">相机进行拍照和录制视频需要你授权存储以及录音权限才能进行，请前往设置进行授权</string>
+    <string name="go_set_permission_btn">去设置</string>
+    <string name="cancel_permission_btn">下次再说</string>
+
+    <string name="permission_tips">CameraXFragment正常运行需要以下权限才能正常运行，我们将仅仅使用授权的权限用于CameraXFragment正常必要运行。</string>
+    <string name="android.permission.ACCESS_FINE_LOCATION">位置权限：获取拍照时候的位置信息\n\n</string>
+    <string name="android.permission.CAMERA">相机权限：打开摄像头获取图形信息 \n\n</string>
+    <string name="android.permission.RECORD_AUDIO">录音权限：长按拍摄视频的时候采集麦克风声音信号 \n\n</string>
+    <string name="android.permission.WRITE_EXTERNAL_STORAGE">储存访问权限：将拍摄的照片存储在手机中，并读取预览 \n\n</string>
+
+    <string name="capture_button_alt">Capture</string>
+    <string name="switch_camera_button_alt">Switch camera</string>
+
+</resources>
