@@ -18,8 +18,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         return ManagerConfig().apply {
             this.cacheMediaDir = cacheMediasDir
-            this.imageDetector = useImageDetection
-            this.captureMode = CaptureMode.takePhoto
+            this.captureMode =
+                if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
         }
     }
@@ -35,8 +35,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     override fun cameraFinishInited() {
-        if (cameraConfig.imageDetector) {//人脸识别拍摄
-            camera_control_layout.visibility = View.GONE
+        if (cameraConfig.isUsingImageAnalyzer()) {//人脸识别拍摄
+            camera_control_layout.visibility = View.INVISIBLE
         } else {
             //capture()//自动拍照或录像
         }

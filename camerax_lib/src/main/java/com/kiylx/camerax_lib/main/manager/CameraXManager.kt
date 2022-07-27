@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.ImageView
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.Recorder
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -25,12 +26,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import com.google.common.util.concurrent.ListenableFuture
 import com.yeyupiaoling.cameraxapp.view.FocusImageView
-import com.kiylx.camerax_lib.main.manager.model.TakeVideoState
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
-import com.kiylx.camerax_lib.main.manager.model.CameraEventListener
-import com.kiylx.camerax_lib.main.manager.model.FlashModel
-import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -63,6 +62,7 @@ abstract class CameraXManager(
     lateinit var imageAnalyzer: ImageAnalysis
     lateinit var imageCapture: ImageCapture
     lateinit var videoCapture: VideoCapture //录像用例
+    lateinit var newVideoCapture: androidx.camera.video.VideoCapture<Recorder> //新版本录像用例
 
     //状态
     lateinit var metrics: DisplayMetrics
@@ -70,9 +70,8 @@ abstract class CameraXManager(
     private var displayId: Int = -1
     private lateinit var cameraSelector: CameraSelector
     var lensFacing = CameraSelector.LENS_FACING_BACK
-    internal var lastImageDetectionState =
-        false//记录cameraConfig中有没有图像识别配置，在拍照和录视频时记录，拍照或录视频后再改回来，以支持持续图像识别
     var currentStatus: Int = TakeVideoState.none//指示当前状态
+    var whichInstance: WhichInstanceBind = WhichInstanceBind.NONE//记录当前绑定的哪一个相机实例
 
     //接口
     var cameraListener: CameraEventListener? = null//我定义的接口，用于在这里做某些处理后，通知外界
@@ -124,7 +123,6 @@ abstract class CameraXManager(
     }
 
     private fun initManager() {
-        lastImageDetectionState = cameraConfig.imageDetector//记录是否使用图像识别的标志
         if (!checkPerms()) {
             throw Exception("没有权限")
         }
@@ -151,6 +149,7 @@ abstract class CameraXManager(
         cameraProviderFuture.addListener(
             Runnable {
                 cameraProvider = cameraProviderFuture.get()
+
                 //设置默认摄像头，默认是后置的摄像头，没有后面的再切换到前面的来
                 val cameraProviderTmp = cameraProvider
                 parseCameraSelector(cameraProviderTmp)
@@ -163,7 +162,7 @@ abstract class CameraXManager(
                 val size = Size(metrics.widthPixels, metrics.heightPixels)
                 val rotation = cameraPreview.display.rotation
 
-                 preview = Preview.Builder()
+                preview = Preview.Builder()
                     // 我们要去宽高比，但是没有分辨率
                     .setTargetAspectRatio(screenAspectRatio)
                     //.setTargetResolution(size)
@@ -222,16 +221,20 @@ abstract class CameraXManager(
 
     @SuppressLint("RestrictedApi")
     private fun initVideoCapture(screenAspectRatio: Int, rotation: Int) {
-        // 视频的还不是很成熟，不一定都能用
-        videoCapture = VideoCapture.Builder()//录像用例配置
-            .setTargetAspectRatio(screenAspectRatio) //设置高宽比「我比较喜欢全屏」
-            //视频帧率  越高视频体积越大
-            .setVideoFrameRate(60)
-            //bit率  越大视频体积越大
-            .setBitRate(3 * 1024 * 1024)
-            .setTargetRotation(rotation)//设置旋转角度
-            //.setAudioRecordSource(MediaRecorder.AudioSource.MIC)//设置音频源麦克风
-            .build()
+        if (cameraConfig.useNewVideoCapture) {
+            newVideoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor)
+        } else {
+            // 视频的还不是很成熟，不一定都能用
+            videoCapture = VideoCapture.Builder()//录像用例配置
+                .setTargetAspectRatio(screenAspectRatio) //设置高宽比「我比较喜欢全屏」
+                //视频帧率  越高视频体积越大
+                .setVideoFrameRate(60)
+                //bit率  越大视频体积越大
+                .setBitRate(3 * 1024 * 1024)
+                .setTargetRotation(rotation)//设置旋转角度
+                //.setAudioRecordSource(MediaRecorder.AudioSource.MIC)//设置音频源麦克风
+                .build()
+        }
     }
 
     private fun initImageAnalyzer() {
@@ -248,33 +251,49 @@ abstract class CameraXManager(
         cameraProvider?.unbindAll()
         try {
             val lifeOwner = context
-            if (lastImageDetectionState) {//以人脸识别优先，绑定图像分析器
-                imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
-                camera = cameraProvider?.bindToLifecycle(
-                    lifeOwner,
-                    cameraSelector,
-                    preview,
-                    imageAnalyzer
-                )
-                currentStatus = TakeVideoState.imageDetection
-            } else {
-                //目前一次无法绑定拍照和摄像一起
-                when (captureMode) {
-                    ManagerUtil.TAKE_PHOTO_CASE -> {
+            //目前一次无法绑定拍照和摄像一起
+            when (captureMode) {
+                CaptureMode.imageAnalysis -> {
+                    //LEVEL_3（或更好）的相机设备才支持“预览”、“视频拍摄”、“图像分析” 三个同时绑定。这里暂定，未来可能会增加更多种绑定
+                    imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
+                    camera = cameraProvider?.bindToLifecycle(
+                        lifeOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalyzer,
+                        imageCapture
+                    )
+                    currentStatus = TakeVideoState.imageDetection
+                    whichInstance = WhichInstanceBind.IMAGE_DETECTION
+                }
+                CaptureMode.takePhoto -> {
+                    try {
                         camera = cameraProvider?.bindToLifecycle(
                             lifeOwner, cameraSelector, preview, imageCapture
                         )
-                        if (myZoomValue != 1F) {//预览时缩放了画面，但拍照时如果不添加缩放，拍出来的图是不会缩放的，所以在这里添加上缩放
-                            camera?.cameraControl!!.setZoomRatio(myZoomValue)
-                        }
+                    } catch (exc: Exception) {
+                        Log.e(TAG, "Use case binding failed", exc)
                     }
-                    ManagerUtil.TAKE_VIDEO_CASE -> {
+                    if (myZoomValue != 1F) {//预览时缩放了画面，但拍照时如果不添加缩放，拍出来的图是不会缩放的，所以在这里添加上缩放
+                        camera?.cameraControl!!.setZoomRatio(myZoomValue)
+                    }
+                    whichInstance = WhichInstanceBind.PICTURE
+                }
+                CaptureMode.takeVideo -> {
+                    try {
                         camera = cameraProvider?.bindToLifecycle(
-                            lifeOwner, cameraSelector, preview, videoCapture
+                            lifeOwner,
+                            cameraSelector,
+                            preview,
+                            if (cameraConfig.useNewVideoCapture) newVideoCapture else videoCapture
                         )
+                    } catch (exc: Exception) {
+                        Log.e(TAG, "Use case binding failed", exc)
                     }
+                    whichInstance = WhichInstanceBind.VIDEO
                 }
             }
+
             // Attach the viewfinder's surface provider to preview use case
             preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
             cameraPreview.previewStreamState.observe(
@@ -415,7 +434,10 @@ abstract class CameraXManager(
 
     }
 
-    //用最后一帧填充画面，避免变成黑色
+    /**
+     * 用最后一帧填充画面，避免变成黑色
+     * 警告：不能用于camera-video库的视频捕获
+     */
     internal fun fillPreview() {
         lastPreview?.let {
             mBitmapFlip = cameraPreview.bitmap

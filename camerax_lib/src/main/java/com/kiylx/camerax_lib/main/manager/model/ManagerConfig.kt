@@ -8,9 +8,14 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 class ManagerConfig : Parcelable {
     var flashMode: Int = FlashModel.CAMERA_FLASH_OFF
-    var imageDetector: Boolean = false//是否开启图像识别
     var MyPhotoDir = ""
     var MyVideoDir = ""
+
+    /**
+     * true：使用camera-video库完成视频录制功能
+     * 将来会使用camera-video库取代旧方式录制视频
+     */
+    var useNewVideoCapture = true
 
     /**
      * 如果不设置cacheMediaDir，将会使用系统图库路径
@@ -21,7 +26,15 @@ class ManagerConfig : Parcelable {
             MyPhotoDir = "$value/images/"
             MyVideoDir = "$value/videos/"
         }
-    var captureMode: Int = CaptureMode.takePhoto // 0：拍照 1：拍视频 默认拍照
+
+    /**
+     * 查看[CaptureMode]
+     */
+    var captureMode: Int = CaptureMode.takePhoto
+
+    fun isUsingImageAnalyzer(): Boolean {
+        return captureMode == CaptureMode.imageAnalysis
+    }
 }
 
 /**
@@ -31,6 +44,7 @@ class CaptureMode {
     companion object {
         const val takePhoto = ManagerUtil.TAKE_PHOTO_CASE
         const val takeVideo = ManagerUtil.TAKE_VIDEO_CASE
+        const val imageAnalysis = ManagerUtil.IMAGE_ANALYZER_CASE
     }
 }
 
@@ -44,4 +58,9 @@ class FlashModel {
         const val CAMERA_FLASH_OFF = ImageCapture.FLASH_MODE_OFF
         const val CAMERA_FLASH_ALL_ON = 777    //常亮模式
     }
+}
+
+object MediaType {
+    const val photo = 1
+    const val video = 2
 }

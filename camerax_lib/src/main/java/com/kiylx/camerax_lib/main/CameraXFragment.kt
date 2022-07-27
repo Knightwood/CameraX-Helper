@@ -2,13 +2,21 @@ package com.kiylx.camerax_lib.main
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
 import android.hardware.display.DisplayManager
 import android.net.Uri
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
@@ -17,7 +25,6 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.annotation.NonNull
 import androidx.camera.core.*
-import androidx.camera.core.Camera
 import androidx.camera.core.ImageCapture.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -28,11 +35,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.common.util.concurrent.ListenableFuture
-import com.kiylx.camerax_lib.main.CameraConfig
 import com.kiylx.camerax_lib.R
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.CameraConfig.Companion.CAMERA_FLASH_ALL_ON
 import com.kiylx.camerax_lib.main.CameraConfig.Companion.MEDIA_MODE_PHOTO
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.TakeVideoState
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS

@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.View
+import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.cameraxexample.databinding.ActivityCameraExampleBinding
@@ -127,7 +128,9 @@ abstract class BaseCameraXActivity : BasicActivity(),
                         setAnalyzerResultListener(object : AnalyzeResultListener {
                             //图像分析成功时
                             override fun isSuccess() {
-                                captureFace()
+                                //captureFace()
+                                Toast.makeText(applicationContext, "图像分析完成", Toast.LENGTH_SHORT)
+                                    .show()
                             }
                         })
                         //拍照录视频操作结果通知回调

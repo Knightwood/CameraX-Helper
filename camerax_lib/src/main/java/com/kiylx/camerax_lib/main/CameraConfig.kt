@@ -2,6 +2,7 @@ package com.kiylx.camerax_lib.main
 
 import android.os.Parcelable
 import androidx.camera.core.ImageCapture
+import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import kotlinx.android.parcel.Parcelize
 
@@ -103,8 +104,10 @@ fun CameraConfig.convert(): ManagerConfig {
     val config = this
     return ManagerConfig().apply {
         this.flashMode = config.flashMode
-        this.captureMode = config.captureMode
+        if (config.faceDetector)
+            this.captureMode = CaptureMode.imageAnalysis
+        else
+            this.captureMode = config.captureMode
         this.cacheMediaDir = config.cacheMediaDir
-        this.imageDetector = config.faceDetector
     }
 }

@@ -9,13 +9,9 @@ import androidx.camera.core.CameraSelector
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.permissionx.guolindev.PermissionX
-import com.permissionx.guolindev.callback.ExplainReasonCallback
 import com.permissionx.guolindev.callback.RequestCallback
-import com.permissionx.guolindev.request.ExplainScope
-import com.kiylx.camerax_lib.main.CameraXFragment
 import java.io.File
 import java.io.IOException
-import java.lang.StringBuilder
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
@@ -30,6 +26,7 @@ class ManagerUtil {
         const val VIDEO_EXTENSION = ".mp4"
         const val TAKE_PHOTO_CASE = 0
         const val TAKE_VIDEO_CASE = 1
+        const val IMAGE_ANALYZER_CASE = 2
 
         //图像的比例
         const val RATIO_4_3_VALUE = 4.0 / 3.0
@@ -71,7 +68,7 @@ class ManagerUtil {
          * @throws IOException
          */
         fun createMediaFile(baseFolder: String?, format: String): File {
-            val timeStamp = SimpleDateFormat("yyyyMMddHHmmss").format(Date())
+            val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(Date())
             createDir(baseFolder)
             return File(baseFolder + timeStamp + format)
         }

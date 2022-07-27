@@ -143,12 +143,12 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         return cameraHolder.currentStatus
     }
 
-    override fun stopTakeVideo(time: Long) {
-        cameraHolder.stopTakeVideo()
-    }
-
     override fun takeVideo() {
         cameraHolder.takeVideo()
+    }
+
+    override fun stopTakeVideo(time: Long) {
+        cameraHolder.stopTakeVideo()
     }
 
     override fun takePhoto() {

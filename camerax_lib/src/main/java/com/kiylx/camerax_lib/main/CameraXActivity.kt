@@ -15,7 +15,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.kiylx.camerax_lib.main.CameraConfig
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.CameraConfig.Companion.CAMERA_FLASH_ALL_ON
 import com.kiylx.camerax_lib.main.CameraConfig.Companion.CAMERA_FLASH_AUTO
