@@ -21,6 +21,6 @@ interface CameraCommon {
     fun takePhoto()
     fun getCameraPreview(): PreviewView
     fun provideBitmap(): Bitmap?
-    fun zoom(zoomValue: Float)
+    fun zoom(delta: Float)
     fun zoom2(zoomValue: Float)
 }

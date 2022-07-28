@@ -24,6 +24,9 @@ object VideoRecorderHolder {
         quality = QualitySelector.from(Quality.HIGHEST)
     }
 
+    /**
+     * 选择“Quality”列表中一个比较好的
+     */
     fun setSupportedQuality() {
         //以下代码会请求支持的最高录制分辨率；如果所有请求分辨率都不受支持，则授权 CameraX 选择最接近 Quality.SD 分辨率的分辨率：
         quality = QualitySelector.fromOrderedList(listOf(
@@ -45,6 +48,10 @@ object VideoRecorderHolder {
             }
     }
 
+    /**
+     * 如果给出“quality”，就用它生成VideoCapture，
+     * 否则，自动挑选一个比较合适的“quality”生成VideoCapture
+     */
     fun getVideoCapture(
         executor: ExecutorService,
         quality: Quality? = null,

@@ -122,10 +122,7 @@ abstract class CameraXManager(
         }
     }
 
-    private fun initManager() {
-        if (!checkPerms()) {
-            throw Exception("没有权限")
-        }
+    private fun initManager() = checkPerm {//权限全部通过后执行下面代码
         initCamera()
         //display的方向监听
         cameraPreview.post {
@@ -164,7 +161,7 @@ abstract class CameraXManager(
 
                 preview = Preview.Builder()
                     // 我们要去宽高比，但是没有分辨率
-                    .setTargetAspectRatio(screenAspectRatio)
+                    //.setTargetAspectRatio(screenAspectRatio)
                     //.setTargetResolution(size)
                     // 设置初始的旋转
                     .setTargetRotation(rotation)
@@ -274,9 +271,6 @@ abstract class CameraXManager(
                     } catch (exc: Exception) {
                         Log.e(TAG, "Use case binding failed", exc)
                     }
-                    if (myZoomValue != 1F) {//预览时缩放了画面，但拍照时如果不添加缩放，拍出来的图是不会缩放的，所以在这里添加上缩放
-                        camera?.cameraControl!!.setZoomRatio(myZoomValue)
-                    }
                     whichInstance = WhichInstanceBind.PICTURE
                 }
                 CaptureMode.takeVideo -> {
@@ -316,62 +310,63 @@ abstract class CameraXManager(
      *
      */
     private fun initCameraListener() {
-        zoomState = camera?.cameraInfo?.zoomState
+        initZoomState()
         val cameraXPreviewViewTouchListener = CameraXPreviewViewTouchListener(this.context)
-
-        cameraXPreviewViewTouchListener.setCustomTouchListener(object :
-            CameraXPreviewViewTouchListener.CustomTouchListener {
-            // 放大缩小操作
-            override fun zoom(delta: Float) {
-                zoomState?.value?.let {
-                    val currentZoomRatio = it.zoomRatio
-                    camera?.cameraControl!!.setZoomRatio(currentZoomRatio * delta)
-                }
-            }
-
-            // 点击操作
-            override fun click(x: Float, y: Float) {
-                val factory = cameraPreview.meteringPointFactory
-                // 设置对焦位置
-                val point = factory.createPoint(x, y)
-                val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
-                    // 3秒内自动调用取消对焦
-                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                    .build()
-                // 执行对焦
-                focusView!!.startFocus(Point(x.toInt(), y.toInt()))
-                val future: ListenableFuture<*> =
-                    camera?.cameraControl!!.startFocusAndMetering(action)
-                future.addListener({
-                    try {
-                        // 获取对焦结果
-                        val result = future.get() as FocusMeteringResult
-                        if (result.isFocusSuccessful) {
-                            focusView!!.onFocusSuccess()
-                        } else {
-                            focusView!!.onFocusFailed()
+            .apply {
+                this.setCustomTouchListener(object :
+                    CameraXPreviewViewTouchListener.CustomTouchListener {
+                    // 放大缩小操作
+                    override fun zoom(delta: Float) {
+                        zoomState?.value?.let {
+                            val currentZoomRatio = it.zoomRatio
+                            camera?.cameraControl!!.setZoomRatio(currentZoomRatio * delta)
                         }
-                    } catch (e: java.lang.Exception) {
-                        Log.e(TAG, e.toString())
                     }
-                }, ContextCompat.getMainExecutor(context))
-            }
 
-            // 双击操作
-            override fun doubleClick(x: Float, y: Float) {
-                // 双击放大缩小
-                val currentZoomRatio = zoomState?.value!!.zoomRatio
-                if (currentZoomRatio > zoomState?.value!!.minZoomRatio) {
-                    camera?.cameraControl!!.setLinearZoom(0f)
-                } else {
-                    camera?.cameraControl!!.setLinearZoom(0.5f)
-                }
-            }
+                    // 点击操作
+                    override fun click(x: Float, y: Float) {
+                        val factory = cameraPreview.meteringPointFactory
+                        // 设置对焦位置
+                        val point = factory.createPoint(x, y)
+                        val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+                            // 3秒内自动调用取消对焦
+                            .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                            .build()
+                        // 执行对焦
+                        focusView!!.startFocus(Point(x.toInt(), y.toInt()))
+                        val future: ListenableFuture<*> =
+                            camera?.cameraControl!!.startFocusAndMetering(action)
+                        future.addListener({
+                            try {
+                                // 获取对焦结果
+                                val result = future.get() as FocusMeteringResult
+                                if (result.isFocusSuccessful) {
+                                    focusView!!.onFocusSuccess()
+                                } else {
+                                    focusView!!.onFocusFailed()
+                                }
+                            } catch (e: java.lang.Exception) {
+                                Log.e(TAG, e.toString())
+                            }
+                        }, ContextCompat.getMainExecutor(context))
+                    }
 
-            override fun longPress(x: Float, y: Float) {
-                Log.d(TAG, "长按")
+                    // 双击操作
+                    override fun doubleClick(x: Float, y: Float) {
+                        // 双击放大缩小
+                        val currentZoomRatio = zoomState?.value!!.zoomRatio
+                        if (currentZoomRatio > zoomState?.value!!.minZoomRatio) {
+                            camera?.cameraControl!!.setLinearZoom(0f)
+                        } else {
+                            camera?.cameraControl!!.setLinearZoom(0.5f)
+                        }
+                    }
+
+                    override fun longPress(x: Float, y: Float) {
+                        Log.d(TAG, "长按")
+                    }
+                })
             }
-        })
         // 添加监听事件
         cameraPreview.setOnTouchListener(cameraXPreviewViewTouchListener)
     }
@@ -393,28 +388,6 @@ abstract class CameraXManager(
 
     private fun setFlashAlwaysOn(status: Boolean) {
         camera?.cameraControl?.enableTorch(status)
-    }
-
-    /**
-     * 基于当前的值再次缩放
-     * 这里只是设置了预览画面的缩放，拍照绑定时还得设置给相机才能拍照的时候缩放
-     */
-    fun zoom(delta: Float) {
-        zoomState?.value?.let {
-            val currentZoomRatio = it.zoomRatio
-            camera?.cameraControl!!.setZoomRatio(currentZoomRatio * delta)
-        }
-    }
-
-    /**
-     * 直接按照输入的参数进行缩放。
-     * 这里只是设置了预览画面的缩放，拍照绑定时还得设置给相机才能拍照的时候缩放
-     */
-    fun zoom2(zoomValue: Float) {
-        myZoomValue = zoomValue
-        zoomState?.value?.let {
-            camera?.cameraControl!!.setZoomRatio(zoomValue)
-        }
     }
 
     /**
@@ -495,7 +468,47 @@ abstract class CameraXManager(
         }
         setCameraSelector(lensFacing)
         setCamera(cameraConfig.captureMode)//绑定实例
+        initZoomState()//翻转相机后，相机实例发生变化，所以重新获取缩放状态
         cameraListener?.switchCamera(lensFacing)
+    }
+
+
+    /**
+     * 基于当前的值再次缩放
+     */
+    fun zoomBasedOnCurrent(delta: Float) {
+        zoomState?.value?.let {
+            val currentZoomRatio = it.zoomRatio
+            camera?.cameraControl!!.setZoomRatio(currentZoomRatio * delta)
+        }
+    }
+
+    /**
+     * 直接按照输入的参数进行缩放。
+     */
+    fun zoomDirectly(zoomValue: Float) {
+        myZoomValue = zoomValue
+        zoomState?.value?.let {
+            camera?.cameraControl!!.setZoomRatio(zoomValue)
+        }
+    }
+
+    /**
+     * 初始化缩放状态
+     * 注意：反转相机后，因为camera实例发生变化，所以需要重新获取缩放状态。
+     * 从拍照绑定切换到视频录制绑定时，因为经历解绑再绑定的过程，画面的缩放值会丢失，这是正常的。
+     * 缩放值可以在绑定的时候就设置，不过目前我没有在绑定时重新设置缩放值，说不定以后会这么做
+     */
+    private fun initZoomState() {
+        zoomState = camera?.cameraInfo?.zoomState
+    }
+
+    /**
+     * 返回缩放的最大值和最小值
+     * @return Pair<MAX,MIN>
+     */
+    fun getZoomRange(): Pair<Float?, Float?> {
+        return Pair(zoomState?.value?.maxZoomRatio, zoomState?.value?.minZoomRatio)
     }
 
     /**
@@ -503,7 +516,7 @@ abstract class CameraXManager(
      */
     abstract fun selectAnalyzer(): ImageAnalysis.Analyzer
 
-    abstract fun checkPerms(): Boolean
+    abstract fun checkPerm(block: () -> Unit)
 
     companion object {
         const val TAG = "相机管理器"

@@ -163,12 +163,18 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         return cameraHolder.provideBitmap()
     }
 
-    override fun zoom(zoomValue: Float) {
-        cameraHolder.zoom(zoomValue)
+    /**
+     * 基于当前值缩放
+     */
+    override fun zoom(delta: Float) {
+        cameraHolder.zoomBasedOnCurrent(delta)
     }
 
+    /**
+     * 直接按照给出的值缩放
+     */
     override fun zoom2(zoomValue: Float) {
-        cameraHolder.zoom2(zoomValue)
+        cameraHolder.zoomDirectly(zoomValue)
     }
 }
 

@@ -26,6 +26,9 @@ import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.getFileOutputOption
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
+import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
+import com.permissionx.guolindev.callback.ForwardToSettingsCallback
+import com.permissionx.guolindev.request.ForwardScope
 import java.util.concurrent.Executors
 
 /**
@@ -73,23 +76,49 @@ class CameraHolder(
         }
     }
 
-    override fun checkPerms(): Boolean {
-        var b = false
+    /**
+     * 检查权限，通过后执行block块初始化相机
+     */
+    override fun checkPerm(block: () -> Unit) {
         PermissionX.init(context).permissions(ManagerUtil.REQUIRED_PERMISSIONS.asList())
-            .explainReasonBeforeRequest()
-            .onExplainRequestReason(object : ExplainReasonCallback {
-                override fun onExplainReason(scope: ExplainScope, deniedList: MutableList<String>) {
-
+            .explainReasonBeforeRequest()//在第一次请求权限之前就先弹出一个对话框向用户解释自己需要哪些权限，然后才会进行权限申请。
+            .onExplainRequestReason(object : ExplainReasonCallbackWithBeforeParam {
+                //onExplainRequestReason() 方法可以用于监听那些被用户拒绝，而又可以再次去申请的权限。
+                //从方法名上也可以看出来了，应该在这个方法中解释申请这些权限的原因。
+                override fun onExplainReason(
+                    scope: ExplainScope,
+                    deniedList: MutableList<String>,
+                    beforeRequest: Boolean,
+                ) {
+                    scope.showRequestReasonDialog(
+                        deniedList,
+                        "即将重新申请的权限是程序必须依赖的权限",
+                        "我已明白",
+                        "取消")
                 }
             })
-            .onForwardToSettings(null)
+            .onForwardToSettings(object : ForwardToSettingsCallback {
+                //onForwardToSettings() 方法，专门用于监听那些被用户永久拒绝的权限。
+                //另外从方法名上就可以看出，我们可以在这里提醒用户手动去应用程序设置当中打开权限。
+                override fun onForwardToSettings(
+                    scope: ForwardScope,
+                    deniedList: MutableList<String>,
+                ) {
+                    scope.showForwardToSettingsDialog(deniedList,
+                        "您需要去应用程序设置当中手动开启权限",
+                        "我已明白",
+                        "取消")
+                }
+            })
             .request { allGranted, grantedList, deniedList ->
                 if (allGranted) {
-                    b = true
+                    block()
+                } else {
+                    throw Exception("缺失权限")
                 }
             }
-        return b
     }
+
 
     /**
      * 拍照处理方法(这里只是拍照，录制视频另外有方法)
@@ -101,7 +130,7 @@ class CameraHolder(
         if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
             setCamera(CaptureMode.takePhoto)
         }
-        // TODO: 这里还得改啊，怎么才能不写死呢？
+        // TODO: [ImageCaptureHelper] 未来会用在这里
         val photoFile = ManagerUtil.createMediaFile(cameraConfig.MyPhotoDir,
             ManagerUtil.PHOTO_EXTENSION)
 
@@ -210,9 +239,9 @@ class CameraHolder(
     }
 
     /**
-     * 如果使用了图像识别，在拍照或录视频后，可以调用它来恢复图像识别实例绑定
+     * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
      *
-     * 实际上，绑定图像识别，是靠配置参数里的[ManagerConfig.captureMode]
+     * 绑定图像识别，是靠配置参数里的[ManagerConfig.captureMode]
      */
     private fun imageAnalyze() {
         if (cameraConfig.captureMode == CaptureMode.imageAnalysis) {
@@ -297,8 +326,7 @@ class CameraHolder(
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
         currentStatus = TakeVideoState.takeVideo
 
-        // TODO: 这里还得改啊，怎么才能不写死呢？
-        //如果是mediastore，也很头疼
+        // TODO: [OnceRecorderHelper] 未来会用在这里
         val videoFile = ManagerUtil.createMediaFile(cameraConfig.MyVideoDir,
             ManagerUtil.VIDEO_EXTENSION)
         val onceRecorder: OnceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)

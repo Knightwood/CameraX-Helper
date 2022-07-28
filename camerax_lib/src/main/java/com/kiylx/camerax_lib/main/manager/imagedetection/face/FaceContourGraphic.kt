@@ -68,7 +68,7 @@ class FaceContourGraphic(
 
     override fun draw(canvas: Canvas?) {
         drawBox(canvas)
-        //drawContours(canvas)
+        drawContours(canvas)
     }
 
     /**
