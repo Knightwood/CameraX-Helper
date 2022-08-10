@@ -31,9 +31,7 @@ import com.permissionx.guolindev.callback.ForwardToSettingsCallback
 import com.permissionx.guolindev.request.ForwardScope
 import java.util.concurrent.Executors
 
-/**
- * @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容
- */
+/** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
 class CameraHolder(
     cameraPreview: PreviewView,
     var graphicOverlay: GraphicOverlay,
@@ -41,10 +39,9 @@ class CameraHolder(
     content: View,
     private var captureResultListener: CaptureResultListener? = null,
 ) : CameraXManager(
-    cameraPreview, cameraConfig) {
-    /**
-     * 外界提供此实例后，人脸分析功能将会改为根据visionType取得不同的图像分析器
-     */
+    cameraPreview, cameraConfig
+) {
+    /** 外界提供此实例后，人脸分析功能将会改为根据visionType取得不同的图像分析器 */
     var analyzerProvider: AnalyzerProvider? = null
     private var visionType: VisionType = VisionType.Face//默认的图片分析器是人脸分析器
     var analyzerResultListener: AnalyzeResultListener? = null
@@ -64,10 +61,7 @@ class CameraHolder(
         this.visionType = visionType
     }
 
-    /**
-     * 默认提供人脸分析器，
-     * 更多种类型的analyzer由[AnalyzerProvider]提供
-     */
+    /** 默认提供人脸分析器， 更多种类型的analyzer由[AnalyzerProvider]提供 */
     override fun selectAnalyzer(): ImageAnalysis.Analyzer {
         return if (analyzerProvider == null) {
             faceProcess
@@ -76,9 +70,7 @@ class CameraHolder(
         }
     }
 
-    /**
-     * 检查权限，通过后执行block块初始化相机
-     */
+    /** 检查权限，通过后执行block块初始化相机 */
     override fun checkPerm(block: () -> Unit) {
         PermissionX.init(context).permissions(ManagerUtil.REQUIRED_PERMISSIONS.asList())
             .explainReasonBeforeRequest()//在第一次请求权限之前就先弹出一个对话框向用户解释自己需要哪些权限，然后才会进行权限申请。
@@ -94,7 +86,8 @@ class CameraHolder(
                         deniedList,
                         "即将重新申请的权限是程序必须依赖的权限",
                         "我已明白",
-                        "取消")
+                        "取消"
+                    )
                 }
             })
             .onForwardToSettings(object : ForwardToSettingsCallback {
@@ -104,10 +97,12 @@ class CameraHolder(
                     scope: ForwardScope,
                     deniedList: MutableList<String>,
                 ) {
-                    scope.showForwardToSettingsDialog(deniedList,
+                    scope.showForwardToSettingsDialog(
+                        deniedList,
                         "您需要去应用程序设置当中手动开启权限",
                         "我已明白",
-                        "取消")
+                        "取消"
+                    )
                 }
             })
             .request { allGranted, grantedList, deniedList ->
@@ -120,19 +115,17 @@ class CameraHolder(
     }
 
 
-    /**
-     * 拍照处理方法(这里只是拍照，录制视频另外有方法)
-     * 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照
-     * 拍照前会检查用例绑定
-     */
+    /** 拍照处理方法(这里只是拍照，录制视频另外有方法) 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照 拍照前会检查用例绑定 */
     fun takePhoto() {
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
         if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
             setCamera(CaptureMode.takePhoto)
         }
         // TODO: [ImageCaptureHelper] 未来会用在这里
-        val photoFile = ManagerUtil.createMediaFile(cameraConfig.MyPhotoDir,
-            ManagerUtil.PHOTO_EXTENSION)
+        val photoFile = ManagerUtil.createMediaFile(
+            cameraConfig.MyPhotoDir,
+            ManagerUtil.PHOTO_EXTENSION
+        )
 
         // 设置拍照的元数据
         val metadata = ImageCapture.Metadata().apply {
@@ -186,16 +179,15 @@ class CameraHolder(
     }
 
 
-    /**
-     * 拍摄视频，目前还没有稳定，先初步的支持吧
-     *
-     */
+    /** 拍摄视频，目前还没有稳定，先初步的支持吧 */
     @SuppressLint("RestrictedApi")
     @Deprecated("不再受支持")
     fun captureVideo() {
         setCamera(ManagerUtil.TAKE_VIDEO_CASE)
-        val videoFile = ManagerUtil.createMediaFile(cameraConfig.MyVideoDir,
-            ManagerUtil.VIDEO_EXTENSION)
+        val videoFile = ManagerUtil.createMediaFile(
+            cameraConfig.MyVideoDir,
+            ManagerUtil.VIDEO_EXTENSION
+        )
 
         // 设置视频的元数据，这里需要后期再完善吧
         val metadata = VideoCapture.Metadata().apply {}
@@ -205,15 +197,19 @@ class CameraHolder(
             .build()
 
         currentStatus = TakeVideoState.takeVideo
-        if (ActivityCompat.checkSelfPermission(context,
-                Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             PermissionX.init(context)
                 .permissions(ManagerUtil.REQUIRED_PERMISSIONS.asList())
                 .request { allGranted, grantedList, deniedList ->
                     if (!allGranted)
-                        throw Exception("缺少权限",
-                            Throwable(deniedList.toStr("缺少权限")))
+                        throw Exception(
+                            "缺少权限",
+                            Throwable(deniedList.toStr("缺少权限"))
+                        )
                 }
         }
         videoCapture.startRecording(
@@ -271,9 +267,7 @@ class CameraHolder(
         videoCapture.stopRecording()
     }
 
-    /**
-     * 标示拍照触发成功了
-     */
+    /** 标示拍照触发成功了 */
     private fun indicateTakePhoto() {
         if (CameraSelector.LENS_FACING_BACK == lensFacing) {
             indicateSuccess(20)
@@ -284,9 +278,7 @@ class CameraHolder(
         }
     }
 
-    /**
-     * 拍照显示成功的提示
-     */
+    /** 拍照显示成功的提示 */
     private fun indicateSuccess(durationTime: Long) {
         // 显示一个闪光动画来告知用户照片已经拍好了。在华为等手机上好像有点问题啊 cameraPreview
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -302,9 +294,7 @@ class CameraHolder(
         }
     }
 
-    /**
-     * 翻转相机时，还需要翻转叠加层
-     */
+    /** 翻转相机时，还需要翻转叠加层 */
     override fun switchCamera() {
         if (currentStatus == TakeVideoState.takeVideo) {//录制视频时得先停下来
             stopTakeVideo()
@@ -313,22 +303,25 @@ class CameraHolder(
         graphicOverlay.toggleSelector()
     }
 
-    /**
-     *提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null
-     */
+    /** 屏幕旋转的角度 */
+    override fun sensorAngleChanged(rotation: Int, angle: Int) {
+        graphicOverlay.rotationChanged(rotation,angle)
+    }
+
+    /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
     private var recording: Recording? = null
 
-    /**
-     * 使用新方式实现的录制视频
-     */
+    /** 使用新方式实现的录制视频 */
     fun anotherCaptureVideo() {
         if (whichInstance != WhichInstanceBind.VIDEO)//如果当前绑定的不是视频捕获实例，绑定他
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
         currentStatus = TakeVideoState.takeVideo
 
         // TODO: [OnceRecorderHelper] 未来会用在这里
-        val videoFile = ManagerUtil.createMediaFile(cameraConfig.MyVideoDir,
-            ManagerUtil.VIDEO_EXTENSION)
+        val videoFile = ManagerUtil.createMediaFile(
+            cameraConfig.MyVideoDir,
+            ManagerUtil.VIDEO_EXTENSION
+        )
         val onceRecorder: OnceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)
 
         recording = onceRecorder.getVideoRecording()

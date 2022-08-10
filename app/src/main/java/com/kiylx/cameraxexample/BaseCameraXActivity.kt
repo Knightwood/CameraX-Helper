@@ -129,8 +129,8 @@ abstract class BaseCameraXActivity : BasicActivity(),
                             //图像分析成功时
                             override fun isSuccess() {
                                 //captureFace()
-                                Toast.makeText(applicationContext, "图像分析完成", Toast.LENGTH_SHORT)
-                                    .show()
+                                /*Toast.makeText(applicationContext, "图像分析完成", Toast.LENGTH_SHORT)
+                                    .show()*/
                             }
                         })
                         //拍照录视频操作结果通知回调

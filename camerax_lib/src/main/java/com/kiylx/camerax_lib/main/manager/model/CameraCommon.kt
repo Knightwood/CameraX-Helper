@@ -23,4 +23,9 @@ interface CameraCommon {
     fun provideBitmap(): Bitmap?
     fun zoom(delta: Float)
     fun zoom2(zoomValue: Float)
+
+    /**
+     * @param true:打开手电筒。 false：关闭手电筒
+     */
+    fun openFlash(open: Boolean)
 }

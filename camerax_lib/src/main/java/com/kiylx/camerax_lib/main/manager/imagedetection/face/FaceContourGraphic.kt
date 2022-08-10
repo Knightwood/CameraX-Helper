@@ -9,7 +9,7 @@ class FaceContourGraphic(
     overlay: GraphicOverlay,
     private val face: Face,
     private val imageRect: Rect
-) : GraphicOverlay.Graphic(overlay) {
+) : Graphic(overlay) {
 
     private val facePositionPaint: Paint
     private val idPaint: Paint

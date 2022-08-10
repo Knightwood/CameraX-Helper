@@ -112,9 +112,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             }
     }
 
-    /**
-     * manager中的事件监听
-     */
+    /** manager中的事件监听 */
     override fun setCameraEventListener(cameraEventListener: CameraEventListener) {
         cameraHolder.cameraListener = cameraEventListener
     }
@@ -135,8 +133,18 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         cameraHolder.switchCamera()
     }
 
+    /** 视频拍摄没有闪光灯这个选项。 所以，在使用视频拍摄时，使用[openFlash]方法取代本方法 */
     override fun setFlashMode(mode: Int) {
         cameraHolder.setFlashMode(mode)
+    }
+
+    /**
+     * 用于视频拍摄，打开或关闭常亮的闪光灯（手电筒）。
+     *
+     * @param true:打开手电筒。 false：关闭手电筒
+     */
+    override fun openFlash(open: Boolean) {
+        cameraHolder.setFlashAlwaysOn(open)
     }
 
     override fun getCurrentStatus(): Int {
@@ -163,24 +171,18 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         return cameraHolder.provideBitmap()
     }
 
-    /**
-     * 基于当前值缩放
-     */
+    /** 基于当前值缩放 */
     override fun zoom(delta: Float) {
         cameraHolder.zoomBasedOnCurrent(delta)
     }
 
-    /**
-     * 直接按照给出的值缩放
-     */
+    /** 直接按照给出的值缩放 */
     override fun zoom2(zoomValue: Float) {
         cameraHolder.zoomDirectly(zoomValue)
     }
 }
 
 interface CameraXFragmentEventListener {
-    /**
-     * cameraXHolder初始化完成，可以对其进行其他操作
-     */
+    /** cameraXHolder初始化完成，可以对其进行其他操作 */
     fun cameraHolderInited(cameraHolder: CameraHolder)
 }

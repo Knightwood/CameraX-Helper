@@ -9,9 +9,9 @@ import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
-import android.view.OrientationEventListener
 import android.view.View
 import android.widget.ImageView
+import androidx.annotation.CallSuper
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
@@ -66,7 +66,7 @@ abstract class CameraXManager(
 
     //状态
     lateinit var metrics: DisplayMetrics
-    var rotation = 0f
+
     private var displayId: Int = -1
     private lateinit var cameraSelector: CameraSelector
     var lensFacing = CameraSelector.LENS_FACING_BACK
@@ -75,10 +75,21 @@ abstract class CameraXManager(
 
     //接口
     var cameraListener: CameraEventListener? = null//我定义的接口，用于在这里做某些处理后，通知外界
+
+    //传感器角度值
+    private var sensorRotation: SensorRotation? = null
+    private val orientationEventListener = object : SensorRotation.RotationChangeListener {
+        override fun angleChanged(rotation: Int, angle: Int) {
+            sensorAngleChanged(rotation, angle)
+        }
+
+        override fun rotationChanged(rotation: Int) {
+            updateCaseRotation(rotation)
+        }
+    }
     private val displayManager by lazy {
         context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
     }
-
     /**
      * 横竖屏切换时，设置
      */
@@ -137,9 +148,7 @@ abstract class CameraXManager(
         handler.removeCallbacksAndMessages(null)
     }
 
-    /**
-     * 初始化相机参数
-     */
+    /** 初始化相机参数 */
     @SuppressLint("RestrictedApi")
     private fun initCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
@@ -159,51 +168,36 @@ abstract class CameraXManager(
                 val size = Size(metrics.widthPixels, metrics.heightPixels)
                 val rotation = cameraPreview.display.rotation
 
-                preview = Preview.Builder()
-                    // 我们要去宽高比，但是没有分辨率
-                    //.setTargetAspectRatio(screenAspectRatio)
-                    //.setTargetResolution(size)
-                    // 设置初始的旋转
-                    .setTargetRotation(rotation)
-                    .build()
-
-                initImageAnalyzer()
+                initPreView(rotation)
+                initImageAnalyzer(rotation)
                 initImageCapture(screenAspectRatio, rotation, size)
                 initVideoCapture(screenAspectRatio, rotation)
-
-                //屏幕方向监听
-                val orientationEventListener = object : OrientationEventListener(context) {
-                    override fun onOrientationChanged(orientation: Int) {
-                        val rotation: Float = when (orientation) {
-                            in 45..134 -> 270f
-                            in 135..224 -> 180f
-                            in 225..314 -> 90f
-                            else -> 0f
-                        }
-                        this@CameraXManager.rotation = rotation
+                if (sensorRotation == null) {
+                    sensorRotation = SensorRotation(context).apply {
+                        listener = orientationEventListener
                     }
                 }
-                orientationEventListener.enable()//屏幕旋转
-
                 //setUpPinchToZoom()
                 setCamera(cameraConfig.captureMode)//绑定实例
 
                 initCameraListener()
-
-                if (cameraConfig.flashMode == FlashModel.CAMERA_FLASH_ALL_ON) {
-                    setFlashAlwaysOn(true)
-                } else {
-                    imageCapture.flashMode = cameraConfig.flashMode
-                }
                 cameraListener?.initCameraFinished()
 
             }, ContextCompat.getMainExecutor(context)
         )
     }
 
-    /**
-     * setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用
-     */
+    private fun initPreView(rotation: Int) {
+        preview = Preview.Builder()
+            // 我们要去宽高比，但是没有分辨率
+            //.setTargetAspectRatio(screenAspectRatio)
+            //.setTargetResolution(size)
+            // 设置初始的旋转
+            .setTargetRotation(rotation)
+            .build()
+    }
+
+    /** setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用 */
     private fun initImageCapture(screenAspectRatio: Int, rotation: Int, size: Size) {
         // ImageCapture，用于拍照功能
         imageCapture = ImageCapture.Builder()
@@ -234,15 +228,14 @@ abstract class CameraXManager(
         }
     }
 
-    private fun initImageAnalyzer() {
+    private fun initImageAnalyzer(rotation: Int) {
         imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetRotation(rotation)//设置旋转角度
             .build()
     }
 
-    /**
-     * 绑定相机实例之类的
-     */
+    /** 绑定相机实例之类的 */
     internal fun setCamera(captureMode: Int) {
         //再次重新绑定前应该先解绑 , imageAnalyzer
         cameraProvider?.unbindAll()
@@ -305,10 +298,7 @@ abstract class CameraXManager(
         }
     }
 
-    /**
-     * 相机点击等相关操作监听，焦距操作
-     *
-     */
+    /** 相机点击等相关操作监听，焦距操作 */
     private fun initCameraListener() {
         initZoomState()
         val cameraXPreviewViewTouchListener = CameraXPreviewViewTouchListener(this.context)
@@ -371,9 +361,7 @@ abstract class CameraXManager(
         cameraPreview.setOnTouchListener(cameraXPreviewViewTouchListener)
     }
 
-    /**
-     * 切换闪光模式,  打开，关闭，自动，长亮
-     */
+    /** 切换闪光模式, 打开，关闭，自动，长亮 */
     fun setFlashMode(flashMode: Int): Int {
         if (flashMode == FlashModel.CAMERA_FLASH_ALL_ON) {
             cameraConfig.flashMode = FlashModel.CAMERA_FLASH_ALL_ON
@@ -386,13 +374,12 @@ abstract class CameraXManager(
         return cameraConfig.flashMode
     }
 
-    private fun setFlashAlwaysOn(status: Boolean) {
+    /** 设置闪关灯常亮 */
+    fun setFlashAlwaysOn(status: Boolean) {
         camera?.cameraControl?.enableTorch(status)
     }
 
-    /**
-     * 预览数据开始后，去掉假设的画面帧
-     */
+    /** 预览数据开始后，去掉假设的画面帧 */
     private fun flipImageViewRecycler() {
         lastPreview?.let {
             handler.postDelayed(Runnable {
@@ -407,10 +394,7 @@ abstract class CameraXManager(
 
     }
 
-    /**
-     * 用最后一帧填充画面，避免变成黑色
-     * 警告：不能用于camera-video库的视频捕获
-     */
+    /** 用最后一帧填充画面，避免变成黑色 警告：不能用于camera-video库的视频捕获 */
     internal fun fillPreview() {
         lastPreview?.let {
             mBitmapFlip = cameraPreview.bitmap
@@ -419,10 +403,7 @@ abstract class CameraXManager(
         }
     }
 
-    /**
-     * provide bitmap from CameraPreview
-     * 实际上，从预览图象里拿到的bitmap，有时候是缺损的
-     */
+    /** provide bitmap from CameraPreview 实际上，从预览图象里拿到的bitmap，有时候是缺损的 */
     fun provideBitmap(): Bitmap? {
         val value = cameraPreview.previewStreamState.value
         return if (value == PreviewView.StreamState.STREAMING)
@@ -431,9 +412,7 @@ abstract class CameraXManager(
             null
     }
 
-    /**
-     * 获取当前使用的摄像头，并设置变量
-     */
+    /** 获取当前使用的摄像头，并设置变量 */
     private fun parseCameraSelector(cameraProviderTmp: ProcessCameraProvider?) {
         lensFacing = when {
             cameraProviderTmp!!.hasBackCamera() -> CameraSelector.LENS_FACING_BACK
@@ -457,9 +436,7 @@ abstract class CameraXManager(
             tmp.hasBackCamera() && tmp.hasFrontCamera()
     }
 
-    /**
-     * 切换前后摄像头
-     */
+    /** 切换前后摄像头 */
     open fun switchCamera() {
         lensFacing = if (CameraSelector.LENS_FACING_FRONT == lensFacing) {
             CameraSelector.LENS_FACING_BACK
@@ -473,9 +450,7 @@ abstract class CameraXManager(
     }
 
 
-    /**
-     * 基于当前的值再次缩放
-     */
+    /** 基于当前的值再次缩放 */
     fun zoomBasedOnCurrent(delta: Float) {
         zoomState?.value?.let {
             val currentZoomRatio = it.zoomRatio
@@ -483,9 +458,7 @@ abstract class CameraXManager(
         }
     }
 
-    /**
-     * 直接按照输入的参数进行缩放。
-     */
+    /** 直接按照输入的参数进行缩放。 */
     fun zoomDirectly(zoomValue: Float) {
         myZoomValue = zoomValue
         zoomState?.value?.let {
@@ -494,8 +467,7 @@ abstract class CameraXManager(
     }
 
     /**
-     * 初始化缩放状态
-     * 注意：反转相机后，因为camera实例发生变化，所以需要重新获取缩放状态。
+     * 初始化缩放状态 注意：反转相机后，因为camera实例发生变化，所以需要重新获取缩放状态。
      * 从拍照绑定切换到视频录制绑定时，因为经历解绑再绑定的过程，画面的缩放值会丢失，这是正常的。
      * 缩放值可以在绑定的时候就设置，不过目前我没有在绑定时重新设置缩放值，说不定以后会这么做
      */
@@ -505,15 +477,25 @@ abstract class CameraXManager(
 
     /**
      * 返回缩放的最大值和最小值
+     *
      * @return Pair<MAX,MIN>
      */
     fun getZoomRange(): Pair<Float?, Float?> {
         return Pair(zoomState?.value?.maxZoomRatio, zoomState?.value?.minZoomRatio)
     }
 
-    /**
-     * 由子类提供分析器
-     */
+    /** 更新用例的方向 */
+    @CallSuper
+    open fun updateCaseRotation(rotation: Int) {
+        //横屏时，动态设置他们的方向
+        imageAnalyzer.targetRotation = rotation
+        imageCapture.targetRotation = rotation
+    }
+
+    /** 方向传感器具体的角度值变化 方向是顺时针，0-359度 */
+    open fun sensorAngleChanged(rotation: Int, angle: Int) {}
+
+    /** 由子类提供分析器 */
     abstract fun selectAnalyzer(): ImageAnalysis.Analyzer
 
     abstract fun checkPerm(block: () -> Unit)
