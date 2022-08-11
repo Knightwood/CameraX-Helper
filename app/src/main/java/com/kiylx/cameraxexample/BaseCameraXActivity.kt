@@ -21,7 +21,6 @@ import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.manager.ui.CameraXFragmentEventListener
 import com.kiylx.camerax_lib.main.manager.ui.NewCameraXFragment
-import kotlinx.android.synthetic.main.activity_camera_example.*
 
 abstract class BaseCameraXActivity : BasicActivity(),
     View.OnClickListener {
@@ -30,58 +29,58 @@ abstract class BaseCameraXActivity : BasicActivity(),
     lateinit var cameraConfig: ManagerConfig
 
     lateinit var mBaseHandler: Handler
-
-    //有些应用希望能添加位置信息在水印上面
-    val perms = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    lateinit var page: ActivityCameraExampleBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        page = ActivityCameraExampleBinding.inflate(layoutInflater)
+        setWindowEdgeToEdge(page.root,page.settingLayout.id,page.cameraControlLayout.id)
+        setContentView(page.root)
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
         setCameraFragment()
-        flush_btn.setOnClickListener {
-            if (flash_layout.visibility == View.VISIBLE) {
-                flash_layout.visibility = View.INVISIBLE
-                switch_btn.visibility = View.VISIBLE
+        page.flushBtn.setOnClickListener {
+            if (page.flashLayout.visibility == View.VISIBLE) {
+                page.flashLayout.visibility = View.INVISIBLE
+                page.switchBtn.visibility = View.VISIBLE
             } else {
-                flash_layout.visibility = View.VISIBLE
-                switch_btn.visibility = View.INVISIBLE
+                page.flashLayout.visibility = View.VISIBLE
+                page.switchBtn.visibility = View.INVISIBLE
             }
         }
         //切换摄像头
-        switch_btn.setOnClickListener {
+        page.switchBtn.setOnClickListener {
             //要保持闪光灯上一次的模式
             if (cameraXFragment.canSwitchCamera()) {
                 cameraXFragment.switchCamera()
             }
         }
-        flash_on.setOnClickListener {
+        page.flashOn.setOnClickListener {
             initFlashSelectColor()
-            flash_on.setTextColor(resources.getColor(R.color.flash_selected))
-            flush_btn.setImageResource(R.drawable.flash_on)
+            page.flashOn.setTextColor(resources.getColor(R.color.flash_selected))
+            page.flushBtn.setImageResource(R.drawable.flash_on)
             cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_ON)
         }
-        flash_off.setOnClickListener {
+        page.flashOff.setOnClickListener {
             initFlashSelectColor()
-            flash_off.setTextColor(resources.getColor(R.color.flash_selected))
-            flush_btn.setImageResource(R.drawable.flash_off)
+            page.flashOff.setTextColor(resources.getColor(R.color.flash_selected))
+            page.flushBtn.setImageResource(R.drawable.flash_off)
             cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_OFF)
         }
-        flash_auto.setOnClickListener {
+        page.flashAuto.setOnClickListener {
             initFlashSelectColor()
-            flash_auto.setTextColor(resources.getColor(R.color.flash_selected))
-            flush_btn.setImageResource(R.drawable.flash_auto)
+            page.flashAuto.setTextColor(resources.getColor(R.color.flash_selected))
+            page.flushBtn.setImageResource(R.drawable.flash_auto)
             cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_AUTO)
         }
-        flash_all_on.setOnClickListener {
+        page.flashAllOn.setOnClickListener {
             initFlashSelectColor()
-            flash_all_on.setTextColor(resources.getColor(R.color.flash_selected))
-            flush_btn.setImageResource(R.drawable.flash_all_on)
+            page.flashAllOn.setTextColor(resources.getColor(R.color.flash_selected))
+            page.flushBtn.setImageResource(R.drawable.flash_all_on)
             cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_ALL_ON)
         }
 
-        close_btn.setOnClickListener {
+        page.closeBtn.setOnClickListener {
             closeActivity()
         }
         //相机的UI在横竖屏幕可以对应修改UI 啊
@@ -160,10 +159,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
      */
     abstract fun configAll(intent: Intent): ManagerConfig
 
-    override fun setContent(): View {
-        return ActivityCameraExampleBinding.inflate(layoutInflater).root
-    }
-
     override fun onResume() {
         super.onResume()
         if (mOrientationListener.canDetectOrientation()) {
@@ -181,13 +176,13 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
 
     private fun initFlashSelectColor() {
-        flash_on.setTextColor(resources.getColor(R.color.white))
-        flash_off.setTextColor(resources.getColor(R.color.white))
-        flash_auto.setTextColor(resources.getColor(R.color.white))
-        flash_all_on.setTextColor(resources.getColor(R.color.white))
+        page.flashOn.setTextColor(resources.getColor(R.color.white))
+        page.flashOff.setTextColor(resources.getColor(R.color.white))
+        page.flashAuto.setTextColor(resources.getColor(R.color.white))
+        page.flashAllOn.setTextColor(resources.getColor(R.color.white))
 
-        flash_layout.visibility = View.INVISIBLE
-        switch_btn.visibility = View.VISIBLE
+        page.flashLayout.visibility = View.INVISIBLE
+        page.switchBtn.visibility = View.VISIBLE
     }
 
     override fun onStop() {
@@ -256,7 +251,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
     //相机初始化完成
     open fun initCameraFinished() {
         //拍照，拍视频的UI 操作的各种状态处理
-        capture_btn2.setCaptureListener(object : CaptureListener {
+        page.captureBtn2.setCaptureListener(object : CaptureListener {
             override fun takePictures() {
                 cameraXFragment.takePhoto()
             }
@@ -281,21 +276,21 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
             }
         })
-        capture_video_btn.setCaptureListener(object : CaptureListener {
+        page.captureVideoBtn.setCaptureListener(object : CaptureListener {
             override fun takePictures() {
 
             }
 
             //开始录制视频
             override fun recordStart() {
-                capture_btn2.visibility = View.GONE
+                page.captureBtn2.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.takeVideo()
             }
 
             //录制视频结束
             override fun recordEnd(time: Long) {
-                capture_btn2.visibility = View.VISIBLE
+                page.captureBtn2.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
                 cameraXFragment.stopTakeVideo(time)
             }

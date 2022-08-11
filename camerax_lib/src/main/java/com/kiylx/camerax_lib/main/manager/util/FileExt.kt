@@ -1,6 +1,7 @@
 package com.kiylx.camerax_lib.main.manager.util
 
 import android.content.Context
+import android.os.Environment
 import java.io.File
 
 
@@ -19,5 +20,9 @@ fun makeTempFile(context: Context): File {
     if (globalRootPath.isEmpty()) {
         globalRootPath = context.getExternalFilesDir(null)!!.absolutePath
     }
-    return File.createTempFile("${System.currentTimeMillis()}", ".png", rootFolder)
+    val file=File(globalRootPath+"/"+System.currentTimeMillis()+".jpg")
+    if (!file.exists())
+        file.createNewFile()
+    return file
+    //return File.createTempFile("${System.currentTimeMillis()}", ".png", rootFolder)
 }

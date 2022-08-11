@@ -19,7 +19,6 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.model.*
-import kotlinx.android.synthetic.main.fragment_camerax.*
 
 class NewCameraXFragment : Fragment(), CameraCommon {
     private var captureResultListener: CaptureResultListener? = null
@@ -89,7 +88,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     }
 
     fun getOverlay(): GraphicOverlay {
-        return graphicOverlay_finder
+        return page.graphicOverlayFinder
     }
 
     override fun onDestroyView() {

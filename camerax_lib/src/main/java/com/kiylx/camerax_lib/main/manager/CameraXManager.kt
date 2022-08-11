@@ -1,14 +1,14 @@
 package com.kiylx.camerax_lib.main.manager
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Point
-import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
+import android.view.Surface
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.CallSuper
@@ -25,16 +25,19 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import com.google.common.util.concurrent.ListenableFuture
-import com.yeyupiaoling.cameraxapp.view.FocusImageView
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
+import com.yeyupiaoling.cameraxapp.view.FocusImageView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-
+/*
+如果视图是强制竖屏或横屏，就不该旋转预览视图
+如果是自由旋转，就应该旋转预览视图
+*/
 abstract class CameraXManager(
     internal val cameraPreview: PreviewView,
     var cameraConfig: ManagerConfig,
@@ -65,9 +68,6 @@ abstract class CameraXManager(
     lateinit var newVideoCapture: androidx.camera.video.VideoCapture<Recorder> //新版本录像用例
 
     //状态
-    lateinit var metrics: DisplayMetrics
-
-    private var displayId: Int = -1
     private lateinit var cameraSelector: CameraSelector
     var lensFacing = CameraSelector.LENS_FACING_BACK
     var currentStatus: Int = TakeVideoState.none//指示当前状态
@@ -76,9 +76,14 @@ abstract class CameraXManager(
     //接口
     var cameraListener: CameraEventListener? = null//我定义的接口，用于在这里做某些处理后，通知外界
 
+    var deviceOrientationMode = 0
+
     //传感器角度值
     private var sensorRotation: SensorRotation? = null
     private val orientationEventListener = object : SensorRotation.RotationChangeListener {
+        //使用 OrientationEventListener
+        //可以让您随着设备屏幕方向的变化持续更新相机用例的目标旋转角度。
+        //方向传感器带来的设备旋转角度
         override fun angleChanged(rotation: Int, angle: Int) {
             sensorAngleChanged(rotation, angle)
         }
@@ -87,26 +92,15 @@ abstract class CameraXManager(
             updateCaseRotation(rotation)
         }
     }
-    private val displayManager by lazy {
-        context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-    }
-    /**
-     * 横竖屏切换时，设置
-     */
-    private val displayListener = object : DisplayManager.DisplayListener {
-        override fun onDisplayAdded(displayId: Int) = Unit
-        override fun onDisplayRemoved(displayId: Int) = Unit
-        override fun onDisplayChanged(displayId: Int) {
-            view?.let { view ->
-                if (displayId == this@CameraXManager.displayId) {
-                    Log.d(TAG, "Rotation changed: ${view.display.rotation}")
-                    imageCapture.targetRotation = view.display.rotation
-                    imageAnalyzer.targetRotation = view.display.rotation
-                }
-            } ?: Unit
+    //display的角度变化
+    private var displayRotation: DisplayRotation? = null
+    private val displayRotationListener = object : DisplayRotation.DisplayRotationChangeListener {
+        override fun rotationChanged(rotation: Int) {
+            //使用 DisplayListener 可以让您在特定情况下更新相机用例的目标旋转角度，
+            //例如在设备旋转了 180 度后系统没有销毁并重新创建 Activity 的情况下。
+            preview?.targetRotation=rotation
         }
     }
-
 
     //其他
     lateinit var handler: Handler
@@ -135,15 +129,10 @@ abstract class CameraXManager(
 
     private fun initManager() = checkPerm {//权限全部通过后执行下面代码
         initCamera()
-        //display的方向监听
-        cameraPreview.post {
-            displayId = cameraPreview.display.displayId
-        }
-        displayManager.registerDisplayListener(displayListener, null)
+        deviceOrientationMode = context.resources.configuration.orientation
     }
 
     private fun destroy() {
-        displayManager.unregisterDisplayListener(displayListener)
         cameraExecutor.shutdown()
         handler.removeCallbacksAndMessages(null)
     }
@@ -160,21 +149,42 @@ abstract class CameraXManager(
                 val cameraProviderTmp = cameraProvider
                 parseCameraSelector(cameraProviderTmp)
 
-                metrics = DisplayMetrics().also {
-                    cameraPreview.display.getRealMetrics(it)
-                }
-                val screenAspectRatio =
-                    ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
-                val size = Size(metrics.widthPixels, metrics.heightPixels)
-                val rotation = cameraPreview.display.rotation
+                var screenAspectRatio: Int//屏幕缩放比率
+                var size: Size//屏幕尺寸
+                val rotation: Int//屏幕方向
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val metrics2 = context.windowManager.currentWindowMetrics
+                    screenAspectRatio =
+                        ManagerUtil.aspectRatio(metrics2.bounds.width(), metrics2.bounds.height())
+                    size = Size(metrics2.bounds.width(), metrics2.bounds.height())
+                    rotation = context.display!!.rotation
+                } else {
+                    val metrics = DisplayMetrics().also {
+                        cameraPreview.display.getRealMetrics(it)
+                    }
+                    screenAspectRatio =
+                        ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
+                    size = Size(metrics.widthPixels, metrics.heightPixels)
+                    rotation = cameraPreview.display.rotation
+                }
+                Log.e("旋转3","$rotation")
+
+                //初始化用例
                 initPreView(rotation)
                 initImageAnalyzer(rotation)
                 initImageCapture(screenAspectRatio, rotation, size)
                 initVideoCapture(screenAspectRatio, rotation)
+                //配置屏幕方向监听
                 if (sensorRotation == null) {
                     sensorRotation = SensorRotation(context).apply {
                         listener = orientationEventListener
+                    }
+                }
+                //配置屏幕方向监听
+                if (displayRotation == null) {
+                    displayRotation = DisplayRotation(context).apply {
+                        listener = displayRotationListener
                     }
                 }
                 //setUpPinchToZoom()
@@ -183,11 +193,12 @@ abstract class CameraXManager(
                 initCameraListener()
                 cameraListener?.initCameraFinished()
 
-            }, ContextCompat.getMainExecutor(context)
+            },
+            ContextCompat.getMainExecutor(context)
         )
     }
 
-    private fun initPreView(rotation: Int) {
+    private fun initPreView(rotation: Int = Surface.ROTATION_0) {
         preview = Preview.Builder()
             // 我们要去宽高比，但是没有分辨率
             //.setTargetAspectRatio(screenAspectRatio)
@@ -198,7 +209,11 @@ abstract class CameraXManager(
     }
 
     /** setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用 */
-    private fun initImageCapture(screenAspectRatio: Int, rotation: Int, size: Size) {
+    private fun initImageCapture(
+        screenAspectRatio: Int,
+        rotation: Int = Surface.ROTATION_0,
+        size: Size,
+    ) {
         // ImageCapture，用于拍照功能
         imageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
@@ -211,7 +226,7 @@ abstract class CameraXManager(
     }
 
     @SuppressLint("RestrictedApi")
-    private fun initVideoCapture(screenAspectRatio: Int, rotation: Int) {
+    private fun initVideoCapture(screenAspectRatio: Int, rotation: Int = Surface.ROTATION_0) {
         if (cameraConfig.useNewVideoCapture) {
             newVideoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor)
         } else {
@@ -228,7 +243,7 @@ abstract class CameraXManager(
         }
     }
 
-    private fun initImageAnalyzer(rotation: Int) {
+    private fun initImageAnalyzer(rotation: Int = Surface.ROTATION_0) {
         imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setTargetRotation(rotation)//设置旋转角度
@@ -487,6 +502,7 @@ abstract class CameraXManager(
     /** 更新用例的方向 */
     @CallSuper
     open fun updateCaseRotation(rotation: Int) {
+        Log.e("旋转1","$rotation")
         //横屏时，动态设置他们的方向
         imageAnalyzer.targetRotation = rotation
         imageCapture.targetRotation = rotation

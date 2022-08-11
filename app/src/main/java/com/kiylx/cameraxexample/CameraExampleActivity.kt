@@ -5,7 +5,6 @@ import android.view.View
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
-import kotlinx.android.synthetic.main.activity_camera_example.*
 
 class CameraExampleActivity : BaseCameraXActivity() {
     private var cacheMediasDir = "" //存储路径
@@ -36,7 +35,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
     override fun cameraFinishInited() {
         if (cameraConfig.isUsingImageAnalyzer()) {//人脸识别拍摄
-            camera_control_layout.visibility = View.INVISIBLE
+           page.cameraControlLayout.visibility = View.INVISIBLE
         } else {
             //capture()//自动拍照或录像
         }

@@ -1,8 +1,8 @@
 package com.kiylx.camerax_lib.main.manager.util
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.*
 import android.media.Image
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
 fun Image.imageToBuffer(): ByteBuffer? {
@@ -22,6 +22,18 @@ fun Image.imageToBitmap(): Bitmap? {
     val bytes = ByteArray(buffer.remaining())
     buffer.get(bytes)
     return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
+}
+
+fun Image.toBitmap(): Bitmap {
+    val buffer = planes[0].buffer
+    buffer.rewind()
+    val bytes = ByteArray(buffer.capacity())
+    buffer.get(bytes)
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    val yuvImage=YuvImage(bytes,ImageFormat.NV21,20,20,null)
+    yuvImage.compressToJpeg(Rect(0,0,20,20),80,byteArrayOutputStream)
+    val n=byteArrayOutputStream.toByteArray()
+    return BitmapFactory.decodeByteArray(n, 0, n.size)
 }
 
 /**

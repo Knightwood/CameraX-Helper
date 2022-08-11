@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -18,7 +18,8 @@
         android:id="@+id/setting_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_gravity="top"
+        >
 
         <ImageView
             android:id="@+id/flush_btn"
@@ -37,8 +38,8 @@
             android:layout_height="match_parent"
             android:scrollbars="none"
             android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@+id/flush_btn"
+            app:layout_constraintBottom_toBottomOf="@id/flush_btn"
+            app:layout_constraintStart_toEndOf="@+id/flush_btn"
             >
 
             <LinearLayout
@@ -122,7 +123,8 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_switch"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toBottomOf="@id/flush_btn"
+            app:layout_constraintTop_toTopOf="@id/flush_btn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -134,7 +136,7 @@
         android:paddingTop="5dp"
         android:paddingRight="15dp"
         android:paddingBottom="10dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_gravity="bottom">
 
         <!-- Camera control and gallery buttons -->
         <ImageButton
@@ -186,32 +188,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
-        android:id="@+id/auto_record"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingLeft="15dp"
-        android:paddingTop="5dp"
-        android:paddingRight="15dp"
-        android:paddingBottom="10dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:gravity="center"
-            android:text="正在录制"
-            android:textColor="@color/black"
-            android:textSize="20sp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/stop_auto_bt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="停止" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

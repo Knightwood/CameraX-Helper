@@ -1,10 +1,11 @@
 package com.kiylx.cameraxexample
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.content.res.Configuration
 import android.os.Bundle
-import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import kotlinx.android.synthetic.main.activity_main.*
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import com.kiylx.cameraxexample.databinding.ActivityMainBinding
 
 /**
  * 最初是github上的CameraxFragment项目和一个演示如何使用谷歌机器学习的库给了我启发，
@@ -13,21 +14,63 @@ import kotlinx.android.synthetic.main.activity_main.*
 const val ImageDetection = "imageDetection"
 
 class MainActivity : AppCompatActivity() {
+    lateinit var page: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        one.setOnClickListener {//普通
+        page = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(page.root)
+        page.one.setOnClickListener {//普通
             val intent: Intent = Intent(this, CameraExampleActivity::class.java)
             intent.putExtra(ImageDetection, false)
             startActivity(intent)
         }
 
-        second.setOnClickListener {//人脸识别拍摄
+        page.second.setOnClickListener {//人脸识别拍摄
             val intent: Intent = Intent(this, CameraExampleActivity::class.java)
             intent.putExtra(ImageDetection, true)
             startActivity(intent)
         }
+        Log.e(tag, "onCreate")
+    }
 
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Log.e(tag, "onConfigurationChanged")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.e(tag, "onRestart")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.e(tag, "onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.e(tag, "onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.e(tag, "onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.e(tag, "onStop")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.e(tag, "onDestroy")
+    }
+
+    companion object {
+        const val tag = "MainActivity"
     }
 }

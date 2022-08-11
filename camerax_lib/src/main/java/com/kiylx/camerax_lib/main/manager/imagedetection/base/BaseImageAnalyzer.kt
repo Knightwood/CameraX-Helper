@@ -1,23 +1,39 @@
 package com.kiylx.camerax_lib.main.manager.imagedetection.base
 
 import android.annotation.SuppressLint
-import android.graphics.*
+import android.graphics.Matrix
+import android.graphics.Rect
+import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.view.PreviewView
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
+import com.kiylx.camerax_lib.main.manager.util.imageToBitmap
+import com.kiylx.camerax_lib.main.manager.util.imageToBuffer
+import com.kiylx.camerax_lib.main.manager.util.saveToGallery
+import com.kiylx.camerax_lib.main.manager.util.toBitmap
 
 abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
 
     abstract val graphicOverlay: GraphicOverlay
+    abstract val cameraPreview: PreviewView
 
-    @SuppressLint("UnsafeExperimentalUsageError")
+    @SuppressLint("UnsafeExperimentalUsageError", "UnsafeOptInUsageError")
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
+        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+
         mediaImage?.let {
-            detectInImage(InputImage.fromMediaImage(it, imageProxy.imageInfo.rotationDegrees))
+            detectInImage(InputImage.fromMediaImage(it, rotationDegrees))
                 .addOnSuccessListener { results ->
+                    //保存图片,我不知道能不能实现。。。。。
+                    //val bitmap=imageProxy.image?.imageToBitmap()
+                    //bitmap?.saveToGallery(cameraPreview.context)
+                    //坐标转换
+                    //MatrixPoint.matrix = getCorrectionMatrix(imageProxy, cameraPreview)//生成转换矩阵
+                    //Log.e("面部","${rotationDegrees}")
                     onSuccess(
                         results,
                         graphicOverlay,
@@ -37,8 +53,14 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
 
     abstract fun stop()
 
+    /**
+     * 分析图像
+     */
     protected abstract fun detectInImage(image: InputImage): Task<T>
 
+    /**
+     *@param rect :  imageProxy.image.cropRect: 获取与此帧关联的裁剪矩形。裁剪矩形使用最大分辨率平面中的坐标指定图像中有效像素的区域。
+     */
     protected abstract fun onSuccess(
         results: T,
         graphicOverlay: GraphicOverlay,
@@ -47,4 +69,59 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
 
     protected abstract fun onFailure(e: Exception)
 
+}
+
+/**
+ * 全局的坐标转换矩阵
+ */
+object MatrixPoint {
+    var matrix: Matrix? = null
+}
+
+/**
+ * 谷歌示例代码
+ */
+fun getCorrectionMatrix(imageProxy: ImageProxy, previewView: PreviewView): Matrix {
+    val cropRect = imageProxy.cropRect
+    val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+    val matrix = Matrix()
+
+    // A float array of the source vertices (crop rect) in clockwise order.
+    val source = floatArrayOf(
+        cropRect.left.toFloat(),
+        cropRect.top.toFloat(),
+        cropRect.right.toFloat(),
+        cropRect.top.toFloat(),
+        cropRect.right.toFloat(),
+        cropRect.bottom.toFloat(),
+        cropRect.left.toFloat(),
+        cropRect.bottom.toFloat()
+    )
+
+    // A float array of the destination vertices in clockwise order.
+    val destination = floatArrayOf(
+        0f,
+        0f,
+        previewView.width.toFloat(),
+        0f,
+        previewView.width.toFloat(),
+        previewView.height.toFloat(),
+        0f,
+        previewView.height.toFloat()
+    )
+
+    // The destination vertexes need to be shifted based on rotation degrees. The
+    // rotation degree represents the clockwise rotation needed to correct the image.
+
+    // Each vertex is represented by 2 float numbers in the vertices array.
+    val vertexSize = 2
+    // The destination needs to be shifted 1 vertex for every 90° rotation.
+    val shiftOffset = rotationDegrees / 90 * vertexSize;
+    val tempArray = destination.clone()
+    for (toIndex in source.indices) {
+        val fromIndex = (toIndex + shiftOffset) % source.size
+        destination[toIndex] = tempArray[fromIndex]
+    }
+    matrix.setPolyToPoly(source, 0, destination, 0, 4)
+    return matrix
 }

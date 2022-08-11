@@ -4,13 +4,15 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Lifecycle.Event.*
+import androidx.lifecycle.Lifecycle.Event.ON_START
+import androidx.lifecycle.Lifecycle.Event.ON_STOP
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.kiylx.camerax_lib.utils.Weak
 
 /**
- * 监听传感器变化，当设备旋转时，变换角度
+ * 监听方向传感器带来的角度变化
+ * 使用 OrientationEventListener 可以让您随着设备屏幕方向的变化持续更新相机用例的目标旋转角度。
  */
 class SensorRotation(context: FragmentActivity) : LifecycleEventObserver {
     var activity by Weak { context }
@@ -18,12 +20,12 @@ class SensorRotation(context: FragmentActivity) : LifecycleEventObserver {
         internal set(value) {
             field = value
             rotation = when (field) {
-                in 45..134 -> Surface.ROTATION_270
-                in 135..224 -> Surface.ROTATION_180
-                in 225..314 -> Surface.ROTATION_90
+                in 45 until 135 -> Surface.ROTATION_270
+                in 135 until 225 -> Surface.ROTATION_180
+                in 225 until 315 -> Surface.ROTATION_90
                 else -> Surface.ROTATION_0
             }
-            listener?.angleChanged(rotation,field)
+            listener?.angleChanged(rotation, field)
         }
 
     /**
@@ -31,17 +33,15 @@ class SensorRotation(context: FragmentActivity) : LifecycleEventObserver {
      */
     var rotation = Surface.ROTATION_0
         internal set(value) {
-            if (value != field) {
-                field = value
-                listener?.rotationChanged(field)
-            }
+            field = value
+            listener?.rotationChanged(field)
         }
 
     /**
      * 监听传感器的变化，旋转角度值在0-359度，方向是顺时针方向
      *
      */
-   private val orientationEventListener: OrientationEventListener by lazy {
+    private val orientationEventListener: OrientationEventListener by lazy {
         object : OrientationEventListener(activity) {
             override fun onOrientationChanged(orientation: Int) {
                 angle = orientation
@@ -57,7 +57,7 @@ class SensorRotation(context: FragmentActivity) : LifecycleEventObserver {
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         when (event) {
-            ON_CREATE -> {
+            ON_START -> {
                 activity?.let {
                     orientationEventListener.enable()
                 }
@@ -73,7 +73,10 @@ class SensorRotation(context: FragmentActivity) : LifecycleEventObserver {
     }
 
     interface RotationChangeListener {
-        fun angleChanged(rotation: Int,angle: Int){}
+        /**
+         * 屏幕旋转的角度值
+         */
+        fun angleChanged(rotation: Int, angle: Int) {}
         fun rotationChanged(rotation: Int)
     }
 }

@@ -9,15 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
-import com.permissionx.guolindev.PermissionX
-import com.permissionx.guolindev.callback.ExplainReasonCallback
-import com.permissionx.guolindev.request.ExplainScope
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
@@ -26,8 +22,10 @@ import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.getFileOutputOption
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
+import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
+import com.permissionx.guolindev.request.ExplainScope
 import com.permissionx.guolindev.request.ForwardScope
 import java.util.concurrent.Executors
 
@@ -54,7 +52,7 @@ class CameraHolder(
 
     //提供人脸识别
     private val faceProcess by lazy {
-        FaceContourDetectionProcessor(graphicOverlay, analyzerResultListener)
+        FaceContourDetectionProcessor(cameraPreview,graphicOverlay, analyzerResultListener)
     }
 
     fun changeAnalyzer(visionType: VisionType) {
