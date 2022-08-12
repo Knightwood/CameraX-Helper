@@ -10,18 +10,27 @@ import android.provider.MediaStore
 import androidx.annotation.RestrictTo
 import androidx.camera.video.*
 import com.kiylx.camerax_lib.main.manager.video.OutputKinds.*
+import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * 配置输出选项，从videocapture中获取recorder，再从中获取pendingRecorder，用它录视频
+ *1. 创建 Recorder，配置QualitySelector。
+ *2. 使用创建好的Recorder，生成VideoCapture，并绑定用例。
+ *3. 创建OutputOptions，这个配置了文件生成的名称，路径等
+ *4. 使用 videoCapture.output.prepareRecording(context,outputOption) 方法生成PendingRecording对象。
+ *5. PendingRecording对象调用start开始录像并得到Recording对象 ，使用 pause()/resume()/stop() 来控制录制操作。
+ *
+ * 配置输出选项(OutputOptions)，从VideoCapture中获取Recording，用它录视频
  * 目前Android10以上，支持输出到相册和app私有目录
  * Android10一下，支持输出到任意位置
  *
- * 三种使用方式: 1. OnceRecorder(context).getMediaStoreOutput(contentValues)
+ * 三种使用方式对OnceRecorder配置好OutputOptions。
+ *             1. OnceRecorder(context).getMediaStoreOutput(contentValues)
  *             2. OnceRecorder(context).getFileOutputOption(file)
  *             3. OnceRecorder(context).getFileDescriptorOutput(fileDescriptor)
+ * 然后调用onceRecorder.getVideoRecording()获取PendingRecording对象，这个对象就用来拍视频了。
  *
  */
 class OnceRecorder(
@@ -31,12 +40,12 @@ class OnceRecorder(
     lateinit var outputOption: OutputOptions
 
     /**
-     * 不使用MediaStore时，使用文件路径记录文件位置
+     * 使用绝对路径时，使用文件路径记录此次录制文件的位置
      */
     var filePath = ""
 
     /**
-     * 使用MediaStore时使用uri记录文件位置
+     * 使用MediaStore，saf 时使用uri记录此次录制文件的位置
      */
     var fileUri: Uri = Uri.EMPTY
 
@@ -46,9 +55,10 @@ class OnceRecorder(
      */
     internal fun getDefaultOutputOptions() {
         val contentValues: ContentValues = ContentValues().apply {
-            val name = SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(Date())
-                .toString() + ".mp4"
+            val name = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+                .toString()
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
+            put(MediaStore.Audio.Media.MIME_TYPE, MimeTypeConsts.jpg)
         }
         outputOption = MediaStoreOutputOptions.Builder(context.contentResolver,
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
@@ -56,9 +66,12 @@ class OnceRecorder(
             .build()
     }
 
+    /**
+     * 根据输出配置(outputOption)，从VideoCapture生成一个新的PendingRecording，此实例就能拿来录制了。
+     */
     @SuppressLint("MissingPermission")
     internal fun getVideoRecording(): PendingRecording? {
-        if (VideoRecorderHolder.videoCapture == null || VideoRecorderHolder.recorder == null) {
+        if (VideoRecorderHolder.videoCapture == null) {
             throw Exception("没有videoCapture")
         }
         val pendingRecording: PendingRecording? =

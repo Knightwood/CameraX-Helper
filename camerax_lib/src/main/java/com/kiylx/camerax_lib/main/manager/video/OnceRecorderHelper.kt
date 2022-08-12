@@ -25,26 +25,12 @@ import java.io.File
 object OnceRecorderHelper {
     var locationKind: LocationKind = DCIM//默认存储到相册
 
-    //存储到app目录下，或是其他位置，存储到相册不会用到这几个路径
-    var MyPhotoDir = ""
     private var MyVideoDir = ""
     private var cacheMediaDir: String = ""
         set(value) {
             field = value
-            MyPhotoDir = "$value/images/"
             MyVideoDir = "$value/videos/"
         }
-
-    var outputKinds: OutputKinds = MEDIA_STORE
-
-    /**
-     * @param config 存储位置
-     */
-    fun applySaveLocation(locationKind: LocationKind, config: String): OnceRecorderHelper {
-        this.locationKind = locationKind
-        this.cacheMediaDir = config
-        return this
-    }
 
     /**
      * 获取一个OnceRecorder
@@ -105,10 +91,5 @@ object OnceRecorderHelper {
 enum class LocationKind {
     APP,
     DCIM,
-
-    /**
-     * 还未实现
-     */
-    @RestrictTo(RestrictTo.Scope.TESTS)
     OTHER
 }

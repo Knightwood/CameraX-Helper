@@ -10,10 +10,7 @@ import androidx.camera.view.PreviewView
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
-import com.kiylx.camerax_lib.main.manager.util.imageToBitmap
-import com.kiylx.camerax_lib.main.manager.util.imageToBuffer
-import com.kiylx.camerax_lib.main.manager.util.saveToGallery
-import com.kiylx.camerax_lib.main.manager.util.toBitmap
+import com.kiylx.camerax_lib.main.manager.util.*
 
 abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
 
@@ -28,13 +25,11 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
         mediaImage?.let {
             detectInImage(InputImage.fromMediaImage(it, rotationDegrees))
                 .addOnSuccessListener { results ->
-                    //保存图片,我不知道能不能实现。。。。。
-                    //val bitmap=imageProxy.image?.imageToBitmap()
-                    //bitmap?.saveToGallery(cameraPreview.context)
                     //坐标转换
                     //MatrixPoint.matrix = getCorrectionMatrix(imageProxy, cameraPreview)//生成转换矩阵
                     //Log.e("面部","${rotationDegrees}")
                     onSuccess(
+                        imageProxy,
                         results,
                         graphicOverlay,
                         it.cropRect,
@@ -62,6 +57,7 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
      *@param rect :  imageProxy.image.cropRect: 获取与此帧关联的裁剪矩形。裁剪矩形使用最大分辨率平面中的坐标指定图像中有效像素的区域。
      */
     protected abstract fun onSuccess(
+        imageProxy:ImageProxy,
         results: T,
         graphicOverlay: GraphicOverlay,
         rect: Rect,

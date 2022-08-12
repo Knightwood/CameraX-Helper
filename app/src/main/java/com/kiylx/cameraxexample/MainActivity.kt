@@ -2,10 +2,14 @@ package com.kiylx.cameraxexample
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.cameraxexample.databinding.ActivityMainBinding
+import com.kiylx.store_lib.mediastore.FileLocate
 
 /**
  * 最初是github上的CameraxFragment项目和一个演示如何使用谷歌机器学习的库给了我启发，
@@ -47,7 +51,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        /*if (StorageConfig.uri== Uri.EMPTY){
+            StoreX.initSaf(this).requestOneFolder {
+                StorageConfig.uri=it
+            }
+        }*/
         Log.e(tag, "onStart")
+        Log.e(tag,
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath)
     }
 
     override fun onResume() {

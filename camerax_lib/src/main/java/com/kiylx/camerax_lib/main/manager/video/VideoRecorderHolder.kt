@@ -4,11 +4,13 @@ import androidx.camera.video.*
 import java.util.concurrent.ExecutorService
 
 /**
- * 配置视频录制工具，不包含录制视频。
+ * 配置VideoCapture，不包含录制视频。
  * 使用CameraX 软件包内的 camera-video 库中实现
- * 使用此类获取videoCapture。
- * 用法： VideoRecorderHolder.getVideoCapture(cameraExecutor) 获取videoCapture。
- * 录制视频：
+ * 使用此类获取videoCapture，之后绑定用例。
+ *
+ * 用法：1.  videoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor) 获取videoCapture。
+ *      2.  camera = cameraProvider?.bindToLifecycle(lifeOwner,cameraSelector,preview,videoCapture) 绑定用例
+ * 绑定用例之后，用此方法录制视频：
  * 用法：val onceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)//获取一个一次性录制工具
  *
  *      var recording: Recording? = onceRecorder.getVideoRecording()//使用这个录制视频，暂停，恢复，停止录制
@@ -17,7 +19,6 @@ import java.util.concurrent.ExecutorService
  */
 object VideoRecorderHolder {
     internal var videoCapture: VideoCapture<Recorder>? = null
-    internal var recorder: Recorder? = null
     internal var quality: QualitySelector = QualitySelector.from(Quality.LOWEST)//默认录制质量为最低画质
 
     fun setMostHighQuality() {
@@ -38,8 +39,11 @@ object VideoRecorderHolder {
         )
     }
 
+    /**
+     * videoCapture是由Recorder生成
+     */
     private fun createCapture(executor: ExecutorService) {
-        recorder = Recorder.Builder()
+         Recorder.Builder()
             .setExecutor(executor)
             .setQualitySelector(this.quality)
             .build()

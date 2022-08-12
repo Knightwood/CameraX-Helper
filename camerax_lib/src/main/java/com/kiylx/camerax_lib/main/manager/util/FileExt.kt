@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Environment
 import java.io.File
 
-
+/*
+* 这个以后会被删除
+* */
 var globalRootPath = ""
 
 val MyPhotoDir = "$globalRootPath/cameraX/images/"

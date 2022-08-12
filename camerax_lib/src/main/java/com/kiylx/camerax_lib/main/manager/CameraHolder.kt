@@ -2,11 +2,13 @@ package com.kiylx.camerax_lib.main.manager
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import androidx.camera.core.*
@@ -21,12 +23,16 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.getFileOutputOption
+import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
 import com.permissionx.guolindev.request.ExplainScope
 import com.permissionx.guolindev.request.ForwardScope
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.Executors
 
 /** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */

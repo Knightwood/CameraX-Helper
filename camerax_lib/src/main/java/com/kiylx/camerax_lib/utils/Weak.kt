@@ -17,12 +17,10 @@ class Weak<T : Any>(initializer: () -> T?) : ReadWriteProperty<Any?, T?> {
     })
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T? {
-        Log.d("Weak Delegate", "-----------getValue")
         return weakReference.get()
     }
 
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T?) {
-        Log.d("Weak Delegate", "-----------setValue")
         weakReference = WeakReference(value)
     }
 

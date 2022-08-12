@@ -1,6 +1,5 @@
 package com.kiylx.camerax_lib.main.manager.imagedetection.face
 
-import android.graphics.Matrix
 import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
@@ -65,6 +64,7 @@ class FaceContourDetectionProcessor(
      * @param rect :  imageProxy.image.cropRect: 获取与此帧关联的裁剪矩形。裁剪矩形使用最大分辨率平面中的坐标指定图像中有效像素的区域。
      */
     override fun onSuccess(
+        imageProxy: ImageProxy,
         results: List<Face>,
         graphicOverlay: GraphicOverlay,
         rect: Rect,

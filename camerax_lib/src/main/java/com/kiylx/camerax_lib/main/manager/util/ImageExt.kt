@@ -1,39 +1,21 @@
 package com.kiylx.camerax_lib.main.manager.util
 
-import android.graphics.*
-import android.media.Image
-import java.io.ByteArrayOutputStream
+import android.annotation.SuppressLint
+import android.content.Context
+import androidx.annotation.RestrictTo
+import androidx.camera.core.ImageProxy
+import com.kiylx.camerax_lib.main.manager.imagedetection.bitmap.BitmapUtils
 import java.nio.ByteBuffer
 
-fun Image.imageToBuffer(): ByteBuffer? {
-    val buffer: ByteBuffer = this.planes[0].buffer
-    val result= cloneByteBuffer(buffer)
-    return result
-}
-
-fun ByteBuffer.toBitmap():Bitmap?{
-    val bytes = ByteArray(remaining())
-    get(bytes)
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
-}
-
-fun Image.imageToBitmap(): Bitmap? {
-    val buffer: ByteBuffer = this.planes[0].buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
-}
-
-fun Image.toBitmap(): Bitmap {
-    val buffer = planes[0].buffer
-    buffer.rewind()
-    val bytes = ByteArray(buffer.capacity())
-    buffer.get(bytes)
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    val yuvImage=YuvImage(bytes,ImageFormat.NV21,20,20,null)
-    yuvImage.compressToJpeg(Rect(0,0,20,20),80,byteArrayOutputStream)
-    val n=byteArrayOutputStream.toByteArray()
-    return BitmapFactory.decodeByteArray(n, 0, n.size)
+/**
+ * 从ImageProxy中获取bitmap，存储到本地
+ * 测试用。
+ */
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+@SuppressLint("UnsafeOptInUsageError")
+fun savePhoto(imageProxy: ImageProxy, context: Context) {
+    val bitmap = BitmapUtils.getBitmap(imageProxy)
+    bitmap?.saveToGallery(context)
 }
 
 /**

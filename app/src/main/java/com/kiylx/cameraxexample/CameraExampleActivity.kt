@@ -13,7 +13,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
      * 这里直接构建了配置，我没有使用intent传入配置。
      */
     override fun configAll(intent: Intent): ManagerConfig {
-        cacheMediasDir = "${application.getExternalFilesDir(null)}/dcim"
+        cacheMediasDir = "${application.getExternalFilesDir(null)}/dcim"//应用自身目录下
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         return ManagerConfig().apply {
             this.cacheMediaDir = cacheMediasDir
