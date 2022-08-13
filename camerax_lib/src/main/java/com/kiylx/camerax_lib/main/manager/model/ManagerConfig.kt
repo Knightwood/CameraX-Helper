@@ -3,7 +3,7 @@ package com.kiylx.camerax_lib.main.manager.model
 import android.os.Parcelable
 import androidx.camera.core.ImageCapture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
 class ManagerConfig : Parcelable {

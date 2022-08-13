@@ -5,6 +5,7 @@ import android.view.View
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
 
 class CameraExampleActivity : BaseCameraXActivity() {
     private var cacheMediasDir = "" //存储路径

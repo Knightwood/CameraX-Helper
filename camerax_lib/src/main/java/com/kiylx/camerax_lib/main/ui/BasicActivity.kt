@@ -1,24 +1,20 @@
-package com.kiylx.cameraxexample
+package com.kiylx.camerax_lib.main.ui
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.AttributeSet
 import android.util.Log
-import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
-import com.blankj.utilcode.util.LogUtils
 
 /**
  * Manifest需要设置
  * android:configChanges="orientation|screenSize"
  * 以保证不销毁activity
  */
-abstract class BasicActivity() : AppCompatActivity() {
+abstract class BasicActivity : AppCompatActivity() {
 
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +27,7 @@ abstract class BasicActivity() : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        Log.e(BasicActivity.tag,"onConfigurationChanged")
+        Log.e(tag,"onConfigurationChanged")
     }
     override fun onRestart() {
         super.onRestart()

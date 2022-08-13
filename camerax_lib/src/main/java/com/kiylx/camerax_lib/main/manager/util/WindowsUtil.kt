@@ -1,4 +1,4 @@
-package com.kiylx.cameraxexample
+package com.kiylx.camerax_lib.main.manager.ui
 
 import android.graphics.Color
 import android.os.Build

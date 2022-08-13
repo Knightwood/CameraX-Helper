@@ -21,7 +21,7 @@
  android:configChanges="orientation|screenSize"
 />
 
-Application或者Activity中，初始化全聚德存储位置
+Application或者Activity中，初始化全局存储位置
 StorageConfig.prepare(application)//灰常重要
 对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
 例如：
@@ -139,7 +139,7 @@ fun initPhoto() {
   
                               }
   
-                              override fun onPhotoTaken(filePath: String) {
+                              override fun onPhotoTaken(filePath: String) {//这里还在测试，参数会
                                   Log.d("CameraXFragment", "onPhotoTaken： $filePath")
                                   //图片拍摄后
   

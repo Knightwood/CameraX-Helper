@@ -1,4 +1,4 @@
-package com.kiylx.cameraxexample
+package com.kiylx.camerax_lib.main.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +10,8 @@ import android.view.Surface
 import android.view.View
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
-import com.kiylx.cameraxexample.databinding.ActivityCameraExampleBinding
+import com.kiylx.camerax_lib.R
+import com.kiylx.camerax_lib.databinding.ActivityCameraExampleBinding
 import com.kiylx.camerax_lib.main.*
 import com.kiylx.camerax_lib.main.buttons.CaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
@@ -21,8 +22,7 @@ import com.kiylx.camerax_lib.main.manager.model.CameraEventListener
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
-import com.kiylx.camerax_lib.main.manager.ui.CameraXFragmentEventListener
-import com.kiylx.camerax_lib.main.manager.ui.NewCameraXFragment
+import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.store.FileMetaData
 
 abstract class BaseCameraXActivity : BasicActivity(),
