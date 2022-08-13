@@ -50,7 +50,9 @@ class OnceRecorder(
     internal fun getDefaultOutputOptions() {
         val contentValues: ContentValues = ContentValues().apply {
             val name = ManagerUtil.generateRandomName()
-            put(MediaStore.Video.Media.RELATIVE_PATH, StorageConfig.videoStorage.relativePath)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, StorageConfig.videoStorage.mediaPath)
+            }
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
             put(MediaStore.Video.Media.MIME_TYPE, MimeTypeConsts.mp4)
         }
@@ -138,7 +140,6 @@ fun OnceRecorder.getMediaStoreOutput(contentValues: ContentValues? = null): Once
  * 生成FileDescriptor版本的输出配置
  * 要求Android8以上
  */
-@RestrictTo(RestrictTo.Scope.LIBRARY)
 fun OnceRecorder.getFileDescriptorOutput(
     fileDescriptor: ParcelFileDescriptor,
     limit: Long = -1,

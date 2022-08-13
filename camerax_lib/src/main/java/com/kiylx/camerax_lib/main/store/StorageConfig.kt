@@ -12,10 +12,9 @@ import com.kiylx.camerax_lib.utils.Weak
 import java.io.File
 
 /**
- * 全局的(存储照片、视频)存储配置
- * 用法：
- *   1. StorageConfig.prepare(application)
- *   2.（可选） StorageConfig.configStorage()
+ * 全局的(存储照片、视频)存储配置 用法：
+ * 1. StorageConfig.prepare(application) 2.（可选）
+ *    StorageConfig.configStorage()
  */
 object StorageConfig {
     var application by Weak<Application> { null }
@@ -40,7 +39,7 @@ object StorageConfig {
     fun configStorage(
         type: Int,
         locationKind: LocationKind,
-        path: String,
+        path: String = "",
         relativePath: String = "",
     ) {
         val config = when (type) {
@@ -56,7 +55,9 @@ object StorageConfig {
         }
         config.apply {
             this.locationKind = locationKind
-            this.parentAbsoluteFolder = path
+            if (relativePath.isNotEmpty()) {
+                this.parentAbsoluteFolder = path
+            }
             if (relativePath.isNotEmpty()) {
                 this.relativePath = relativePath
             }
@@ -65,6 +66,7 @@ object StorageConfig {
 
     /**
      * 配置 Android10及以上，使用saf存储文件的情况
+     *
      * @param type [MediaType] 配置图片或视频的存储位置
      * @param uri :saf获取文件夹权限后，将文件夹uri传入
      */
@@ -91,8 +93,8 @@ object StorageConfig {
     }
 
     /**
-     * @param type [MediaType] 配置图片或视频的存储位置
-     * 配置 Android10及以上，使用mediaStore存储到相册的情况
+     * @param type [MediaType] 配置图片或视频的存储位置 配置
+     *     Android10及以上，使用mediaStore存储到相册的情况
      */
     @RequiresApi(Build.VERSION_CODES.Q)
     fun configStorageDCIM(
@@ -118,10 +120,7 @@ object StorageConfig {
         }
     }
 
-    /**
-     * @param type [MediaType] 配置图片或视频的存储位置
-     * 配置 Android10及以上，存储到app外部私有目录情况
-     */
+    /** @param type [MediaType] 配置图片或视频的存储位置 配置 Android10及以上，存储到app外部私有目录情况 */
     @RequiresApi(Build.VERSION_CODES.Q)
     fun configStorageApp(
         type: Int,
@@ -149,10 +148,7 @@ object StorageConfig {
 
 }
 
-/**
- * android 10及以上使用MediaStore或者saf
- * android 10以下使用File
- */
+/** android 10及以上使用MediaStore或者saf android 10以下使用File */
 class Storage(
     var relativePath: String = "SimpleCameraX",//相对路径：在上面的父路径下建立的文件夹名称,用于在Android10以下，或者Android10以上中的私有目录、MediaStore
     var mediaType: Int = -1,//标识哪种媒体的存储配置
@@ -160,20 +156,16 @@ class Storage(
 
     var locationKind: LocationKind = LocationKind.DCIM
 
-    /**
-     * Android10及以上，放在非公共目录和私有目录下时
-     */
+    /** Android10及以上，放在非公共目录和私有目录下时 */
     var parentUri: Uri = Uri.EMPTY
 
-    /**
-     * Android10及以上，使用mediaStore存储到相册
-     */
-    var mediaPath: String = "${Environment.DIRECTORY_DCIM}${File.separator}$relativePath"
+    /** Android10及以上，使用mediaStore存储到相册 */
+    var mediaPath: String = Environment.DIRECTORY_DCIM
+    get() {
+        return "$field${File.separator}$relativePath"
+    }
 
-    /**
-     * Android10及以上,文件夹绝对路径,用在app自身路径下
-     * 默认值是app外部私有目录
-     */
+    /** Android10及以上,文件夹绝对路径,用在app自身路径下 默认值是app外部私有目录 */
     var appSelfAbsolutePath: String =
         StorageConfig.application!!.getExternalFilesDir(null)!!.absolutePath
         get() {
@@ -184,10 +176,7 @@ class Storage(
             return "$field${File.separator}$relativePath"
         }
 
-    /**
-     * Android10以下,表示任何位置
-     * 默认值是相册DCIM目录
-     */
+    /** Android10以下,表示任何位置 默认值是相册DCIM目录 */
     var parentAbsoluteFolder: String =
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath
         get() {
