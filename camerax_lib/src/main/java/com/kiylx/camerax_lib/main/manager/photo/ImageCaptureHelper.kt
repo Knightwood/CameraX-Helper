@@ -53,7 +53,7 @@ class ImageCaptureHelper {
                         val name = ManagerUtil.generateRandomName()
                         val df: DocumentFile? =
                             DocumentFile.fromTreeUri(context, storageConfig.parentUri)
-                                ?.createFile(MimeTypeConsts.mp4, name)
+                                ?.createFile(MimeTypeConsts.jpg, name)
                         val uri = df!!.uri
                         val outputOptionsBuilder =
                             context.contentResolver.openOutputStream(uri)
