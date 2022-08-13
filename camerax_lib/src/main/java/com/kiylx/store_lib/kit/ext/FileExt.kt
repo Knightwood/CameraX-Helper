@@ -40,8 +40,7 @@ class FileDescriptorMode {
  * 生成一个以日期命名的文件名
  */
 fun generateFileName(): String {
-    val fileName = SimpleDateFormat("yyyyMMddhhmmss", Locale.getDefault()).format(Date())
-    return fileName
+    return SimpleDateFormat("yyyyMMddhhmmss", Locale.getDefault()).format(Date())
 }
 
 /**

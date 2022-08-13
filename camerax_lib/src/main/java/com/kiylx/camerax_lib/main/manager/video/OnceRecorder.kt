@@ -9,7 +9,10 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import androidx.annotation.RestrictTo
 import androidx.camera.video.*
+import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.manager.video.OutputKinds.*
+import com.kiylx.camerax_lib.main.store.FileMetaData
+import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.io.File
 import java.text.SimpleDateFormat
@@ -38,16 +41,7 @@ class OnceRecorder(
 ) {
     var outputKinds = MEDIA_STORE
     lateinit var outputOption: OutputOptions
-
-    /**
-     * 使用绝对路径时，使用文件路径记录此次录制文件的位置
-     */
-    var filePath = ""
-
-    /**
-     * 使用MediaStore，saf 时使用uri记录此次录制文件的位置
-     */
-    var fileUri: Uri = Uri.EMPTY
+    lateinit var fileMetaData: FileMetaData//描述文件存放信息
 
     /**
      * 生成默认的输出位置,输出到相册
@@ -55,10 +49,10 @@ class OnceRecorder(
      */
     internal fun getDefaultOutputOptions() {
         val contentValues: ContentValues = ContentValues().apply {
-            val name = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
-                .toString()
+            val name = ManagerUtil.generateRandomName()
+            put(MediaStore.Video.Media.RELATIVE_PATH, StorageConfig.videoStorage.relativePath)
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
-            put(MediaStore.Audio.Media.MIME_TYPE, MimeTypeConsts.jpg)
+            put(MediaStore.Video.Media.MIME_TYPE, MimeTypeConsts.mp4)
         }
         outputOption = MediaStoreOutputOptions.Builder(context.contentResolver,
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI)

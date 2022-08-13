@@ -1,26 +1,29 @@
 package com.kiylx.cameraxexample
 
-import android.Manifest
 import android.content.Intent
+import android.net.Uri
 import android.os.*
 import android.util.Log
 import android.view.KeyEvent
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.View
-import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.cameraxexample.databinding.ActivityCameraExampleBinding
 import com.kiylx.camerax_lib.main.*
 import com.kiylx.camerax_lib.main.buttons.CaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.model.CameraEventListener
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
+import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.manager.ui.CameraXFragmentEventListener
 import com.kiylx.camerax_lib.main.manager.ui.NewCameraXFragment
+import com.kiylx.camerax_lib.main.store.FileMetaData
 
 abstract class BaseCameraXActivity : BasicActivity(),
     View.OnClickListener {
@@ -59,25 +62,25 @@ abstract class BaseCameraXActivity : BasicActivity(),
             initFlashSelectColor()
             page.flashOn.setTextColor(resources.getColor(R.color.flash_selected))
             page.flushBtn.setImageResource(R.drawable.flash_on)
-            cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_ON)
+            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ON)
         }
         page.flashOff.setOnClickListener {
             initFlashSelectColor()
             page.flashOff.setTextColor(resources.getColor(R.color.flash_selected))
             page.flushBtn.setImageResource(R.drawable.flash_off)
-            cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_OFF)
+            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_OFF)
         }
         page.flashAuto.setOnClickListener {
             initFlashSelectColor()
             page.flashAuto.setTextColor(resources.getColor(R.color.flash_selected))
             page.flushBtn.setImageResource(R.drawable.flash_auto)
-            cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_AUTO)
+            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_AUTO)
         }
         page.flashAllOn.setOnClickListener {
             initFlashSelectColor()
             page.flashAllOn.setTextColor(resources.getColor(R.color.flash_selected))
             page.flushBtn.setImageResource(R.drawable.flash_all_on)
-            cameraXFragment.setFlashMode(CameraConfig.CAMERA_FLASH_ALL_ON)
+            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ALL_ON)
         }
 
         page.closeBtn.setOnClickListener {
@@ -134,16 +137,14 @@ abstract class BaseCameraXActivity : BasicActivity(),
                         })
                         //拍照录视频操作结果通知回调
                         setCaptureResultListener(object : CaptureResultListener {
-                            override fun onVideoRecorded(filePath: String) {
-                                Log.d("CameraXFragment", "onVideoRecorded：$filePath")
+                            override fun onVideoRecorded(fileMetaData: FileMetaData?) {
                                 // 视频拍摄后
 
                             }
 
-                            override fun onPhotoTaken(filePath: String) {
+                            override fun onPhotoTaken(filePath: Uri?) {
                                 Log.d("CameraXFragment", "onPhotoTaken： $filePath")
                                 //图片拍摄后
-
                             }
                         })
                     }

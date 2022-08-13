@@ -2,14 +2,14 @@ package com.kiylx.camerax_lib.main.manager.video
 
 import android.content.Context
 import android.os.Build
-import android.os.Environment
-import androidx.annotation.RestrictTo
 import androidx.camera.video.MediaStoreOutputOptions
+import androidx.documentfile.provider.DocumentFile
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import com.kiylx.camerax_lib.main.manager.video.LocationKind.APP
-import com.kiylx.camerax_lib.main.manager.video.LocationKind.DCIM
-import com.kiylx.camerax_lib.main.manager.video.OutputKinds.MEDIA_STORE
-import java.io.File
+import com.kiylx.camerax_lib.main.manager.video.LocationKind.*
+import com.kiylx.camerax_lib.main.store.FileMetaData
+import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.store_lib.kit.MimeTypeConsts
+import java.util.*
 
 /**
  * 1.通过这个单例，全局设置默认的文件输出位置。
@@ -23,62 +23,42 @@ import java.io.File
  * 这个不适应于旧方法实现的视频录制，旧方法实现的视频录制不再被支持
  */
 object OnceRecorderHelper {
-    var locationKind: LocationKind = DCIM//默认存储到相册
 
-    private var MyVideoDir = ""
-    private var cacheMediaDir: String = ""
-        set(value) {
-            field = value
-            MyVideoDir = "$value/videos/"
-        }
-
-    /**
-     * 获取一个OnceRecorder
-     */
-    fun newOnceRecorder(context: Context): OnceRecorder? {
+    fun newOnceRecorder(context: Context): OnceRecorder {
+        val storageConfig = StorageConfig.videoStorage
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {//android 10 以上，使用mediastore
-            when (locationKind) {
+            when (storageConfig.locationKind) {
                 APP -> {//存储到app私有目录
-                    if (cacheMediaDir.isEmpty()) {
-                        cacheMediaDir = context.getExternalFilesDir(null)!!.absolutePath
-                    }
-                    val videoFile = ManagerUtil.createMediaFile(MyVideoDir,
+                    val videoFile = ManagerUtil.createMediaFile(storageConfig.appSelfAbsolutePath,
                         ManagerUtil.VIDEO_EXTENSION)
                     return OnceRecorder(context).getFileOutputOption(videoFile).apply {
-                        this.filePath = videoFile.absolutePath
+                        this.fileMetaData = FileMetaData(APP, videoFile.absolutePath)
                     }
                 }
                 DCIM -> {
                     return OnceRecorder(context).getMediaStoreOutput().apply {
-                        this.fileUri = (outputOption as MediaStoreOutputOptions).collectionUri
+                        val tmp = (outputOption as MediaStoreOutputOptions).collectionUri
+                        this.fileMetaData = FileMetaData(DCIM, uri = tmp)
                     }
                 }
-                else -> {
-                    return null
+                OTHER -> {
+                    val name = ManagerUtil.generateRandomName()
+                    val uri = storageConfig.parentUri
+                    val df: DocumentFile? =
+                        DocumentFile.fromTreeUri(context, uri)?.createFile(MimeTypeConsts.mp4, name)
+                    val uri2 = df!!.uri
+                    val fd = context.contentResolver.openFileDescriptor(uri2, "rw")
+                    return OnceRecorder(context).getFileDescriptorOutput(fd!!)
+                        .apply {
+                            this.fileMetaData = FileMetaData(OTHER, uri = uri2)
+                        }
                 }
             }
         } else {
-            var videoPath = ""
-            when (locationKind) {
-                APP -> {
-                    if (cacheMediaDir.isEmpty()) {
-                        cacheMediaDir = context.getExternalFilesDir(null)!!.absolutePath
-                    }
-                    videoPath = MyVideoDir
-                }
-                DCIM -> {
-                    videoPath =
-                        Environment.getExternalStorageDirectory().absolutePath + File.separator +
-                                Environment.DIRECTORY_PICTURES
-                }
-                else -> ""
-            }
-            if (videoPath.isEmpty())
-                throw Exception("文件位置不存在")
-            val videoFile = ManagerUtil.createMediaFile(videoPath,
+            val videoFile = ManagerUtil.createMediaFile(storageConfig.parentAbsoluteFolder,
                 ManagerUtil.VIDEO_EXTENSION)
             return OnceRecorder(context).getFileOutputOption(videoFile).apply {
-                this.filePath = videoPath
+                this.fileMetaData = FileMetaData(storageConfig.locationKind, videoFile.absolutePath)
             }
         }
     }

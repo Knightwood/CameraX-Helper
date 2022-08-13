@@ -2,13 +2,11 @@ package com.kiylx.camerax_lib.main.manager
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import androidx.camera.core.*
@@ -21,18 +19,15 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListe
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
-import com.kiylx.camerax_lib.main.manager.video.getFileOutputOption
-import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
 import com.permissionx.guolindev.request.ExplainScope
 import com.permissionx.guolindev.request.ForwardScope
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.Executors
 
 /** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
@@ -58,7 +53,7 @@ class CameraHolder(
 
     //提供人脸识别
     private val faceProcess by lazy {
-        FaceContourDetectionProcessor(cameraPreview,graphicOverlay, analyzerResultListener)
+        FaceContourDetectionProcessor(cameraPreview, graphicOverlay, analyzerResultListener)
     }
 
     fun changeAnalyzer(visionType: VisionType) {
@@ -125,11 +120,6 @@ class CameraHolder(
         if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
             setCamera(CaptureMode.takePhoto)
         }
-        // TODO: [ImageCaptureHelper] 未来会用在这里
-        val photoFile = ManagerUtil.createMediaFile(
-            cameraConfig.MyPhotoDir,
-            ManagerUtil.PHOTO_EXTENSION
-        )
 
         // 设置拍照的元数据
         val metadata = ImageCapture.Metadata().apply {
@@ -138,9 +128,8 @@ class CameraHolder(
             isReversedHorizontal = lensFacing == CameraSelector.LENS_FACING_FRONT
         }
         // 创建输出选项，包含有图片文件和其中的元数据
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile)
-            .setMetadata(metadata)
-            .build()
+        val outputOptions = ImageCaptureHelper.getFileOutputOption(metadata, context)
+
         currentStatus = TakeVideoState.takePhoto
         // 设置拍照监听回调，当拍照动作被触发的时候
         // Setup image capture listener which is triggered after photo has been taken
@@ -148,16 +137,14 @@ class CameraHolder(
             outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed:-----------------\n\n ${exc.message}", exc)
-                    captureResultListener?.onPhotoTaken("")
+                    captureResultListener?.onPhotoTaken(null)
                     currentStatus = TakeVideoState.none
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     currentStatus = TakeVideoState.none
                     indicateTakePhoto()
-                    //我就没有看见 output.savedUri 有过正常的数据
-                    val savedUriPath = output.savedUri ?: Uri.fromFile(photoFile)
-                    captureResultListener?.onPhotoTaken(savedUriPath.path.toString())
+                    captureResultListener?.onPhotoTaken(output.savedUri)
                 }
             })
 
@@ -224,7 +211,7 @@ class CameraHolder(
                 override fun onVideoSaved(outputFileResults: VideoCapture.OutputFileResults) {
                     currentStatus = TakeVideoState.none
                     imageAnalyze()//如果因为拍视频而解绑了图像分析，则重新绑定图像分析
-                    captureResultListener?.onVideoRecorded(outputFileResults.savedUri?.path.toString())
+                    //captureResultListener?.onVideoRecorded(outputFileResults.savedUri?.path.toString())
                 }
 
                 override fun onError(error: Int, message: String, cause: Throwable?) {
@@ -233,7 +220,7 @@ class CameraHolder(
                         setCamera(ManagerUtil.TAKE_PHOTO_CASE)
                     })
 
-                    captureResultListener?.onVideoRecorded("")
+                    //captureResultListener?.onVideoRecorded("")
                 }
             })
     }
@@ -309,7 +296,7 @@ class CameraHolder(
 
     /** 屏幕旋转的角度 */
     override fun sensorAngleChanged(rotation: Int, angle: Int) {
-        graphicOverlay.rotationChanged(rotation,angle)
+        graphicOverlay.rotationChanged(rotation, angle)
     }
 
     /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
@@ -321,24 +308,21 @@ class CameraHolder(
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
         currentStatus = TakeVideoState.takeVideo
 
-        // TODO: [OnceRecorderHelper] 未来会用在这里
-        val videoFile = ManagerUtil.createMediaFile(
-            cameraConfig.MyVideoDir,
-            ManagerUtil.VIDEO_EXTENSION
-        )
-        val onceRecorder: OnceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)
+        val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context)
+        val videoFile = onceRecorder.fileMetaData
 
         recording = onceRecorder.getVideoRecording()
             ?.start(Executors.newSingleThreadExecutor(),
                 object : androidx.core.util.Consumer<VideoRecordEvent> {
                     override fun accept(t: VideoRecordEvent) {
                         if (t is VideoRecordEvent.Finalize) {
+                            //t.outputResults.outputUri
                             currentStatus = TakeVideoState.none
                             imageAnalyze()
                             if (t.error != VideoRecordEvent.Finalize.ERROR_NONE) {
-                                captureResultListener?.onVideoRecorded("")
+                                throw Exception("what the fuck")
                             } else {
-                                captureResultListener?.onVideoRecorded(videoFile.absolutePath)
+                                captureResultListener?.onVideoRecorded(videoFile)
                             }
                         }
                     }

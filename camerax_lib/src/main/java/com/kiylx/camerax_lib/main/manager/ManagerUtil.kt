@@ -17,6 +17,9 @@ import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+const val KEY_CAMERA_EVENT_ACTION = "key_camera_event_action"
+const val KEY_CAMERA_EVENT_EXTRA = "key_camera_event_extra"
+const val CAMERA_CONFIG = "camera_config"   //相机的配置
 
 class ManagerUtil {
     companion object {
@@ -63,12 +66,19 @@ class ManagerUtil {
         }
 
         /**
-         * 产生的素材都将统一放在Lebang 文件下，后续需要清楚才好管理
+         * 以当前时间为名字
+         */
+        fun generateRandomName(): String {
+            return SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+        }
+
+        /**
+         * 产生的素材都将统一放在文件下
          *
          * @throws IOException
          */
-        fun createMediaFile(baseFolder: String?, format: String): File {
-            val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(Date())
+        fun createMediaFile(baseFolder: String, format: String): File {
+            val timeStamp = generateRandomName()
             createDir(baseFolder)
             return File(baseFolder + timeStamp + format)
         }
@@ -79,7 +89,7 @@ class ManagerUtil {
          * @param dirPath
          * @return
          */
-        fun createDir(dirPath: String?): Boolean {
+        fun createDir(dirPath: String): Boolean {
             //判断为空的目录的情况用默认目录。。。。
             val file = File(dirPath)
             return if (!file.exists() || !file.isDirectory) {

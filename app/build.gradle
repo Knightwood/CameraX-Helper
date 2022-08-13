@@ -15,16 +15,26 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk{
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
     buildFeatures {
         viewBinding true
-        //dataBinding true
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        /*debug {
+            minifyEnabled true
+            zipAlignEnabled true // 开启Zip压缩优化
+            shrinkResources true // 移除未被使用的资源
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            consumerProguardFiles 'consumer-rules.pro'
+        }*/
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

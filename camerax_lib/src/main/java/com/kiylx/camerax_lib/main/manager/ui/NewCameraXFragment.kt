@@ -15,8 +15,11 @@ import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.kiylx.camerax_lib.databinding.FragmentCameraxBinding
 import com.kiylx.camerax_lib.main.*
+import com.kiylx.camerax_lib.main.manager.CAMERA_CONFIG
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.CameraHolder
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.model.*
 

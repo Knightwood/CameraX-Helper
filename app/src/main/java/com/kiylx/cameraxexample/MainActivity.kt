@@ -5,10 +5,16 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
+import com.kiylx.camerax_lib.main.manager.ManagerUtil
+import com.kiylx.camerax_lib.main.manager.model.MediaType
 import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.cameraxexample.databinding.ActivityMainBinding
+import com.kiylx.store_lib.StoreX
+import com.kiylx.store_lib.kit.MimeTypeConsts
 import com.kiylx.store_lib.mediastore.FileLocate
 
 /**
@@ -36,6 +42,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         Log.e(tag, "onCreate")
+        StorageConfig.prepare(application)//灰常重要
+        StoreX.with(this).safHelper.requestOneFolder {
+            StorageConfig.configStorageOther(MediaType.video,it)//配置视频输出位置，图片使用默认输出位置
+        }
     }
 
 
