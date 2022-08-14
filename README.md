@@ -7,7 +7,7 @@
 
 ## 截图
 
-<img src="TyporaRaw/README.assets/1-16604033592332.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
+<img src="screenshots/1.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
 
 ## 用法
 
@@ -16,10 +16,9 @@
 ```
 首先是配置：
 //屏幕方向这个可选，可以固定竖屏、横屏、不设置。
-//需要在清单文件里写如下内容，另持有相机的activity在旋转屏幕时不被销毁重建
-<activity android:name=".CameraExampleActivity"
+//需要在清单文件的相机activity中添加如下配置，另持有相机的activity在旋转屏幕时不被销毁重建
  android:configChanges="orientation|screenSize"
-/>
+
 
 Application或者Activity中，初始化全局存储位置
 StorageConfig.prepare(application)//灰常重要
@@ -156,5 +155,5 @@ fun initPhoto() {
 
   
 
-示例代码在app目录下。
+# 示例代码在app目录下。
 
