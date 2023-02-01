@@ -24,7 +24,6 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListe
 import com.kiylx.camerax_lib.main.manager.model.*
 
 class NewCameraXFragment : Fragment(), CameraCommon {
-    private var captureResultListener: CaptureResultListener? = null
     var eventListener: CameraXFragmentEventListener? = null
     lateinit var cameraHolder: CameraHolder
     lateinit var page: FragmentCameraxBinding
@@ -63,8 +62,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             page.cameraPreview,
             page.graphicOverlayFinder,
             cameraConfig,
-            page.root,
-            this.captureResultListener
+            page.root
         ).apply {
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
 //使用方式 示例代码：
@@ -120,7 +118,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     }
 
     override fun setCaptureResultListener(captureListener: CaptureResultListener) {
-        this.captureResultListener = captureListener
+        cameraHolder.captureResultListener = captureListener
     }
 
     override fun setAnalyzerResultListener(analyzerResultListener: AnalyzeResultListener) {
