@@ -29,6 +29,7 @@
         <activity android:name=".CameraExampleActivity"
             android:configChanges="orientation|screenSize"
             />
+        <activity android:name=".TestFileDecActivity" />
     </application>
 
 </manifest>

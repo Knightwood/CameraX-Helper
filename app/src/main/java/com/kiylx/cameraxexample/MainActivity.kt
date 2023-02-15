@@ -33,6 +33,11 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(ImageDetection, true)
             startActivity(intent)
         }
+        page.third.setOnClickListener {
+            val intent: Intent = Intent(this, TestFileDecActivity::class.java)
+            intent.putExtra(ImageDetection, true)
+            startActivity(intent)
+        }
         Log.e(tag, "onCreate")
         StorageConfig.prepare(application)//灰常重要
         initPhoto()

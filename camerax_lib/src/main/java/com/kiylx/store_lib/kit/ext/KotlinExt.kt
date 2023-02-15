@@ -1,5 +1,9 @@
 package com.kiylx.store_lib.kit.ext
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 /**
  * try-catch
  * @param block: (T) -> R 使用try catch 块执行的匿名函数
@@ -40,3 +44,8 @@ inline fun <T : Any, R> T?.runSafelyNoNull(block: (T) -> R) = try {
     e.printStackTrace()
     null
 }
+
+suspend inline fun <T> withIo(crossinline block: suspend CoroutineScope.() -> T) =
+    withContext(Dispatchers.IO) {
+        return@withContext block()
+    }

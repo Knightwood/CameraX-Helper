@@ -36,7 +36,7 @@ class CameraHolder(
     var graphicOverlay: GraphicOverlay,
     cameraConfig: ManagerConfig,
     content: View,
-    private var captureResultListener: CaptureResultListener? = null,
+    var captureResultListener: CaptureResultListener? = null,
 ) : CameraXManager(
     cameraPreview, cameraConfig
 ) {

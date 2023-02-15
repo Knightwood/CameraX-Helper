@@ -1,5 +1,6 @@
 package com.kiylx.store_lib.kit.ext
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -9,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.kiylx.store_lib.kit.RequestHelper
 import java.io.Serializable
+import kotlin.system.exitProcess
 
 /**
  * 简化startActivityForResult()操作
@@ -91,4 +93,27 @@ fun <T> Intent.putExtras(vararg params: Pair<String, T>): Intent {
         }
     }
     return this
+}
+
+fun exit() {
+    exitProcess(0)
+}
+
+fun Activity.reStartApp() {
+    val intent =
+        packageManager.getLaunchIntentForPackage(applicationContext.packageName)
+    intent!!.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+    startActivity(intent)
+
+    /*val restartIntent = PendingIntent.getActivity(
+        MyApplication.mContext,
+        0,
+        intent,
+        PendingIntent.FLAG_ONE_SHOT
+    )
+    val mgr = MyApplication.mContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, restartIntent)
+
+    killProcess(myPid())
+    exitProcess(0)*/
 }

@@ -124,6 +124,14 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
             android:text="人脸识别" />
+
+        <Button
+            android:id="@+id/third"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text="图像人脸识别" />
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>
