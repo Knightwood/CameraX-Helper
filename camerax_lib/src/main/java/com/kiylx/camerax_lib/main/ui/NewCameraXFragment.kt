@@ -57,7 +57,21 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         savedInstanceState: Bundle?,
     ): View {
         page = FragmentCameraxBinding.inflate(layoutInflater, container, false)
+        return page.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initCameraHolder()
+        broadcastManager = LocalBroadcastManager.getInstance(view.context)//用于监测音量键触发
+
+        // 设置意图过滤器，从我们的main activity接收事件
+        val filter = IntentFilter().apply { addAction(KEY_CAMERA_EVENT_ACTION) }
+
+        broadcastManager.registerReceiver(volumeDownReceiver, filter)
+    }
+
+    private fun initCameraHolder() {
         cameraHolder = CameraHolder(
             page.cameraPreview,
             page.graphicOverlayFinder,
@@ -65,27 +79,16 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             page.root
         ).apply {
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-//使用方式 示例代码：
-//            analyzerProvider=object :AnalyzerProvider{
-//                override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
-//                    TODO("在这里可以提供其他类型的图像识别器")
-//                }
-//            }
+            //使用方式 示例代码：
+            //            analyzerProvider=object :AnalyzerProvider{
+            //                override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
+            //                    TODO("在这里可以提供其他类型的图像识别器")
+            //                }
+            //            }
         }
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
         eventListener?.cameraHolderInited(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
-        return page.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        broadcastManager = LocalBroadcastManager.getInstance(view.context)//用于监测音量键触发
-
-        // 设置意图过滤器，从我们的main activity接收事件
-        val filter = IntentFilter().apply { addAction(KEY_CAMERA_EVENT_ACTION) }
-
-        broadcastManager.registerReceiver(volumeDownReceiver, filter)
     }
 
     fun getOverlay(): GraphicOverlay {

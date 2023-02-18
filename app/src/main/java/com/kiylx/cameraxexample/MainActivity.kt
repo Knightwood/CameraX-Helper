@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.video.Quality
 import com.kiylx.camerax_lib.main.manager.model.MediaType
 import com.kiylx.camerax_lib.main.manager.video.LocationKind
 import com.kiylx.camerax_lib.main.store.StorageConfig
@@ -43,7 +44,6 @@ class MainActivity : AppCompatActivity() {
         initPhoto()
         initVideo()
     }
-
 
 
     fun initPhoto() {
@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                             getExternalFilesDir(null)!!.absolutePath,
                             relativePath
                         )
+                        StorageConfig.quality = Quality.HD//设置视频 拍摄质量
                     }
                 }
                 R.id.save_dcim_2 -> {

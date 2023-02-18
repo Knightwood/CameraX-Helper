@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import androidx.annotation.RequiresApi
+import androidx.camera.video.Quality
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.manager.model.MediaType
 import com.kiylx.camerax_lib.main.manager.video.LocationKind
@@ -17,6 +18,7 @@ import java.io.File
  *    StorageConfig.configStorage()
  */
 object StorageConfig {
+    var quality: Quality?=null//视频拍摄质量
     var application by Weak<Application> { null }
     lateinit var imageStorage: Storage
     lateinit var videoStorage: Storage

@@ -29,11 +29,13 @@ import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
+import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
 import com.yeyupiaoling.cameraxapp.view.FocusImageView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
 /*
 如果视图是强制竖屏或横屏，就不该旋转预览视图
 如果是自由旋转，就应该旋转预览视图
@@ -92,13 +94,14 @@ abstract class CameraXManager(
             updateCaseRotation(rotation)
         }
     }
+
     //display的角度变化
     private var displayRotation: DisplayRotation? = null
     private val displayRotationListener = object : DisplayRotation.DisplayRotationChangeListener {
         override fun rotationChanged(rotation: Int) {
             //使用 DisplayListener 可以让您在特定情况下更新相机用例的目标旋转角度，
             //例如在设备旋转了 180 度后系统没有销毁并重新创建 Activity 的情况下。
-            preview?.targetRotation=rotation
+            preview?.targetRotation = rotation
         }
     }
 
@@ -154,22 +157,28 @@ abstract class CameraXManager(
                 val rotation: Int//屏幕方向
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    //或许，这里会获取失败？？？
                     val metrics2 = context.windowManager.currentWindowMetrics
                     screenAspectRatio =
                         ManagerUtil.aspectRatio(metrics2.bounds.width(), metrics2.bounds.height())
                     size = Size(metrics2.bounds.width(), metrics2.bounds.height())
                     rotation = context.display!!.rotation
                 } else {
-                    val metrics = DisplayMetrics().also {
-                        cameraPreview.display.getRealMetrics(it)
+                    if (cameraPreview.display == null) {
+                        screenAspectRatio =
+                            ManagerUtil.aspectRatio(cameraConfig.size.width, cameraConfig.size.height)
+                        size = cameraConfig.size
+                    } else {
+                        val metrics = DisplayMetrics().also {
+                            cameraPreview.display.getRealMetrics(it)
+                        }
+                        screenAspectRatio =
+                            ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
+                        size = Size(metrics.widthPixels, metrics.heightPixels)
                     }
-                    screenAspectRatio =
-                        ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
-                    size = Size(metrics.widthPixels, metrics.heightPixels)
-                    rotation = cameraPreview.display.rotation
+                    rotation = cameraPreview.rotation.toInt()
                 }
-                Log.e("旋转3","$rotation")
-
+                Log.e("旋转3", "$rotation")
                 //初始化用例
                 initPreView(rotation)
                 initImageAnalyzer(rotation)
@@ -228,7 +237,7 @@ abstract class CameraXManager(
     @SuppressLint("RestrictedApi")
     private fun initVideoCapture(screenAspectRatio: Int, rotation: Int = Surface.ROTATION_0) {
         if (cameraConfig.useNewVideoCapture) {
-            newVideoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor)
+            newVideoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor,StorageConfig.quality)
         } else {
             // 视频的还不是很成熟，不一定都能用
             videoCapture = VideoCapture.Builder()//录像用例配置
@@ -502,7 +511,7 @@ abstract class CameraXManager(
     /** 更新用例的方向 */
     @CallSuper
     open fun updateCaseRotation(rotation: Int) {
-        Log.e("旋转1","$rotation")
+        Log.e("旋转1", "$rotation")
         //横屏时，动态设置他们的方向
         imageAnalyzer.targetRotation = rotation
         imageCapture.targetRotation = rotation

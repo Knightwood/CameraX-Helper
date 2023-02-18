@@ -1,15 +1,17 @@
 package com.kiylx.camerax_lib.main.manager.model
 
 import android.os.Parcelable
+import android.util.Size
 import androidx.camera.core.ImageCapture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import kotlinx.parcelize.Parcelize
+import kotlinx.android.parcel.Parcelize
 
 @Parcelize
 class ManagerConfig : Parcelable {
     var flashMode: Int = FlashModel.CAMERA_FLASH_OFF
     var MyPhotoDir = ""
     var MyVideoDir = ""
+    var size: Size = Size(1280,720)//android R以下，设置预览，拍照的默认分辨率
 
     /**
      * true：使用camera-video库完成视频录制功能

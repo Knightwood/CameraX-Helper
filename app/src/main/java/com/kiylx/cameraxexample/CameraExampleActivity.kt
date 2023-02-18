@@ -1,6 +1,7 @@
 package com.kiylx.cameraxexample
 
 import android.content.Intent
+import android.util.Size
 import android.view.View
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
@@ -21,6 +22,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
+            this.size= Size(1920,1080)//拍照，预览的分辨率
         }
     }
 
