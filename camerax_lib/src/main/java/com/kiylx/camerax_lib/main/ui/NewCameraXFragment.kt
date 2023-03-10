@@ -10,6 +10,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -21,6 +22,8 @@ import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
+import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.main.manager.model.*
 
 class NewCameraXFragment : Fragment(), CameraCommon {
@@ -31,6 +34,25 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     //相机的配置：存储路径，闪光灯模式，
     private lateinit var cameraConfig: ManagerConfig
     private lateinit var broadcastManager: LocalBroadcastManager
+
+    //提供人脸识别
+    private lateinit var faceProcess: FaceContourDetectionProcessor
+    //activity生成fragment时指定此处的图像分析器提供工具
+    var outAnalyzer: AnalyzerProvider? = null
+        get() {
+            if (field == null)
+                return object : AnalyzerProvider {
+                    override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
+                        //("在这里可以提供其他类型的图像识别器")
+                        if (verType == VisionType.Face) {//提供面部识别分析器
+                            return faceProcess
+                        } else
+                            return AnalyzeUtils.emptyAnalyzer()
+                    }
+                }
+            else
+                return field
+        }
 
     //音量下降按钮接收器用于触发快门
     private val volumeDownReceiver = object : BroadcastReceiver() {
@@ -79,12 +101,16 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             page.root
         ).apply {
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-            //使用方式 示例代码：
-            //            analyzerProvider=object :AnalyzerProvider{
-            //                override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
-            //                    TODO("在这里可以提供其他类型的图像识别器")
-            //                }
-            //            }
+            if (!this@NewCameraXFragment::faceProcess.isInitialized) {
+                //初始化默认的面部识别工具
+                faceProcess =
+                    FaceContourDetectionProcessor(
+                        page.cameraPreview,
+                        page.graphicOverlayFinder,
+                    )
+            }
+            //提供图像分析器
+            analyzerProvider = outAnalyzer
         }
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
@@ -125,7 +151,8 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     }
 
     override fun setAnalyzerResultListener(analyzerResultListener: AnalyzeResultListener) {
-        cameraHolder.analyzerResultListener = analyzerResultListener
+        if (this::faceProcess.isInitialized)
+            faceProcess.analyzeListener = analyzerResultListener
     }
 
     override fun canSwitchCamera(): Boolean {

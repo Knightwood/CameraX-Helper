@@ -9,13 +9,23 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.camera.core.CameraSelector
 
+interface Overlay {
+    fun toggleSelector()
+
+    /**
+     * 设备旋转，对坐标做转换
+     */
+    fun rotationChanged(rotation: Int, angle: Int)
+
+}
+
 /**
  * 目前有个问题：
  * 如果不限制activity的方向，任其自由旋转，没有问题
  * 如果限制为横屏或竖屏，没有问题。但此时旋转手机，面部识别后，绘制坐标会缺失旋转变换。
  */
 open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
-    View(context, attrs) {
+    View(context, attrs), Overlay {
 
     private val lock = Any()
     private val graphics: MutableList<Graphic> = ArrayList()
@@ -26,7 +36,7 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
 
     fun isFrontMode() = cameraSelector == CameraSelector.LENS_FACING_FRONT
 
-    fun toggleSelector() {
+    override fun toggleSelector() {
         cameraSelector =
             if (cameraSelector == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT
             else CameraSelector.LENS_FACING_BACK
@@ -76,7 +86,7 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
     /**
      * 设备旋转，对坐标做转换
      */
-    fun rotationChanged(rotation: Int, angle: Int) {
+    override fun rotationChanged(rotation: Int, angle: Int) {
         this.angle = angle
     }
 

@@ -178,7 +178,7 @@ abstract class CameraXManager(
                     }
                     rotation = cameraPreview.rotation.toInt()
                 }
-                Log.e("旋转3", "$rotation")
+//                Log.i("旋转3", "$rotation")
                 //初始化用例
                 initPreView(rotation)
                 initImageAnalyzer(rotation)

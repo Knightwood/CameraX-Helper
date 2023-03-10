@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.View
@@ -15,9 +14,8 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import com.kiylx.camerax_lib.R
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
+import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.Overlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
@@ -33,7 +31,7 @@ import java.util.concurrent.Executors
 /** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
 class CameraHolder(
     cameraPreview: PreviewView,
-    var graphicOverlay: GraphicOverlay,
+    var graphicOverlay: Overlay,//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
     cameraConfig: ManagerConfig,
     content: View,
     var captureResultListener: CaptureResultListener? = null,
@@ -43,17 +41,11 @@ class CameraHolder(
     /** 外界提供此实例后，人脸分析功能将会改为根据visionType取得不同的图像分析器 */
     var analyzerProvider: AnalyzerProvider? = null
     private var visionType: VisionType = VisionType.Face//默认的图片分析器是人脸分析器
-    var analyzerResultListener: AnalyzeResultListener? = null
 
     init {
         view = content
         lastPreview = content.findViewById(R.id.last_preview)
         focusView = content.findViewById(R.id.focus_view)
-    }
-
-    //提供人脸识别
-    private val faceProcess by lazy {
-        FaceContourDetectionProcessor(cameraPreview, graphicOverlay, analyzerResultListener)
     }
 
     fun changeAnalyzer(visionType: VisionType) {
@@ -63,7 +55,7 @@ class CameraHolder(
     /** 默认提供人脸分析器， 更多种类型的analyzer由[AnalyzerProvider]提供 */
     override fun selectAnalyzer(): ImageAnalysis.Analyzer {
         return if (analyzerProvider == null) {
-            faceProcess
+            AnalyzeUtils.emptyAnalyzer()
         } else {
             analyzerProvider!!.provider(visionType)
         }

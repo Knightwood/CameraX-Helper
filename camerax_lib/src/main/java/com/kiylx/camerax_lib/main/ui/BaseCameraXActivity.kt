@@ -2,33 +2,29 @@ package com.kiylx.camerax_lib.main.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
 import android.view.OrientationEventListener
-import android.view.Surface
 import android.view.View
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.databinding.ActivityCameraExampleBinding
-import com.kiylx.camerax_lib.main.*
 import com.kiylx.camerax_lib.main.buttons.CaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.model.CameraEventListener
-import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
-import com.kiylx.camerax_lib.main.manager.model.FlashModel
-import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.store.FileMetaData
 
 abstract class BaseCameraXActivity : BasicActivity(),
     View.OnClickListener {
     lateinit var cameraXFragment: NewCameraXFragment
-    lateinit var mOrientationListener: OrientationEventListener
     lateinit var cameraConfig: ManagerConfig
 
     lateinit var mBaseHandler: Handler
@@ -37,7 +33,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         page = ActivityCameraExampleBinding.inflate(layoutInflater)
-        setWindowEdgeToEdge(page.root,page.settingLayout.id,page.cameraControlLayout.id)
+        setWindowEdgeToEdge(page.root, page.settingLayout.id, page.cameraControlLayout.id)
         setContentView(page.root)
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
@@ -86,39 +82,13 @@ abstract class BaseCameraXActivity : BasicActivity(),
         page.closeBtn.setOnClickListener {
             closeActivity()
         }
-        //相机的UI在横竖屏幕可以对应修改UI 啊
-        mOrientationListener = object : OrientationEventListener(baseContext) {
-            override fun onOrientationChanged(orientation: Int) {
-                // Monitors orientation values to determine the target rotation value
-                // 这个可以微调
-                val rotation: Int = when (orientation) {
-                    in 45..134 -> Surface.ROTATION_270
-                    in 135..224 -> Surface.ROTATION_180
-                    in 225..314 -> Surface.ROTATION_90
-                    else -> Surface.ROTATION_0
-                }
-
-                when (rotation) {
-                    Surface.ROTATION_270 -> {
-
-                    }
-                    Surface.ROTATION_180 -> {
-
-                    }
-                    Surface.ROTATION_90 -> {
-
-                    }
-                    Surface.ROTATION_0 -> {
-
-                    }
-                }
-            }
-        }
     }
 
     private fun setCameraFragment() {
         cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
             .apply {
+                //指定不同类型图像分析器，默认只有面部分析器
+                outAnalyzer = myAnalyzerProvider()
                 eventListener = object : CameraXFragmentEventListener {
                     override fun cameraHolderInited(cameraHolder: CameraHolder) {//holder初始化完成
                         setCameraEventListener(object : CameraEventListener {
@@ -130,21 +100,20 @@ abstract class BaseCameraXActivity : BasicActivity(),
                         setAnalyzerResultListener(object : AnalyzeResultListener {
                             //图像分析成功时
                             override fun isSuccess() {
-                                //captureFace()
-                                /*Toast.makeText(applicationContext, "图像分析完成", Toast.LENGTH_SHORT)
-                                    .show()*/
+                                this@BaseCameraXActivity.analyzerEnd()
                             }
                         })
                         //拍照录视频操作结果通知回调
                         setCaptureResultListener(object : CaptureResultListener {
                             override fun onVideoRecorded(fileMetaData: FileMetaData?) {
                                 // 视频拍摄后
-
+                                this@BaseCameraXActivity.videoRecordEnd(fileMetaData)
                             }
 
                             override fun onPhotoTaken(filePath: Uri?) {
                                 Log.d("CameraXFragment", "onPhotoTaken： $filePath")
                                 //图片拍摄后
+                                this@BaseCameraXActivity.photoTakeEnd(filePath)
                             }
                         })
                     }
@@ -154,27 +123,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, cameraXFragment).commit()
     }
-
-    /**
-     * 使用intent初始化ManagerConfig
-     */
-    abstract fun configAll(intent: Intent): ManagerConfig
-
-    override fun onResume() {
-        super.onResume()
-        if (mOrientationListener.canDetectOrientation()) {
-            mOrientationListener.enable()
-        } else {
-            mOrientationListener.disable()
-        }
-    }
-
-
-    override fun onPause() {
-        super.onPause()
-        mOrientationListener.disable();
-    }
-
 
     private fun initFlashSelectColor() {
         page.flashOn.setTextColor(resources.getColor(R.color.white))
@@ -222,31 +170,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
             else -> super.onKeyDown(keyCode, event)
         }
     }
-
-    /**
-     * 根据工信部的要求申请权限前需要向用户说明权限的明确具体用途，请根据业务和法务要求组织语言进行描述
-     *
-     *
-     * @param permissions 需要申请的权限组合，如果为空说明底层CameraX 所需要的权限都申请好了
-     * @param requestCode 有权限需要申请值为{@link CameraXFragment} 否则为0
-     */
-//    override fun onBeforePermissionRequest(permissions: Array<String>, requestCode: Int) {
-//        if (permissions.isEmpty()) return
-//
-//        //提示可以根据自己的业务自行开展
-//        PermissionTipsDialog(this@BaseRecordVideoActivity, permissions,
-//            object : PermissionTipsDialog.PermissionCallBack {
-//                override fun onContinue() {
-//                    //cameraXFragment.onRequestPermission(permissions, requestCode)
-//                }
-//
-//                override fun onCancel() {
-//
-//                }
-//            }
-//        ).show()
-//
-//    }
 
 
     //相机初始化完成
@@ -309,12 +232,21 @@ abstract class BaseCameraXActivity : BasicActivity(),
         cameraFinishInited()
     }
 
+    abstract fun myAnalyzerProvider(): AnalyzerProvider?
+
     /**
      * 初始化完成，做其他操作
      */
     open fun cameraFinishInited() {}
     abstract fun captureFace()
 
+    /**
+     * 使用intent初始化ManagerConfig
+     */
+    abstract fun configAll(intent: Intent): ManagerConfig
+    open fun photoTakeEnd(filePath: Uri?) {}
+    open fun videoRecordEnd(fileMetaData: FileMetaData?) {}
+    open fun analyzerEnd() {}
 
     companion object {
         const val tag = "BaseRecordVideo"
