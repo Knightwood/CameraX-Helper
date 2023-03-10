@@ -5,7 +5,7 @@
 
 内置了人脸识别，并预留出来了改变分析器使用其他图像分析的方法。
 
-* [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
+* 版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 
 ```
 allprojects {
