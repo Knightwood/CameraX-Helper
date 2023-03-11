@@ -28,4 +28,10 @@ interface CameraCommon {
      * @param true:打开手电筒。 false：关闭手电筒
      */
     fun openFlash(open: Boolean)
+
+    /**
+     * 设置相机绑定何种实例
+     * @param mode 默认： [CaptureMode.takePhoto]
+     */
+    fun setCameraUseCase(mode: Int = CaptureMode.takePhoto)
 }

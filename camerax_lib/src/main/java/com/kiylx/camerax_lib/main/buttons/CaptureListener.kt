@@ -16,3 +16,29 @@ interface CaptureListener {
     fun recordError(message:String)
 
 }
+
+/**
+ * 实现captureListener，子类继承后，可以不用实现不需要的方法
+ */
+open class DefaultCaptureListener :CaptureListener{
+    override fun takePictures() {
+
+    }
+
+    override fun recordStart() {
+
+    }
+
+    override fun recordEnd(time: Long) {
+
+    }
+
+    override fun recordZoom(zoom: Float) {
+
+    }
+
+    override fun recordError(message: String) {
+
+    }
+
+}
