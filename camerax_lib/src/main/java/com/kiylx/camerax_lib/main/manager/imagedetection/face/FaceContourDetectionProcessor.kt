@@ -35,8 +35,8 @@ class FaceContourDetectionProcessor(
      * 不会报告检测到的人脸的欧拉 X、欧拉 Y 或欧拉 Z 角度
      */
     private val realTimeOpts = FaceDetectorOptions.Builder()
-        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)//在检测人脸时更注重速度还是准确性，精确模式会检测到比快速模式更少的人脸
-        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)//轮廓检测
+        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)//在检测人脸时更注重速度还是准确性，精确模式会检测到比快速模式更少的人脸
+        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)//轮廓检测
         .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)//面部特征点
         .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)//是否将人脸分为不同类别（例如“微笑”和“眼睛睁开”）。
         .setMinFaceSize(0.6f)//人脸最小占图片的百分比

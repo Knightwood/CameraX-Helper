@@ -18,6 +18,7 @@ import com.kiylx.camerax_lib.R;
 
 /**
  * 拍照按钮，拍视频动画
+ * 指定app:captureMode="false" 则点击按钮为录像，否则点击为拍照
  */
 public class CaptureButton2 extends View {
     // 选择拍照 拍视频 或者都有

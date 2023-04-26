@@ -210,6 +210,8 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 page.captureBtn2.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.takeVideo()
+                //录制视频时隐藏摄像头切换
+                page.switchBtn.visibility=View.GONE
             }
 
             //录制视频结束
@@ -217,6 +219,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 page.captureBtn2.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
                 cameraXFragment.stopTakeVideo(time)
+                page.switchBtn.visibility=View.VISIBLE
             }
 
             //长按拍视频的时候，在屏幕滑动可以调整焦距缩放

@@ -35,7 +35,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     private lateinit var cameraConfig: ManagerConfig
     private lateinit var broadcastManager: LocalBroadcastManager
 
-    //提供人脸识别
+    //提供人脸识别，默认的
     private lateinit var faceProcess: FaceContourDetectionProcessor
 
     //activity生成fragment时指定此处的图像分析器提供工具

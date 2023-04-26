@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         minSdk 23
@@ -70,7 +70,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
 
     // CameraX core library
-    def camerax_version = '1.2.0-alpha01'
+    def camerax_version = '1.2.1'
+    def mlkit_version = '1.2.0-beta02'
 
     // CameraX Camera2 extensions
     api "androidx.camera:camera-camera2:$camerax_version"
@@ -83,7 +84,7 @@ dependencies {
     // If you want to additionally use the CameraX View class
     api "androidx.camera:camera-view:$camerax_version"
     // If you want to additionally add CameraX ML Kit Vision Integration
-    api "androidx.camera:camera-mlkit-vision:$camerax_version"
+    api "androidx.camera:camera-mlkit-vision:$mlkit_version"
     // If you want to additionally use the CameraX Extensions library
     api "androidx.camera:camera-extensions:$camerax_version"
     api 'com.blankj:utilcodex:1.31.0'

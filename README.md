@@ -5,6 +5,8 @@
 
 内置了人脸识别，并预留出来了改变分析器使用其他图像分析的方法。
 
+推荐直接把`camerax_lib`集成到项目
+
 * 版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 
 ```
@@ -99,20 +101,30 @@ fun initPhoto() {
 * `NewCameraXFragment`内部创建`CameraHolder`
 
 ```
-        cameraHolder = CameraHolder(
+class NewCameraXFragment : Fragment(), CameraCommon {
+
+//activity生成fragment时指定此处的图像分析器提供工具
+var outAnalyzer: AnalyzerProvider? = null
+........
+
+//相机    
+cameraHolder = CameraHolder(
             page.cameraPreview,
             page.graphicOverlayFinder,
             cameraConfig,
-            page.root,
-            this.captureResultListener
+            page.root
         ).apply {
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-//使用方式 示例代码：
-//            analyzerProvider=object :AnalyzerProvider{
-//                override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
-//                    TODO("在这里可以提供其他类型的图像识别器")
-//                }
-//            }
+            if (!this@NewCameraXFragment::faceProcess.isInitialized) {
+                //初始化默认的面部识别工具
+                faceProcess =
+                    FaceContourDetectionProcessor(
+                        page.cameraPreview,
+                        page.graphicOverlayFinder,
+                    )
+            }
+            //提供图像分析器
+            analyzerProvider = outAnalyzer
         }
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
@@ -153,7 +165,7 @@ fun initPhoto() {
   
                               }
   
-                              override fun onPhotoTaken(filePath: String) {//这里还在测试，参数会
+                              override fun onPhotoTaken(filePath: String) {
                                   Log.d("CameraXFragment", "onPhotoTaken： $filePath")
                                   //图片拍摄后
   
@@ -166,6 +178,18 @@ fun initPhoto() {
           supportFragmentManager.beginTransaction()
               .replace(R.id.fragment_container, cameraXFragment).commit()
       }
+```
+
+人脸检测
+
+`FaceContourDetectionProcessor`文件中配置检测模式。
+
+```
+.setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)//在检测人脸时更注重速度还是准确性，精确模式会检测到比快速模式更少的人脸
+.setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)//轮廓检测
+.setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)//面部特征点
+.setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)//是否将人脸分为不同类别（例如“微笑”和“眼睛睁开”）。
+.setMinFaceSize(0.6f)//人脸最小占图片的百分比
 ```
 
   

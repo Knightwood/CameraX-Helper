@@ -18,6 +18,7 @@ import com.kiylx.camerax_lib.R;
 
 /**
  * 拍照按钮，拍视频动画
+ * 点击拍照，长按录像
  *
  */
 public class CaptureButton extends View {

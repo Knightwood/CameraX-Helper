@@ -13,7 +13,7 @@ import android.view.View.OnTouchListener
 /**
  * 自定义CameraX点击事件
  */
-class CameraXPreviewViewTouchListener(context: Context?) : OnTouchListener {
+class CameraXPreviewViewTouchListener(context: Context) : OnTouchListener {
     private val mGestureDetector: GestureDetector
     private var mCustomTouchListener: CustomTouchListener? = null
     private val mScaleGestureDetector: ScaleGestureDetector
