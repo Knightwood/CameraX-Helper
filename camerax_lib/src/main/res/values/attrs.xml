@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="size" format="integer"  />
-    <attr name="maxDuration" format="integer"  />
+    <attr name="size" format="integer" />
+    <attr name="maxDuration" format="integer" />
 
-    <declare-styleable name="CaptureButton">
+    <declare-styleable name="CameraButton">
         <attr name="size" />
         <attr name="maxDuration" />
-    </declare-styleable>
-
-    <declare-styleable name="CaptureButton2">
-        <attr name="size" />
-        <attr name="maxDuration" />
-        <attr name="captureMode" format="boolean" /><!--true:拍照；false:录像-->
+        <attr name="buttonMode" format="integer">
+            <enum name="only_capture" value="1" />
+            <enum name="only_record" value="2" />
+            <enum name="both" value="3" />
+            <enum name="both_not" value="4" />
+        </attr>
+        <attr name="longPassRecord" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="FocusImageView">

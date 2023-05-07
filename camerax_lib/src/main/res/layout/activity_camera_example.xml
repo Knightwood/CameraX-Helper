@@ -152,21 +152,24 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.kiylx.camerax_lib.main.buttons.CaptureButton
-            android:id="@+id/capture_btn2"
+        <com.kiylx.camerax_lib.main.buttons.CameraButton
+            android:id="@+id/full_capture_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
+            app:buttonMode="both"
+            app:longPassRecord="true"
             app:layout_constraintTop_toTopOf="parent"
             app:size="80" />
 
-        <com.kiylx.camerax_lib.main.buttons.CaptureButton2
+        <com.kiylx.camerax_lib.main.buttons.CameraButton
             android:id="@+id/capture_video_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:captureMode="false"
+            app:buttonMode="only_record"
+            app:longPassRecord="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"

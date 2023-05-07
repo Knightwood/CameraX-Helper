@@ -7,9 +7,15 @@ interface CaptureListener {
 
     fun takePictures()
 
+    /**
+     * 回调此方法以通知可以开始录制
+     */
     fun recordStart()
 
-    fun recordEnd(time: Long)
+    /**
+     * 到达设定的录制时长时，将回调此方法通知可以结束录制了
+     */
+    fun recordShouldEnd(time: Long)
 
     fun recordZoom(zoom: Float)
 
@@ -29,7 +35,7 @@ open class DefaultCaptureListener :CaptureListener{
 
     }
 
-    override fun recordEnd(time: Long) {
+    override fun recordShouldEnd(time: Long) {
 
     }
 

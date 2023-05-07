@@ -14,6 +14,7 @@ import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.databinding.ActivityCameraExampleBinding
 import com.kiylx.camerax_lib.main.buttons.CaptureListener
+import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
@@ -175,48 +176,40 @@ abstract class BaseCameraXActivity : BasicActivity(),
     //相机初始化完成
     open fun initCameraFinished() {
         //拍照，拍视频的UI 操作的各种状态处理
-        page.captureBtn2.setCaptureListener(object : CaptureListener {
+        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
             override fun takePictures() {
                 cameraXFragment.takePhoto()
             }
-
             //开始录制视频
             override fun recordStart() {
-
-            }
-
-            //录制视频结束
-            override fun recordEnd(time: Long) {
-
-            }
-
-            //长按拍视频的时候，在屏幕滑动可以调整焦距缩放
-            override fun recordZoom(zoom: Float) {
-                val a = zoom
-            }
-
-            //录制视频错误（拍照也会有错误，先不处理了吧）
-            override fun recordError(message: String) {
-
-            }
-        })
-        page.captureVideoBtn.setCaptureListener(object : CaptureListener {
-            override fun takePictures() {
-
-            }
-
-            //开始录制视频
-            override fun recordStart() {
-                page.captureBtn2.visibility = View.GONE
+                page.captureVideoBtn.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.takeVideo()
                 //录制视频时隐藏摄像头切换
                 page.switchBtn.visibility=View.GONE
             }
 
-            //录制视频结束
-            override fun recordEnd(time: Long) {
-                page.captureBtn2.visibility = View.VISIBLE
+            //录制视频到达预定的时长，可以结束了
+            override fun recordShouldEnd(time: Long) {
+                page.captureVideoBtn.visibility = View.VISIBLE
+                LogUtils.dTag("录制activity", "停止")
+                cameraXFragment.stopTakeVideo(time)
+                page.switchBtn.visibility=View.VISIBLE
+            }
+        })
+        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener(){
+            //开始录制视频
+            override fun recordStart() {
+                page.fullCaptureBtn.visibility = View.GONE
+                LogUtils.dTag("录制activity", "开始")
+                cameraXFragment.takeVideo()
+                //录制视频时隐藏摄像头切换
+                page.switchBtn.visibility=View.GONE
+            }
+
+            //录制视频到达预定的时长，可以结束了
+            override fun recordShouldEnd(time: Long) {
+                page.fullCaptureBtn.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
                 cameraXFragment.stopTakeVideo(time)
                 page.switchBtn.visibility=View.VISIBLE

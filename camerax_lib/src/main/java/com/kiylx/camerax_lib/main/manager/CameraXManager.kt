@@ -31,7 +31,7 @@ import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
 import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
-import com.yeyupiaoling.cameraxapp.view.FocusImageView
+import com.kiylx.camerax_lib.view.FocusImageView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -511,7 +511,7 @@ abstract class CameraXManager(
     /** 更新用例的方向 */
     @CallSuper
     open fun updateCaseRotation(rotation: Int) {
-        Log.e("旋转1", "$rotation")
+//        Log.e("旋转1", "$rotation")
         //横屏时，动态设置他们的方向
         imageAnalyzer.targetRotation = rotation
         imageCapture.targetRotation = rotation

@@ -3,6 +3,6 @@
     <!--一个相机布局里必须要有的-->
     <item name="graphicOverlay_finder" type="id" /><!--com.kiylx.camerax_lib.main.manager.imagedection.face.GraphicOverlay-->
     <item name="camera_preview" type="id" /><!--androidx.camera.view.PreviewView-->
-    <item name="focus_view" type="id" /><!--com.yeyupiaoling.cameraxapp.view.FocusImageView-->
+    <item name="focus_view" type="id" /><!--com.kiylx.camerax_lib.view.FocusImageView-->
     <item name="last_preview" type="id" /><!--ImageView-->
 </resources>
