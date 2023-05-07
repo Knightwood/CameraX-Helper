@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.ImageView
 import androidx.annotation.CallSuper
 import androidx.camera.core.*
+import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.view.PreviewView
@@ -166,7 +167,10 @@ abstract class CameraXManager(
                 } else {
                     if (cameraPreview.display == null) {
                         screenAspectRatio =
-                            ManagerUtil.aspectRatio(cameraConfig.size.width, cameraConfig.size.height)
+                            ManagerUtil.aspectRatio(
+                                cameraConfig.size.width,
+                                cameraConfig.size.height
+                            )
                         size = cameraConfig.size
                     } else {
                         val metrics = DisplayMetrics().also {
@@ -237,7 +241,8 @@ abstract class CameraXManager(
     @SuppressLint("RestrictedApi")
     private fun initVideoCapture(screenAspectRatio: Int, rotation: Int = Surface.ROTATION_0) {
         if (cameraConfig.useNewVideoCapture) {
-            newVideoCapture = VideoRecorderHolder.getVideoCapture(cameraExecutor,StorageConfig.quality)
+            newVideoCapture =
+                VideoRecorderHolder.getVideoCapture(cameraExecutor, StorageConfig.quality)
         } else {
             // 视频的还不是很成熟，不一定都能用
             videoCapture = VideoCapture.Builder()//录像用例配置
@@ -281,12 +286,41 @@ abstract class CameraXManager(
                     whichInstance = WhichInstanceBind.IMAGE_DETECTION
                 }
                 CaptureMode.takePhoto -> {
-                    try {
-                        camera = cameraProvider?.bindToLifecycle(
-                            lifeOwner, cameraSelector, preview, imageCapture
-                        )
-                    } catch (exc: Exception) {
-                        Log.e(TAG, "Use case binding failed", exc)
+                    if (cameraConfig.useExtensionApi) {
+                        //使用相机扩展功能
+                        cameraProvider?.let {
+                            val extensionsManagerFuture =
+                                ExtensionsManager.getInstanceAsync(context.applicationContext, it)
+                            extensionsManagerFuture.addListener({
+                                val extensionsManager = extensionsManagerFuture.get()
+                                if (extensionsManager.isExtensionAvailable(cameraSelector,cameraConfig.extensionMode)) {
+                                    try {
+                                        val extensionCameraSelector =
+                                            extensionsManager.getExtensionEnabledCameraSelector(
+                                                cameraSelector,
+                                                cameraConfig.extensionMode)
+                                        camera = it.bindToLifecycle(
+                                            lifeOwner,
+                                            extensionCameraSelector,
+                                            imageCapture,
+                                            preview
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Use case binding failed", e)
+                                    }
+                                }else{
+                                    Log.e(TAG,"does not support this extension")
+                                }
+                            }, ContextCompat.getMainExecutor(context))
+                        }
+                    } else {
+                        try {
+                            camera = cameraProvider?.bindToLifecycle(
+                                lifeOwner, cameraSelector, preview, imageCapture
+                            )
+                        } catch (exc: Exception) {
+                            Log.e(TAG, "Use case binding failed", exc)
+                        }
                     }
                     whichInstance = WhichInstanceBind.PICTURE
                 }

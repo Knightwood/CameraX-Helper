@@ -239,6 +239,18 @@ class CameraHolder(
     }
 
     /**
+     * 调整设置后，调用此方法重新配置相机
+     * 例如更改扩展功能后，使用此方法让扩展功能生效
+     */
+    fun reFreshCameraUseCase(){
+        recording?.stop()
+        currentStatus = TakeVideoState.none
+        handler.post{
+            setCamera(cameraConfig.captureMode)
+        }
+    }
+
+    /**
      * 停止录像
      *
      * 录制的视频的时间

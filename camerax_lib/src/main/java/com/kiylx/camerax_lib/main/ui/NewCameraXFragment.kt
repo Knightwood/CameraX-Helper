@@ -170,6 +170,13 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     }
 
     /**
+     * 更改相机设置后，重新绑定相机实例，此过程会终止录像，重置状态，根据相机设置重新绑定
+     */
+    override fun refreshCameraUseCase(){
+        cameraHolder.reFreshCameraUseCase()
+    }
+
+    /**
      * 用于视频拍摄，打开或关闭常亮的闪光灯（手电筒）。
      *
      * @param true:打开手电筒。 false：关闭手电筒

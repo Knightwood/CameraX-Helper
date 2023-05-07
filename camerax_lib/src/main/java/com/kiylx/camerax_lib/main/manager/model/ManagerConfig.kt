@@ -3,6 +3,7 @@ package com.kiylx.camerax_lib.main.manager.model
 import android.os.Parcelable
 import android.util.Size
 import androidx.camera.core.ImageCapture
+import androidx.camera.extensions.ExtensionMode
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import kotlinx.android.parcel.Parcelize
 
@@ -37,6 +38,20 @@ class ManagerConfig : Parcelable {
     fun isUsingImageAnalyzer(): Boolean {
         return captureMode == CaptureMode.imageAnalysis
     }
+
+    /**
+     * 是否为拍照启用扩展功能
+     *
+     * 启用扩展后，只能保证能够使用 ImageCapture 和 Preview 的组合。
+     * 根据 OEM 实现情况，可能无法同时添加 ImageAnalysis；无法为 VideoCapture 用例启用扩展。如需了解详情，请参阅([扩展参考文档](https://developer.android.google.cn/reference/androidx/camera/extensions/ExtensionsManager?hl=zh-cn))
+     * 如需查看支持扩展的设备列表，请参阅([支持的设备](https://developer.android.google.cn/training/camera/supported-devices?hl=zh-cn))。
+     */
+    var useExtensionApi=false
+
+    /**
+     * 要使用的相机扩展，详情查看[ExtensionMode]
+     */
+    var extensionMode: Int=ExtensionMode.AUTO
 }
 
 /**

@@ -34,4 +34,5 @@ interface CameraCommon {
      * @param mode 默认： [CaptureMode.takePhoto]
      */
     fun setCameraUseCase(mode: Int = CaptureMode.takePhoto)
+    fun refreshCameraUseCase()
 }
