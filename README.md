@@ -1,4 +1,4 @@
-# CameraLlib
+# CameraXlib
 集成了拍照，录制视频，人脸识别等的camerax库。
 
 适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
@@ -192,7 +192,7 @@ cameraHolder = CameraHolder(
 .setMinFaceSize(0.6f)//人脸最小占图片的百分比
 ```
 
-  # cameraButtom
+  # CameraButton
 
 此按钮控件用于拍照和录像，支持点击拍照，点击录像和长按录像，长按录制有动画
 
