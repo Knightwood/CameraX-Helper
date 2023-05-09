@@ -18,10 +18,10 @@ class CameraExampleActivity : BaseCameraXActivity() {
      * 这里直接构建了配置，我没有使用intent传入配置。
      */
     override fun configAll(intent: Intent): ManagerConfig {
-        cacheMediasDir = "${application.getExternalFilesDir(null)}/dcim"//应用自身目录下
+//        cacheMediasDir = "${application.getExternalFilesDir(null)}/dcim"//应用自身目录下
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         return ManagerConfig().apply {
-            this.cacheMediaDir = cacheMediasDir
+            //this.cacheMediaDir = cacheMediasDir
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO

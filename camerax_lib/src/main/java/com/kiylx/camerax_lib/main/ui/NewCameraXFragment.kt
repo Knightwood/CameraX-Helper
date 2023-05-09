@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -70,7 +71,11 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            cameraConfig = it.getParcelable(CAMERA_CONFIG)!!
+            cameraConfig = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelable(CAMERA_CONFIG,ManagerConfig::class.java)!!
+            }else{
+                it.getParcelable(CAMERA_CONFIG)!!
+            }
         }
     }
 
