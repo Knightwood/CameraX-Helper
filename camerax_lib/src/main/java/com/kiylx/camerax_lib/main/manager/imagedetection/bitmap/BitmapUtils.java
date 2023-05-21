@@ -280,4 +280,34 @@ public class BitmapUtils {
       rowStart += plane.getRowStride();
     }
   }
+
+  /**
+   * 计算bitmap的平均亮度值
+   * 总体思路：Bitmap可以返回某个点的RGB值bitmap.getPixel），对当前区域取一些特定点获取其RGB值，
+   * bitmap.getPixel返回的是ARGB值，通过移位操作获取到R、G、B的值，
+   * 使用亮度=0.229×R + 0.587G + 0.114B进行亮度值计算，将所有点的亮度值相加后取一个平均值，
+   * 如果这个值比128大，则这个图片较亮，如果这个值比128小，则这个图比较暗。
+   * @param bm
+   * @return
+   */
+  public int getBright(Bitmap bm) {
+    if(bm == null) return -1;
+    int width = bm.getWidth();
+    int height = bm.getHeight();
+    int r, g, b;
+    int count = 0;
+    int bright = 0;
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+        count++;
+        int localTemp = bm.getPixel(i, j);
+        r = (localTemp | 0xff00ffff) >> 16 & 0x00ff;
+        g = (localTemp | 0xffff00ff) >> 8 & 0x0000ff;
+        b = (localTemp | 0xffffff00) & 0x0000ff;
+        bright = (int) (bright + 0.299 * r + 0.587 * g + 0.114 * b);
+      }
+    }
+    return bright / count;
+  }
+
 }
