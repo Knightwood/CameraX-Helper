@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Size
 import android.view.View
+import androidx.camera.extensions.ExtensionMode
 import com.kiylx.camerax_lib.main.manager.model.AnalyzerProvider
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
@@ -12,7 +13,7 @@ import com.kiylx.camerax_lib.main.store.FileMetaData
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
 
 class CameraExampleActivity : BaseCameraXActivity() {
-    private var cacheMediasDir = "" //存储路径
+//    private var cacheMediasDir = "" //存储路径
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
@@ -26,6 +27,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
             this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
+            this.useExtensionApi=true
+            this.extensionMode=ExtensionMode.AUTO
         }
     }
 

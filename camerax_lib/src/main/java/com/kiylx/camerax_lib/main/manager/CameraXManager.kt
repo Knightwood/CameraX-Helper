@@ -329,8 +329,8 @@ abstract class CameraXManager(
                                         camera = it.bindToLifecycle(
                                             lifeOwner,
                                             extensionCameraSelector,
-                                            imageCapture,
-                                            preview
+                                            preview,
+                                            imageCapture
                                         )
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Use case binding failed", e)
