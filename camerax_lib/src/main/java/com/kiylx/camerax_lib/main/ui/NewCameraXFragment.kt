@@ -5,11 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
+import android.util.Range
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.camera.core.ExposureState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.fragment.app.Fragment
@@ -36,7 +39,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     private lateinit var broadcastManager: LocalBroadcastManager
 
     //提供人脸识别，默认的
-    private lateinit var faceProcess: FaceContourDetectionProcessor
+    private lateinit var faceAnalyzer: FaceContourDetectionProcessor
 
     //activity生成fragment时指定此处的图像分析器提供工具
     var outAnalyzer: AnalyzerProvider? = null
@@ -46,7 +49,15 @@ class NewCameraXFragment : Fragment(), CameraCommon {
                     override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
                         //("在这里可以提供其他类型的图像识别器")
                         if (verType == VisionType.Face) {//提供面部识别分析器
-                            return faceProcess
+                            if (!this@NewCameraXFragment::faceAnalyzer.isInitialized) {
+                                //初始化默认的面部识别工具
+                                faceAnalyzer =
+                                    FaceContourDetectionProcessor(
+                                        page.cameraPreview,
+                                        page.graphicOverlayFinder,
+                                    )
+                            }
+                            return faceAnalyzer
                         } else
                             return AnalyzeUtils.emptyAnalyzer()
                     }
@@ -70,7 +81,11 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            cameraConfig = it.getParcelable(CAMERA_CONFIG)!!
+            cameraConfig = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelable(CAMERA_CONFIG,ManagerConfig::class.java)!!
+            }else{
+                it.getParcelable(CAMERA_CONFIG)!!
+            }
         }
     }
 
@@ -102,14 +117,6 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             page.root
         ).apply {
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-            if (!this@NewCameraXFragment::faceProcess.isInitialized) {
-                //初始化默认的面部识别工具
-                faceProcess =
-                    FaceContourDetectionProcessor(
-                        page.cameraPreview,
-                        page.graphicOverlayFinder,
-                    )
-            }
             //提供图像分析器
             analyzerProvider = outAnalyzer
         }
@@ -152,8 +159,8 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     }
 
     override fun setAnalyzerResultListener(analyzerResultListener: AnalyzeResultListener) {
-        if (this::faceProcess.isInitialized)
-            faceProcess.analyzeListener = analyzerResultListener
+        if (this::faceAnalyzer.isInitialized)
+            faceAnalyzer.analyzeListener = analyzerResultListener
     }
 
     override fun canSwitchCamera(): Boolean {
@@ -222,6 +229,21 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     override fun zoom2(zoomValue: Float) {
         cameraHolder.zoomDirectly(zoomValue)
     }
+
+    /**
+     * 设置曝光补偿
+     */
+    fun setExposure(value:Int) = cameraHolder.setExposure(value)
+
+    /**
+     * 查询曝光补偿范围
+     */
+    fun queryExposureRange(): Range<Int> =cameraHolder.queryExposureRange()
+
+    /**
+     * 查询当前相机的曝光参数
+     */
+    fun queryExposureState(): ExposureState? =cameraHolder.queryExposureState()
 }
 
 interface CameraXFragmentEventListener {

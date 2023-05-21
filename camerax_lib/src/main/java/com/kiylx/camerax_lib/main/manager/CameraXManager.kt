@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -61,7 +62,7 @@ abstract class CameraXManager(
     //相机相关
     private var preview: Preview? = null
     private var camera: Camera? = null
-    private var cameraProvider: ProcessCameraProvider? = null
+    private lateinit var cameraProvider: ProcessCameraProvider
     var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     //三种实例
@@ -118,6 +119,32 @@ abstract class CameraXManager(
         handler = Handler(context.mainLooper)
         context.lifecycle.addObserver(this)
     }
+
+    /**
+     * 设置曝光补偿
+     */
+    fun setExposure(value: Int) {
+        try {
+            camera?.cameraControl?.setExposureCompensationIndex(value)
+        } catch (e: java.lang.Exception) {
+            Log.e(TAG, e.message, e)//错误日志打印
+        }
+    }
+
+    /**
+     * 查询曝光补偿范围
+     */
+    fun queryExposureRange(): Range<Int> =
+        camera?.cameraInfo?.exposureState?.exposureCompensationRange ?: Range(0, 0)
+
+    /**
+     * 曝光值(EV)=(曝光补偿)exposure_compensation_index * (步长)compensation_step
+     *
+     * 注：
+     * compensation_step 的 step_size 取值通常为 ⅓ 或者 ½，较少情况下，有些设备可能会支持 1 或者甚至 ¼。
+     * 所能支持的最大曝光值一般是 2 EV 或者 3 EV。
+     */
+    fun queryExposureState() = camera?.cameraInfo?.exposureState
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         when (event) {

@@ -5,35 +5,27 @@ import android.util.Size
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
+
 
 @Parcelize
-class ManagerConfig : Parcelable {
-    var flashMode: Int = FlashModel.CAMERA_FLASH_OFF
-    var MyPhotoDir = ""
-    var MyVideoDir = ""
-    var size: Size = Size(1280,720)//android R以下，设置预览，拍照的默认分辨率
-
+data class ManagerConfig(
+    var flashMode: Int = FlashModel.CAMERA_FLASH_OFF,
+    var size: Size = Size(1280, 720),//android R以下，设置预览，拍照的默认分辨率
     /**
      * true：使用camera-video库完成视频录制功能
      * 将来会使用camera-video库取代旧方式录制视频
      */
-    var useNewVideoCapture = true
-
-    /**
-     * 如果不设置cacheMediaDir，将会使用系统图库路径
-     */
-    var cacheMediaDir: String = ""
-        set(value) {
-            field = value
-            MyPhotoDir = "$value/images/"
-            MyVideoDir = "$value/videos/"
-        }
-
+    var useNewVideoCapture: Boolean = true,
     /**
      * 查看[CaptureMode]
      */
-    var captureMode: Int = CaptureMode.takePhoto
+    var captureMode: Int = CaptureMode.takePhoto,
+
+    @Deprecated("新的录像方式已不再使用此字段")
+    var MyVideoDir: String = "",
+
+    ) : Parcelable {
 
     fun isUsingImageAnalyzer(): Boolean {
         return captureMode == CaptureMode.imageAnalysis

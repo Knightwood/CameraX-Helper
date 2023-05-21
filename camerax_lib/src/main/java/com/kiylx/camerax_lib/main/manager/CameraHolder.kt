@@ -162,7 +162,7 @@ class CameraHolder(
     }
 
 
-    /** 拍摄视频，目前还没有稳定，先初步的支持吧 */
+    /** 拍摄视频，使用[anotherCaptureVideo]取代 */
     @SuppressLint("RestrictedApi")
     @Deprecated("不再受支持")
     fun captureVideo() {
