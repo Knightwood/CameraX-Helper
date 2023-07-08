@@ -10,7 +10,6 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListe
 interface CameraCommon {
     fun setCameraEventListener(cameraEventListener: CameraEventListener)
     fun setCaptureResultListener(captureListener: CaptureResultListener)
-    fun setAnalyzerResultListener(analyzerResultListener: AnalyzeResultListener)
 
     fun canSwitchCamera(): Boolean
     fun switchCamera()

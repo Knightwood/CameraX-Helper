@@ -4,7 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Size
 import android.view.View
-import com.kiylx.camerax_lib.main.manager.model.AnalyzerProvider
+import androidx.camera.view.PreviewView
+import com.kiylx.camerax_lib.main.manager.CameraHolder
+import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
@@ -39,7 +42,26 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
     }
 
-    override fun cameraFinishInited() {
+    override fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
+        super.initCameraStart(cameraHolder, cameraPreview)
+        //生成图像分析器
+        val analyzer = FaceContourDetectionProcessor(
+            cameraPreview,
+            page.graphicOverlayFinder,
+        ).also {
+            cameraHolder.changeAnalyzer(it)//设置图像分析器
+        }
+        //监听分析结果
+        (analyzer as FaceContourDetectionProcessor).analyzeListener =
+            object : AnalyzeResultListener {
+                override fun isSuccess() {
+
+                }
+            }
+    }
+
+    override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
+        super.initCameraFinished(cameraHolder, cameraPreview)
         if (cameraConfig.isUsingImageAnalyzer()) {//人脸识别拍摄
             page.cameraControlLayout.visibility = View.INVISIBLE
         } else {
@@ -97,27 +119,5 @@ class CameraExampleActivity : BaseCameraXActivity() {
         super.videoRecordEnd(fileMetaData)
     }
 
-    /**
-     * 每次图像分析完成
-     */
-    override fun analyzerEnd() {
-        super.analyzerEnd()
-    }
 
-    /**
-     * 提供不同的分析器
-     * 返回null，将使用默认的面部分析器
-     */
-    override fun myAnalyzerProvider(): AnalyzerProvider? {
-//        return object : AnalyzerProvider {
-//            override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
-//                //("在这里可以提供其他类型的图像识别器")
-//                if (verType == VisionType.Face) {//提供面部识别分析器
-//                    return faceProcess
-//                } else
-//                    return AnalyzeUtils.emptyAnalyzer()
-//            }
-//        }
-        return null
-    }
 }

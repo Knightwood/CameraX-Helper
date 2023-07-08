@@ -31,16 +31,14 @@ import java.util.concurrent.Executors
 /** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
 class CameraHolder(
     cameraPreview: PreviewView,
-    var graphicOverlay: Overlay,//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
     cameraConfig: ManagerConfig,
     content: View,
     var captureResultListener: CaptureResultListener? = null,
 ) : CameraXManager(
     cameraPreview, cameraConfig
 ) {
-    /** 外界提供此实例后，人脸分析功能将会改为根据visionType取得不同的图像分析器 */
-    var analyzerProvider: AnalyzerProvider? = null
-    private var visionType: VisionType = VisionType.Face//默认的图片分析器是人脸分析器
+    var graphicOverlay: Overlay?=null//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
+    private var analyzer: ImageAnalysis.Analyzer = AnalyzeUtils.emptyAnalyzer
 
     init {
         view = content
@@ -48,18 +46,11 @@ class CameraHolder(
         focusView = content.findViewById(R.id.focus_view)
     }
 
-    fun changeAnalyzer(visionType: VisionType) {
-        this.visionType = visionType
+    fun changeAnalyzer(analyzer: ImageAnalysis.Analyzer) {
+        this.analyzer = analyzer
     }
 
-    /** 默认提供人脸分析器， 更多种类型的analyzer由[AnalyzerProvider]提供 */
-    override fun selectAnalyzer(): ImageAnalysis.Analyzer {
-        return if (analyzerProvider == null) {
-            AnalyzeUtils.emptyAnalyzer()
-        } else {
-            analyzerProvider!!.provider(visionType)
-        }
-    }
+    override fun selectAnalyzer(): ImageAnalysis.Analyzer = analyzer
 
     /** 检查权限，通过后执行block块初始化相机 */
     override fun checkPerm(block: () -> Unit) {
@@ -283,12 +274,12 @@ class CameraHolder(
             stopTakeVideo()
         }
         super.switchCamera()
-        graphicOverlay.toggleSelector()
+        graphicOverlay?.toggleSelector()
     }
 
     /** 屏幕旋转的角度 */
     override fun sensorAngleChanged(rotation: Int, angle: Int) {
-        graphicOverlay.rotationChanged(rotation, angle)
+        graphicOverlay?.rotationChanged(rotation, angle)
     }
 
     /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */

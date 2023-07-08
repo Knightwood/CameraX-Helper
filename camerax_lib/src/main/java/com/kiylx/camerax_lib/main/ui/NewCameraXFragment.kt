@@ -13,20 +13,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.camera.core.ExposureState
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.kiylx.camerax_lib.databinding.FragmentCameraxBinding
 import com.kiylx.camerax_lib.main.*
 import com.kiylx.camerax_lib.main.manager.CAMERA_CONFIG
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.main.manager.model.*
 
 class NewCameraXFragment : Fragment(), CameraCommon {
@@ -37,34 +32,6 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     //相机的配置：存储路径，闪光灯模式，
     private lateinit var cameraConfig: ManagerConfig
     private lateinit var broadcastManager: LocalBroadcastManager
-
-    //提供人脸识别，默认的
-    private lateinit var faceAnalyzer: FaceContourDetectionProcessor
-
-    //activity生成fragment时指定此处的图像分析器提供工具
-    var outAnalyzer: AnalyzerProvider? = null
-        get() {
-            if (field == null)
-                return object : AnalyzerProvider {
-                    override fun provider(verType: VisionType): ImageAnalysis.Analyzer {
-                        //("在这里可以提供其他类型的图像识别器")
-                        if (verType == VisionType.Face) {//提供面部识别分析器
-                            if (!this@NewCameraXFragment::faceAnalyzer.isInitialized) {
-                                //初始化默认的面部识别工具
-                                faceAnalyzer =
-                                    FaceContourDetectionProcessor(
-                                        page.cameraPreview,
-                                        page.graphicOverlayFinder,
-                                    )
-                            }
-                            return faceAnalyzer
-                        } else
-                            return AnalyzeUtils.emptyAnalyzer()
-                    }
-                }
-            else
-                return field
-        }
 
     //音量下降按钮接收器用于触发快门
     private val volumeDownReceiver = object : BroadcastReceiver() {
@@ -112,21 +79,15 @@ class NewCameraXFragment : Fragment(), CameraCommon {
     private fun initCameraHolder() {
         cameraHolder = CameraHolder(
             page.cameraPreview,
-            page.graphicOverlayFinder,
             cameraConfig,
             page.root
         ).apply {
+            eventListener?.cameraHolderInitStart(this)
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-            //提供图像分析器
-            analyzerProvider = outAnalyzer
         }
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
         eventListener?.cameraHolderInited(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
-    }
-
-    fun getOverlay(): GraphicOverlay {
-        return page.graphicOverlayFinder
     }
 
     override fun onDestroyView() {
@@ -156,11 +117,6 @@ class NewCameraXFragment : Fragment(), CameraCommon {
 
     override fun setCaptureResultListener(captureListener: CaptureResultListener) {
         cameraHolder.captureResultListener = captureListener
-    }
-
-    override fun setAnalyzerResultListener(analyzerResultListener: AnalyzeResultListener) {
-        if (this::faceAnalyzer.isInitialized)
-            faceAnalyzer.analyzeListener = analyzerResultListener
     }
 
     override fun canSwitchCamera(): Boolean {
@@ -240,6 +196,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
 }
 
 interface CameraXFragmentEventListener {
+    fun cameraHolderInitStart(cameraHolder: CameraHolder)
     /** cameraXHolder初始化完成，可以对其进行其他操作 */
     fun cameraHolderInited(cameraHolder: CameraHolder)
 }

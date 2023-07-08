@@ -7,18 +7,20 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
-import android.view.OrientationEventListener
 import android.view.View
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.view.PreviewView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.databinding.ActivityCameraExampleBinding
-import com.kiylx.camerax_lib.main.buttons.CaptureListener
 import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
+import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.store.FileMetaData
@@ -30,6 +32,10 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     lateinit var mBaseHandler: Handler
     lateinit var page: ActivityCameraExampleBinding
+
+    fun getOverlay(): GraphicOverlay {
+        return page.graphicOverlayFinder
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,19 +95,22 @@ abstract class BaseCameraXActivity : BasicActivity(),
         cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
             .apply {
                 //指定不同类型图像分析器，默认只有面部分析器
-                outAnalyzer = myAnalyzerProvider()
                 eventListener = object : CameraXFragmentEventListener {
+                    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
+                        this@BaseCameraXActivity.initCameraStart(
+                            cameraHolder,
+                            page.cameraPreview
+                        )//初始化其他内容
+                    }
+
                     override fun cameraHolderInited(cameraHolder: CameraHolder) {//holder初始化完成
                         setCameraEventListener(object : CameraEventListener {
                             //holder初始化完成后，相机也初始化完成了
                             override fun initCameraFinished() {
-                                this@BaseCameraXActivity.initCameraFinished()//初始化其他内容
-                            }
-                        })
-                        setAnalyzerResultListener(object : AnalyzeResultListener {
-                            //图像分析成功时
-                            override fun isSuccess() {
-                                this@BaseCameraXActivity.analyzerEnd()
+                                this@BaseCameraXActivity.initCameraFinished(
+                                    cameraHolder,
+                                    page.cameraPreview
+                                )//初始化其他内容
                             }
                         })
                         //拍照录视频操作结果通知回调
@@ -123,6 +132,11 @@ abstract class BaseCameraXActivity : BasicActivity(),
             }
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, cameraXFragment).commit()
+    }
+
+    open fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
+        //指定接收屏幕反转信息的接口实现，例如这里是一个view实现的接口
+        cameraHolder.graphicOverlay=page.graphicOverlayFinder
     }
 
     private fun initFlashSelectColor() {
@@ -174,19 +188,20 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
 
     //相机初始化完成
-    open fun initCameraFinished() {
+    open fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
         //拍照，拍视频的UI 操作的各种状态处理
-        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
+        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener() {
             override fun takePictures() {
                 cameraXFragment.takePhoto()
             }
+
             //开始录制视频
             override fun recordStart() {
                 page.captureVideoBtn.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.takeVideo()
                 //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility=View.GONE
+                page.switchBtn.visibility = View.GONE
             }
 
             //录制视频到达预定的时长，可以结束了
@@ -194,17 +209,17 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 page.captureVideoBtn.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
                 cameraXFragment.stopTakeVideo(time)
-                page.switchBtn.visibility=View.VISIBLE
+                page.switchBtn.visibility = View.VISIBLE
             }
         })
-        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener(){
+        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener() {
             //开始录制视频
             override fun recordStart() {
                 page.fullCaptureBtn.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.takeVideo()
                 //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility=View.GONE
+                page.switchBtn.visibility = View.GONE
             }
 
             //录制视频到达预定的时长，可以结束了
@@ -212,7 +227,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 page.fullCaptureBtn.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
                 cameraXFragment.stopTakeVideo(time)
-                page.switchBtn.visibility=View.VISIBLE
+                page.switchBtn.visibility = View.VISIBLE
             }
 
             //长按拍视频的时候，在屏幕滑动可以调整焦距缩放
@@ -225,15 +240,9 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 LogUtils.dTag(tag, message)
             }
         })
-        cameraFinishInited()
+
     }
 
-    abstract fun myAnalyzerProvider(): AnalyzerProvider?
-
-    /**
-     * 初始化完成，做其他操作
-     */
-    open fun cameraFinishInited() {}
     abstract fun captureFace()
 
     /**
@@ -242,7 +251,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
     abstract fun configAll(intent: Intent): ManagerConfig
     open fun photoTakeEnd(filePath: Uri?) {}
     open fun videoRecordEnd(fileMetaData: FileMetaData?) {}
-    open fun analyzerEnd() {}
+
 
     companion object {
         const val tag = "BaseRecordVideo"

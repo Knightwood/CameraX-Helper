@@ -4,21 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.kiylx.camerax_lib.main.CameraXFragment">
+    tools:context="com.kiylx.camerax_lib.main.ui.BaseCameraXActivity">
 
     <androidx.camera.view.PreviewView
         android:id="@+id/camera_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
-        android:id="@+id/graphicOverlay_finder"
+    <FrameLayout
+        android:id="@+id/sub_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <com.kiylx.camerax_lib.view.FocusImageView
         android:id="@+id/focus_view"
