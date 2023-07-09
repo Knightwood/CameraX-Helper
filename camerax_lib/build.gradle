@@ -91,4 +91,7 @@ dependencies {
     api 'com.google.mlkit:face-detection:16.1.5'
 
     api 'com.guolindev.permissionx:permissionx:1.6.1'
+
+    api 'org.tensorflow:tensorflow-lite-api:2.9.0'
+    api 'org.tensorflow:tensorflow-lite:2.9.0'
 }

@@ -7,6 +7,8 @@
 
 推荐直接把`camerax_lib`集成到项目
 
+* 示例代码在app目录下。
+
 * 版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 
 ```
@@ -108,27 +110,18 @@ var outAnalyzer: AnalyzerProvider? = null
 ........
 
 //相机    
-cameraHolder = CameraHolder(
+   cameraHolder = CameraHolder(
             page.cameraPreview,
-            page.graphicOverlayFinder,
             cameraConfig,
             page.root
         ).apply {
+            eventListener?.cameraHolderInitStart(this)
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
-            if (!this@NewCameraXFragment::faceProcess.isInitialized) {
-                //初始化默认的面部识别工具
-                faceProcess =
-                    FaceContourDetectionProcessor(
-                        page.cameraPreview,
-                        page.graphicOverlayFinder,
-                    )
-            }
-            //提供图像分析器
-            analyzerProvider = outAnalyzer
         }
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
         eventListener?.cameraHolderInited(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
+    
 ```
 
 * `BaseCameraXActivity`
@@ -138,49 +131,134 @@ cameraHolder = CameraHolder(
   初始化`NewCameraXFragment`要遵循代码中的三条初始化顺序。
 
 ```
-  private fun setCameraFragment() {
-          cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
-              .apply {
-                  eventListener = object : CameraXFragmentEventListener {
-                      override fun cameraHolderInited(cameraHolder: CameraHolder) {
-                      //1. holder初始化完成
-                          setCameraEventListener(object : CameraEventListener {
-                              //2. holder初始化完成后，相机也初始化完成了
-                              override fun initCameraFinished() {
-                                  this@BaseCameraXActivity.initCameraFinished()
-                                  //3. 初始化其他内容
-                              }
-                          })
-                          setAnalyzerResultListener(object : AnalyzeResultListener {
-                              //图像分析成功时，例如调用拍照
-                              override fun isSuccess() {
-                                  captureFace()
-                              }
-                          })
-                          //拍照录视频操作结果通知回调
-                          setCaptureResultListener(object : CaptureResultListener {
-                              override fun onVideoRecorded(filePath: String) {
-                                  Log.d("CameraXFragment", "onVideoRecorded：$filePath")
-                                  // 视频拍摄后
-  
-                              }
-  
-                              override fun onPhotoTaken(filePath: String) {
-                                  Log.d("CameraXFragment", "onPhotoTaken： $filePath")
-                                  //图片拍摄后
-  
-                              }
-                          })
-                      }
-  
-                  }
-              }
-          supportFragmentManager.beginTransaction()
-              .replace(R.id.fragment_container, cameraXFragment).commit()
-      }
+ private fun setCameraFragment() {
+        cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
+            .apply {
+               //设置事件监听
+                eventListener = object : CameraXFragmentEventListener {
+                    //相机管理器初始化之前
+                    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
+                        this@BaseCameraXActivity.initCameraStart(
+                            cameraHolder,
+                            page.cameraPreview
+                        )
+                    }
+                    //相机管理器初始化之后
+                    override fun cameraHolderInited(cameraHolder: CameraHolder) {
+                        setCameraEventListener(object : CameraEventListener {
+                            override fun initCameraFinished() {
+                                this@BaseCameraXActivity.initCameraFinished(
+                                    cameraHolder,
+                                    page.cameraPreview
+                                )
+                            }
+                        })
+                        //拍照录视频操作结果通知回调
+                        setCaptureResultListener(object : CaptureResultListener {
+                            override fun onVideoRecorded(fileMetaData: FileMetaData?) {
+                                // 视频拍摄后
+                                this@BaseCameraXActivity.videoRecordEnd(fileMetaData)
+                            }
+
+                            override fun onPhotoTaken(filePath: Uri?) {
+                                Log.d("CameraXFragment", "onPhotoTaken： $filePath")
+                                //图片拍摄后
+                                this@BaseCameraXActivity.photoTakeEnd(filePath)
+                            }
+                        })
+                    }
+
+                }
+            }
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, cameraXFragment).commit()
+    }
 ```
 
-人脸检测
+## 示例相机
+
+```
+class CameraExampleActivity : BaseCameraXActivity() {
+    private var cacheMediasDir = "" //存储路径
+
+    /**
+     * 这里直接构建了配置，我没有使用intent传入配置。
+     */
+    override fun configAll(intent: Intent): ManagerConfig {
+        val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+        return ManagerConfig().apply {
+            //this.cacheMediaDir = cacheMediasDir
+            this.captureMode =
+                if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
+            this.flashMode = FlashModel.CAMERA_FLASH_AUTO
+            this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
+        }
+    }
+
+    override fun closeActivity(shouldInvokeFinish: Boolean) {
+        cameraXFragment.stopTakeVideo(0)
+    }
+
+    override fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
+        super.initCameraStart(cameraHolder, cameraPreview)
+        //相机初始化之前
+        //可以在这里添加图像分析器
+        //生成图像分析器
+        val analyzer = FaceContourDetectionProcessor(
+            cameraPreview,
+            page.graphicOverlayFinder,
+        ).also {
+            cameraHolder.changeAnalyzer(it)//设置图像分析器
+        }
+        //监听分析结果
+        (analyzer as FaceContourDetectionProcessor).analyzeListener =
+            object : AnalyzeResultListener {
+                override fun isSuccess() {
+
+                }
+            }
+    }
+
+    override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
+        super.initCameraFinished(cameraHolder, cameraPreview)
+    	//相机初始化之后
+    }
+
+    /**
+     * 人脸识别后拍摄照片
+     */
+    override fun captureFace() {
+        mBaseHandler.post {
+            cameraXFragment.takePhoto()
+        }
+        /*
+        //还可以使用预览画面里的bitmap存储为图片
+        mBaseHandler.post {
+            val bitmap = cameraXFragment.provideBitmap()
+            if (bitmap != null) {
+                // TODO: 存储bitmap
+            }
+        }*/
+
+    }
+
+    /**
+     * 拍完照片
+     */
+    override fun photoTakeEnd(filePath: Uri?) {
+        super.photoTakeEnd(filePath)
+    }
+
+    /**
+     * 录完视频
+     */
+    override fun videoRecordEnd(fileMetaData: FileMetaData?) {
+        super.videoRecordEnd(fileMetaData)
+    }
+}
+```
+
+## 人脸检测
 
 `FaceContourDetectionProcessor`文件中配置检测模式。
 
@@ -191,6 +269,34 @@ cameraHolder = CameraHolder(
 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)//是否将人脸分为不同类别（例如“微笑”和“眼睛睁开”）。
 .setMinFaceSize(0.6f)//人脸最小占图片的百分比
 ```
+
+## 面部识别，特征点计算
+
+[来源]:https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5
+
+```
+//使用TensorFlow Lite 模型的处理器
+private val model = FaceDetection.create(
+        this.assets,
+        TF_OD_API_MODEL_FILE,
+        TF_OD_API_LABELS_FILE,
+        TF_OD_API_IS_QUANTIZED
+   )
+StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
+            //选择图片后经过mlkit的处理，以及MyFileProcessor中的裁剪，得到只有面部区域的bitmap
+            MyFileProcessor.process(contentResolver, uri) {
+                //处理bitmap,获取面部特征点
+                it?.let { it1 ->
+                    //将bitmap转换成特定尺寸bitmap
+                    val tmp = FaceDetection.convertBitmap(it1)
+                    //获取特征点
+                    val masks = model.detectionBitmap(tmp)
+                }
+            }
+        }
+```
+
+
 
   # CameraButton
 
@@ -247,5 +353,34 @@ page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
 })
 ```
 
-# 示例代码在app目录下。
+# 
+
+# tensorflow lite
+
+## 依赖
+
+可以不使用下面这个教程上的依赖
+
+```
+implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+```
+
+可以引入
+
+```
+implementation 'org.tensorflow:tensorflow-lite-api:2.9.0'
+implementation 'org.tensorflow:tensorflow-lite:2.9.0'
+```
+
+参考
+
+https://jarcasting.com/artifacts/org.tensorflow/tensorflow-lite/
+
+https://discuss.tensorflow.org/t/tensorflow-lite-aar-2-9-0-android-integration/11796
+
+
+
+* 如果需要更简便的使用方式，可以同时引入`TensorFlow Lite Task Library`
+
+详情参考https://tensorflow.google.cn/lite/inference_with_metadata/overview?hl=zh-cn
 

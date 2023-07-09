@@ -94,23 +94,23 @@ abstract class BaseCameraXActivity : BasicActivity(),
     private fun setCameraFragment() {
         cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
             .apply {
-                //指定不同类型图像分析器，默认只有面部分析器
+               //设置事件监听
                 eventListener = object : CameraXFragmentEventListener {
+                    //相机管理器初始化之前
                     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
                         this@BaseCameraXActivity.initCameraStart(
                             cameraHolder,
                             page.cameraPreview
-                        )//初始化其他内容
+                        )
                     }
-
-                    override fun cameraHolderInited(cameraHolder: CameraHolder) {//holder初始化完成
+                    //相机管理器初始化之后
+                    override fun cameraHolderInited(cameraHolder: CameraHolder) {
                         setCameraEventListener(object : CameraEventListener {
-                            //holder初始化完成后，相机也初始化完成了
                             override fun initCameraFinished() {
                                 this@BaseCameraXActivity.initCameraFinished(
                                     cameraHolder,
                                     page.cameraPreview
-                                )//初始化其他内容
+                                )
                             }
                         })
                         //拍照录视频操作结果通知回调
