@@ -104,9 +104,6 @@ fun initPhoto() {
 
 ```
 class NewCameraXFragment : Fragment(), CameraCommon {
-
-//activity生成fragment时指定此处的图像分析器提供工具
-var outAnalyzer: AnalyzerProvider? = null
 ........
 
 //相机    
