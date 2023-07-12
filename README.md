@@ -91,16 +91,16 @@ fun initPhoto() {
 ```
 
 2. 直接继承自`BaseCameraXActivity`就可以自定义相机
-3. 或者可以自己实现一个activity,内部放置一个`NewCameraXFragment`就可以实现相机功能
+3. 或者可以自己实现一个activity,内部放置一个`CameraXFragment`就可以实现相机功能
 
 ## 其他介绍
 
-`NewCameraXFragment`实现` CameraCommon`接口，对外提供各种相机方法，实际上各类实现是由`cameraHolder`实现。
+`CameraXFragment`实现` ICameraXF`接口，对外提供各种相机方法，实际上各类实现是由`cameraHolder`实现。
 
-* `NewCameraXFragment`内部创建`CameraHolder`
+* `CameraXFragment`内部创建`CameraHolder`
 
 ```
-class NewCameraXFragment : Fragment(), CameraCommon {
+class CameraXFragment : Fragment(), ICameraXF {
 ........
 
 //相机  
@@ -112,15 +112,13 @@ class NewCameraXFragment : Fragment(), CameraCommon {
             eventListener?.cameraHolderInitStart(this)
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
         }
-        //使用changeAnalyzer方法改变camerax使用的图像识别器
-        // cameraHolder.changeAnalyzer(VisionType.Barcode)
-        eventListener?.cameraHolderInited(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
+        eventListener?.cameraHolderInited(cameraHolder)//通知外层，holder初始化完成了，可以对holder做其他操作了
   
 ```
 
 * `BaseCameraXActivity`
 
-  持有`NewCameraXFragment`实现相机功能，并提供了额外的一些功能。
+  持有`CameraXFragment`实现相机功能，并提供了额外的一些功能。
 ```kotlin
     private fun setCameraFragment() {
         cameraXFragment = CameraXFragment.newInstance(cameraConfig)
@@ -341,13 +339,13 @@ StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
 page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
 	//拍照
     override fun takePictures() {
-        cameraXFragment.takePhoto()
+        cameraXF.takePhoto()
     }
     //开始录制视频
     override fun recordStart() {
         page.captureVideoBtn.visibility = View.GONE
         LogUtils.dTag("录制activity", "开始")
-        cameraXFragment.takeVideo()
+        cameraXF.takeVideo()
         //录制视频时隐藏摄像头切换
         page.switchBtn.visibility=View.GONE
     }
@@ -356,7 +354,7 @@ page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
     override fun recordShouldEnd(time: Long) {
         page.captureVideoBtn.visibility = View.VISIBLE
         LogUtils.dTag("录制activity", "停止")
-        cameraXFragment.stopTakeVideo(time)
+        cameraXF.stopTakeVideo(time)
         page.switchBtn.visibility=View.VISIBLE
     }
 })

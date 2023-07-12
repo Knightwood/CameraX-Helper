@@ -110,9 +110,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
             eventListener?.cameraHolderInitStart(this)
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
         }
-        //使用changeAnalyzer方法改变camerax使用的图像识别器
-        // cameraHolder.changeAnalyzer(VisionType.Barcode)
-        eventListener?.cameraHolderInitFinish(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
+    eventListener?.cameraHolderInitFinish(cameraHolder)//通知holder初始化完成了，可以对holder做其他操作了
     }
 
     override fun photoTaken() {
