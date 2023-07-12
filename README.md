@@ -217,7 +217,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     /**
-     * 启动后自动拍照或录像
+     * 拍照或录像
      */
     private fun capture() {
         if (cameraConfig.captureMode == CaptureMode.takePhoto) {
