@@ -120,15 +120,12 @@ class NewCameraXFragment : Fragment(), CameraCommon {
 
 * `BaseCameraXActivity`
 
-  持有`NewCameraXFragment`实现相机功能，并提供了额外的功能。
-
-  初始化`NewCameraXFragment`要遵循代码中的三条初始化顺序。
-
-```
- private fun setCameraFragment() {
-        cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
+  持有`NewCameraXFragment`实现相机功能，并提供了额外的一些功能。
+```kotlin
+    private fun setCameraFragment() {
+        cameraXFragment = CameraXFragment.newInstance(cameraConfig)
             .apply {
-               //设置事件监听
+                //设置事件监听
                 eventListener = object : CameraXFragmentEventListener {
                     //相机管理器初始化之前
                     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
@@ -137,6 +134,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
                             page.cameraPreview
                         )
                     }
+
                     //相机管理器初始化之后
                     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
                         this@BaseCameraXActivity.initCameraFinished(
@@ -163,13 +161,14 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, cameraXFragment).commit()
     }
+
 ```
+
 
 ## 示例相机
 
 ```
 class CameraExampleActivity : BaseCameraXActivity() {
-    private var cacheMediasDir = "" //存储路径
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
@@ -177,7 +176,6 @@ class CameraExampleActivity : BaseCameraXActivity() {
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         return ManagerConfig().apply {
-            //this.cacheMediaDir = cacheMediasDir
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
@@ -186,13 +184,17 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     override fun closeActivity(shouldInvokeFinish: Boolean) {
-        cameraXFragment.stopTakeVideo(0)
+        cameraXF.stopTakeVideo(0)
+
+        if (shouldInvokeFinish) {
+            mBaseHandler.postDelayed(Runnable {
+                this.finish()
+            }, 500)
+        }
     }
 
     override fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
         super.initCameraStart(cameraHolder, cameraPreview)
-        //相机初始化之前
-        //可以在这里添加图像分析器
         //生成图像分析器
         val analyzer = FaceContourDetectionProcessor(
             cameraPreview,
@@ -211,25 +213,43 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
     override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
         super.initCameraFinished(cameraHolder, cameraPreview)
-    	//相机初始化之后
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+            page.cameraControlLayout.visibility = View.INVISIBLE
+        }
     }
 
     /**
-     * 人脸识别后拍摄照片
+     * 启动后自动拍照或录像
+     */
+    private fun capture() {
+        if (cameraConfig.captureMode == CaptureMode.takePhoto) {
+            //拍照
+            mBaseHandler.postDelayed(Runnable {
+                cameraXF.takePhoto()
+            }, 300)
+        } else if (cameraConfig.captureMode == CaptureMode.takeVideo) {
+            cameraXF.takeVideo()
+        }
+    }
+
+    /**
+     * 拍摄照片
      */
     override fun captureFace() {
-        mBaseHandler.post {
-            cameraXFragment.takePhoto()
-        }
+            cameraXF.takePhoto()
         /*
         //还可以使用预览画面里的bitmap存储为图片
         mBaseHandler.post {
-            val bitmap = cameraXFragment.provideBitmap()
+            val bitmap = cameraXF.provideBitmap()
             if (bitmap != null) {
                 // TODO: 存储bitmap
             }
         }*/
 
+    }
+
+    override fun onClick(p0: View?) {
+        TODO("Not yet implemented")
     }
 
     /**
@@ -265,7 +285,6 @@ class CameraExampleActivity : BaseCameraXActivity() {
 > 来源
 >
 > [文章连接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
-
 
 ```
 //使用TensorFlow Lite 模型的处理器

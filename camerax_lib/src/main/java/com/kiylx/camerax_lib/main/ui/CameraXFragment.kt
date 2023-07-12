@@ -36,8 +36,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
+class CameraXF(private val cameraXF: CameraXFragment) : ICameraXF by cameraXF
+
 /** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
-class NewCameraXFragment : Fragment(), CameraManagerEventListener, CameraCommon {
+class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     var eventListener: CameraXFragmentEventListener? = null
     lateinit var cameraHolder: CameraHolder
     lateinit var page: FragmentCameraxBinding
@@ -212,7 +214,7 @@ class NewCameraXFragment : Fragment(), CameraManagerEventListener, CameraCommon 
                                         Log.e(TAG, e.toString())
                                     }
                                 },
-                                ContextCompat.getMainExecutor(this@NewCameraXFragment.requireContext())
+                                ContextCompat.getMainExecutor(this@CameraXFragment.requireContext())
                             )
                         }
                     }
@@ -246,7 +248,7 @@ class NewCameraXFragment : Fragment(), CameraManagerEventListener, CameraCommon 
          */
         @JvmStatic
         fun newInstance(cameraConfig: ManagerConfig) =
-            NewCameraXFragment().apply {
+            CameraXFragment().apply {
                 arguments = Bundle().apply {
                     putParcelable(CAMERA_CONFIG, cameraConfig)
                 }

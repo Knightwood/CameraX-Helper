@@ -24,9 +24,10 @@ import com.kiylx.camerax_lib.main.store.FileMetaData
 
 abstract class BaseCameraXActivity : BasicActivity(),
     View.OnClickListener {
-    lateinit var cameraXFragment: NewCameraXFragment
-    lateinit var cameraConfig: ManagerConfig
+    internal lateinit var cameraXFragment: CameraXFragment
+    val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }
 
+    lateinit var cameraConfig: ManagerConfig
     lateinit var mBaseHandler: Handler
     lateinit var page: ActivityCameraExampleBinding
 
@@ -89,9 +90,9 @@ abstract class BaseCameraXActivity : BasicActivity(),
     }
 
     private fun setCameraFragment() {
-        cameraXFragment = NewCameraXFragment.newInstance(cameraConfig)
+        cameraXFragment = CameraXFragment.newInstance(cameraConfig)
             .apply {
-               //设置事件监听
+                //设置事件监听
                 eventListener = object : CameraXFragmentEventListener {
                     //相机管理器初始化之前
                     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
@@ -100,6 +101,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
                             page.cameraPreview
                         )
                     }
+
                     //相机管理器初始化之后
                     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
                         this@BaseCameraXActivity.initCameraFinished(
@@ -129,7 +131,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     open fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
         //指定接收屏幕反转信息的接口实现，例如这里是一个view实现的接口
-        cameraHolder.graphicOverlay=page.graphicOverlayFinder
+        cameraHolder.graphicOverlay = page.graphicOverlayFinder
     }
 
     private fun initFlashSelectColor() {

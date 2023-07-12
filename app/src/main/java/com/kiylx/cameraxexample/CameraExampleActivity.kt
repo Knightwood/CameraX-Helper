@@ -15,16 +15,13 @@ import com.kiylx.camerax_lib.main.store.FileMetaData
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
 
 class CameraExampleActivity : BaseCameraXActivity() {
-    private var cacheMediasDir = "" //存储路径
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
      */
     override fun configAll(intent: Intent): ManagerConfig {
-//        cacheMediasDir = "${application.getExternalFilesDir(null)}/dcim"//应用自身目录下
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         return ManagerConfig().apply {
-            //this.cacheMediaDir = cacheMediasDir
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
@@ -33,7 +30,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     override fun closeActivity(shouldInvokeFinish: Boolean) {
-        cameraXFragment.stopTakeVideo(0)
+        cameraXF.stopTakeVideo(0)
 
         if (shouldInvokeFinish) {
             mBaseHandler.postDelayed(Runnable {
@@ -62,10 +59,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
     override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
         super.initCameraFinished(cameraHolder, cameraPreview)
-        if (cameraConfig.isUsingImageAnalyzer()) {//人脸识别拍摄
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
             page.cameraControlLayout.visibility = View.INVISIBLE
-        } else {
-            //capture()//自动拍照或录像
         }
     }
 
@@ -76,10 +71,10 @@ class CameraExampleActivity : BaseCameraXActivity() {
         if (cameraConfig.captureMode == CaptureMode.takePhoto) {
             //拍照
             mBaseHandler.postDelayed(Runnable {
-                cameraXFragment.takePhoto()
+                cameraXF.takePhoto()
             }, 300)
         } else if (cameraConfig.captureMode == CaptureMode.takeVideo) {
-            cameraXFragment.takeVideo()
+            cameraXF.takeVideo()
         }
     }
 
@@ -87,13 +82,11 @@ class CameraExampleActivity : BaseCameraXActivity() {
      * 人脸识别后拍摄照片
      */
     override fun captureFace() {
-        mBaseHandler.post {
-            cameraXFragment.takePhoto()
-        }
+            cameraXF.takePhoto()
         /*
         //还可以使用预览画面里的bitmap存储为图片
         mBaseHandler.post {
-            val bitmap = cameraXFragment.provideBitmap()
+            val bitmap = cameraXF.provideBitmap()
             if (bitmap != null) {
                 // TODO: 存储bitmap
             }

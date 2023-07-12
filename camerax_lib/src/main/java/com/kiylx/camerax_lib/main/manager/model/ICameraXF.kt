@@ -6,7 +6,7 @@ import androidx.camera.view.PreviewView
 /**
  * fragment实现这些接口，其实是把这些功能委托给CameraHolder去做
  */
-interface CameraCommon {
+interface ICameraXF {
     fun setCaptureResultListener(captureListener: CaptureResultListener)
 
     fun canSwitchCamera(): Boolean
