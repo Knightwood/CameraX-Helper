@@ -28,23 +28,16 @@ import com.permissionx.guolindev.request.ExplainScope
 import com.permissionx.guolindev.request.ForwardScope
 import java.util.concurrent.Executors
 
-/** @param content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
 class CameraHolder(
     cameraPreview: PreviewView,
     cameraConfig: ManagerConfig,
-    content: View,
+    cameraManagerListener: CameraManagerEventListener,
     var captureResultListener: CaptureResultListener? = null,
 ) : CameraXManager(
-    cameraPreview, cameraConfig
+    cameraPreview, cameraConfig,cameraManagerListener
 ) {
     var graphicOverlay: Overlay?=null//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
     private var analyzer: ImageAnalysis.Analyzer = AnalyzeUtils.emptyAnalyzer
-
-    init {
-        view = content
-        lastPreview = content.findViewById(R.id.last_preview)
-        focusView = content.findViewById(R.id.focus_view)
-    }
 
     fun changeAnalyzer(analyzer: ImageAnalysis.Analyzer) {
         this.analyzer = analyzer
@@ -126,7 +119,7 @@ class CameraHolder(
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     currentStatus = TakeVideoState.none
-                    indicateTakePhoto()
+                    cameraListener?.photoTaken()
                     captureResultListener?.onPhotoTaken(output.savedUri)
                 }
             })
@@ -237,35 +230,7 @@ class CameraHolder(
     @SuppressLint("RestrictedApi")
     @Deprecated("不再受支持")
     fun stopCaptureVideo() {
-        fillPreview()
         videoCapture.stopRecording()
-    }
-
-    /** 标示拍照触发成功了 */
-    private fun indicateTakePhoto() {
-        if (CameraSelector.LENS_FACING_BACK == lensFacing) {
-            indicateSuccess(20)
-        } else {
-            if (cameraConfig.flashMode == FlashModel.CAMERA_FLASH_ALL_ON || cameraConfig.flashMode == FlashModel.CAMERA_FLASH_ON) {
-                indicateSuccess(20)   //先不要柔白补光了 500
-            }
-        }
-    }
-
-    /** 拍照显示成功的提示 */
-    private fun indicateSuccess(durationTime: Long) {
-        // 显示一个闪光动画来告知用户照片已经拍好了。在华为等手机上好像有点问题啊 cameraPreview
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            view?.let { cameraUIContainer ->
-                cameraUIContainer.postDelayed({
-                    cameraUIContainer.foreground = ColorDrawable(Color.WHITE)
-                    cameraUIContainer.postDelayed(
-                        { cameraUIContainer.foreground = null },
-                        durationTime
-                    )
-                }, ANIMATION_SLOW_MILLIS)
-            }
-        }
     }
 
     /** 翻转相机时，还需要翻转叠加层 */

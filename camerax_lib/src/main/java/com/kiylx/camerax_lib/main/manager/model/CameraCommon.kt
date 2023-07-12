@@ -2,13 +2,11 @@ package com.kiylx.camerax_lib.main.manager.model
 
 import android.graphics.Bitmap
 import androidx.camera.view.PreviewView
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 
 /**
  * fragment实现这些接口，其实是把这些功能委托给CameraHolder去做
  */
 interface CameraCommon {
-    fun setCameraEventListener(cameraEventListener: CameraEventListener)
     fun setCaptureResultListener(captureListener: CaptureResultListener)
 
     fun canSwitchCamera(): Boolean

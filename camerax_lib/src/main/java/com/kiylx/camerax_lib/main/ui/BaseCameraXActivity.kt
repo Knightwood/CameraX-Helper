@@ -8,7 +8,6 @@ import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
@@ -18,8 +17,6 @@ import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
@@ -104,15 +101,11 @@ abstract class BaseCameraXActivity : BasicActivity(),
                         )
                     }
                     //相机管理器初始化之后
-                    override fun cameraHolderInited(cameraHolder: CameraHolder) {
-                        setCameraEventListener(object : CameraEventListener {
-                            override fun initCameraFinished() {
-                                this@BaseCameraXActivity.initCameraFinished(
-                                    cameraHolder,
-                                    page.cameraPreview
-                                )
-                            }
-                        })
+                    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+                        this@BaseCameraXActivity.initCameraFinished(
+                            cameraHolder,
+                            page.cameraPreview
+                        )
                         //拍照录视频操作结果通知回调
                         setCaptureResultListener(object : CaptureResultListener {
                             override fun onVideoRecorded(fileMetaData: FileMetaData?) {

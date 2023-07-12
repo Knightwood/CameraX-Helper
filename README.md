@@ -1,4 +1,5 @@
 # CameraXlib
+
 集成了拍照，录制视频，人脸识别等的camerax库。
 
 适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
@@ -8,7 +9,6 @@
 推荐直接把`camerax_lib`集成到项目
 
 * 示例代码在app目录下。
-
 * 版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 
 ```
@@ -91,10 +91,7 @@ fun initPhoto() {
 ```
 
 2. 直接继承自`BaseCameraXActivity`就可以自定义相机
-
 3. 或者可以自己实现一个activity,内部放置一个`NewCameraXFragment`就可以实现相机功能
-
-   
 
 ## 其他介绍
 
@@ -106,11 +103,11 @@ fun initPhoto() {
 class NewCameraXFragment : Fragment(), CameraCommon {
 ........
 
-//相机    
+//相机  
    cameraHolder = CameraHolder(
             page.cameraPreview,
             cameraConfig,
-            page.root
+            cameraManagerListener = this,//fragment实现已此接口，可以收到cameraManager传来的某些事件
         ).apply {
             eventListener?.cameraHolderInitStart(this)
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
@@ -118,7 +115,7 @@ class NewCameraXFragment : Fragment(), CameraCommon {
         //使用changeAnalyzer方法改变camerax使用的图像识别器
         // cameraHolder.changeAnalyzer(VisionType.Barcode)
         eventListener?.cameraHolderInited(cameraHolder)//通知外界holder初始化完成了，可以对holder做其他操作了
-    
+  
 ```
 
 * `BaseCameraXActivity`
@@ -141,15 +138,11 @@ class NewCameraXFragment : Fragment(), CameraCommon {
                         )
                     }
                     //相机管理器初始化之后
-                    override fun cameraHolderInited(cameraHolder: CameraHolder) {
-                        setCameraEventListener(object : CameraEventListener {
-                            override fun initCameraFinished() {
-                                this@BaseCameraXActivity.initCameraFinished(
-                                    cameraHolder,
-                                    page.cameraPreview
-                                )
-                            }
-                        })
+                    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+                        this@BaseCameraXActivity.initCameraFinished(
+                            cameraHolder,
+                            page.cameraPreview
+                        )
                         //拍照录视频操作结果通知回调
                         setCaptureResultListener(object : CaptureResultListener {
                             override fun onVideoRecorded(fileMetaData: FileMetaData?) {
@@ -269,7 +262,10 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
 ## 面部识别，特征点计算
 
-[来源]:https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5
+> 来源
+>
+> [文章连接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
+
 
 ```
 //使用TensorFlow Lite 模型的处理器
@@ -293,9 +289,7 @@ StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
         }
 ```
 
-
-
-  # CameraButton
+# CameraButton
 
 此按钮控件用于拍照和录像，支持点击拍照，点击录像和长按录像，长按录制有动画
 
@@ -304,7 +298,6 @@ StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
 可以设置按钮仅支持拍照，仅支持录制，或都支持
 
 1. 在开启长按录制时，点击录制将不可用
-
 2. 开启点击录制时，拍照不可用
 
 布局文件示例
@@ -375,9 +368,6 @@ https://jarcasting.com/artifacts/org.tensorflow/tensorflow-lite/
 
 https://discuss.tensorflow.org/t/tensorflow-lite-aar-2-9-0-android-integration/11796
 
-
-
 * 如果需要更简便的使用方式，可以同时引入`TensorFlow Lite Task Library`
 
 详情参考https://tensorflow.google.cn/lite/inference_with_metadata/overview?hl=zh-cn
-
