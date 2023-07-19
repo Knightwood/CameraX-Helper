@@ -81,7 +81,7 @@ abstract class CameraXManager(
             //使用 DisplayListener 可以让您在特定情况下更新相机用例的目标旋转角度，
             //例如在设备旋转了 180 度后系统没有销毁并重新创建 Activity 的情况下。
             preview?.targetRotation = rotation
-            updateCaseRotation(rotation)
+            //updateCaseRotation(rotation)
         }
     }
 
