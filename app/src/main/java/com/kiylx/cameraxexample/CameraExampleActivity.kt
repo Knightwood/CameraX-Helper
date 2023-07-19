@@ -2,9 +2,11 @@ package com.kiylx.cameraxexample
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.util.Size
 import android.view.View
 import androidx.camera.view.PreviewView
+import com.google.mlkit.vision.face.Face
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
@@ -13,8 +15,12 @@ import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.store.FileMetaData
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
+import com.kiylx.cameraxexample.graphic2.BitmapProcessor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 
 class CameraExampleActivity : BaseCameraXActivity() {
+    var analyzeResultListener: AnalyzeResultListener? = null
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
@@ -54,7 +60,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
                 override fun isSuccess() {
 
                 }
-            }
+            }.also { analyzeResultListener = it }
     }
 
     override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
@@ -82,7 +88,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
      * 人脸识别后拍摄照片
      */
     override fun captureFace() {
-            cameraXF.takePhoto()
+        cameraXF.takePhoto()
         /*
         //还可以使用预览画面里的bitmap存储为图片
         mBaseHandler.post {
@@ -110,6 +116,39 @@ class CameraExampleActivity : BaseCameraXActivity() {
      */
     override fun videoRecordEnd(fileMetaData: FileMetaData?) {
         super.videoRecordEnd(fileMetaData)
+    }
+
+
+    var stopAnalyzer = false
+
+    /**
+     * 每隔20ms从预览视图中获取bitmap
+     * 然后运行图像分析，绘制矩形框
+     * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
+     */
+    suspend fun runFaceDetection(interval: Long = 20L) {
+        if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
+            Log.d(tag, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
+            return
+        } else {
+            BitmapProcessor.analyzeListener = analyzeResultListener
+            flow<Boolean> {
+                while (true) {
+                    delay(interval)
+                    emit(stopAnalyzer)
+                    if (stopAnalyzer) {
+                        break
+                    }
+                }
+            }.collect {
+                cameraXF.provideBitmap()?.let { originalBitmap ->
+                    BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
+                        BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
+                    }
+                }
+
+            }
+        }
     }
 
 

@@ -2,7 +2,6 @@ package com.kiylx.camerax_lib.main.manager
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.graphics.Point
 import android.os.Build
 import android.os.Handler
 import android.util.DisplayMetrics
@@ -10,8 +9,6 @@ import android.util.Log
 import android.util.Range
 import android.util.Size
 import android.view.Surface
-import android.view.View
-import android.widget.ImageView
 import androidx.annotation.CallSuper
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -25,17 +22,11 @@ import androidx.lifecycle.Lifecycle.Event.ON_DESTROY
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import com.google.common.util.concurrent.ListenableFuture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
 import com.kiylx.camerax_lib.main.manager.model.*
-import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
-import com.kiylx.camerax_lib.main.store.StorageConfig
-import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
-import com.kiylx.camerax_lib.view.FocusImageView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 /*
 如果视图是强制竖屏或横屏，就不该旋转预览视图
@@ -90,6 +81,7 @@ abstract class CameraXManager(
             //使用 DisplayListener 可以让您在特定情况下更新相机用例的目标旋转角度，
             //例如在设备旋转了 180 度后系统没有销毁并重新创建 Activity 的情况下。
             preview?.targetRotation = rotation
+            updateCaseRotation(rotation)
         }
     }
 
@@ -165,43 +157,8 @@ abstract class CameraXManager(
                 //设置默认摄像头，默认是后置的摄像头，没有后面的再切换到前面的来
                 val cameraProviderTmp = cameraProvider
                 parseCameraSelector(cameraProviderTmp)
-
-                var screenAspectRatio: Int//屏幕缩放比率
-                var size: Size//屏幕尺寸
-                val rotation: Int//屏幕方向
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    //或许，这里会获取失败？？？
-                    val metrics2 = context.windowManager.currentWindowMetrics
-                    screenAspectRatio =
-                        ManagerUtil.aspectRatio(metrics2.bounds.width(), metrics2.bounds.height())
-                    size = Size(metrics2.bounds.width(), metrics2.bounds.height())
-                    rotation = context.display!!.rotation
-                } else {
-                    if (cameraPreview.display == null) {
-                        screenAspectRatio =
-                            ManagerUtil.aspectRatio(
-                                cameraConfig.size.width,
-                                cameraConfig.size.height
-                            )
-                        size = cameraConfig.size
-                    } else {
-                        val metrics = DisplayMetrics().also {
-                            cameraPreview.display.getRealMetrics(it)
-                        }
-                        screenAspectRatio =
-                            ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
-                        size = Size(metrics.widthPixels, metrics.heightPixels)
-                    }
-                    rotation = cameraPreview.rotation.toInt()
-                }
-//                Log.i("旋转3", "$rotation")
-                //初始化用例
-                initPreView(rotation)
-                initImageAnalyzer(rotation)
-                initImageCapture(screenAspectRatio, rotation, size)
-                initVideoCapture(screenAspectRatio, rotation)
-                //配置屏幕方向监听
+                initUseCase()
+                //配置传感器方向监听
                 if (sensorRotation == null) {
                     sensorRotation = SensorRotation(context).apply {
                         listener = orientationEventListener
@@ -209,9 +166,7 @@ abstract class CameraXManager(
                 }
                 //配置屏幕方向监听
                 if (displayRotation == null) {
-                    displayRotation = DisplayRotation(context).apply {
-                        listener = displayRotationListener
-                    }
+                    displayRotation = DisplayRotation(context,displayRotationListener)
                 }
                 //setUpPinchToZoom()
                 setCamera(cameraConfig.captureMode)//绑定实例
@@ -223,63 +178,62 @@ abstract class CameraXManager(
         )
     }
 
-    private fun initPreView(rotation: Int = Surface.ROTATION_0) {
-        preview = Preview.Builder()
-            // 我们要去宽高比，但是没有分辨率
-            //.setTargetAspectRatio(screenAspectRatio)
-            //.setTargetResolution(size)
-            // 设置初始的旋转
-            .setTargetRotation(rotation)
-            .build()
+    /**
+     * 重新构建用例，并且绑定用例
+     */
+    fun refreshBinding() {
+        initUseCase()
+        setCamera(cameraConfig.captureMode)
     }
 
-    /** setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用 */
-    private fun initImageCapture(
-        screenAspectRatio: Int,
-        rotation: Int = Surface.ROTATION_0,
-        size: Size,
-    ) {
-        // ImageCapture，用于拍照功能
-        imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            //设置初始目标旋转，如果旋转改变，我们将不得不再次调用它在此用例的生命周期中
-            .setTargetRotation(rotation)
-            // 我们要求长宽比，但没有分辨率匹配预览配置，但让 CameraX优化为任何特定的解决方案，最适合我们的用例
-            .setTargetAspectRatio(screenAspectRatio)
-            //.setTargetResolution(size)
-            .build()
-    }
+    fun initUseCase() {
+        val screenAspectRatio: Int//屏幕缩放比率
+        val size: Size//屏幕尺寸
+        var rotation: Int//屏幕方向
 
-    @SuppressLint("RestrictedApi")
-    private fun initVideoCapture(screenAspectRatio: Int, rotation: Int = Surface.ROTATION_0) {
-        if (cameraConfig.useNewVideoCapture) {
-            newVideoCapture =
-                VideoRecorderHolder.getVideoCapture(cameraExecutor, StorageConfig.quality)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics2 = context.windowManager.currentWindowMetrics
+            screenAspectRatio =
+                ManagerUtil.aspectRatio(metrics2.bounds.width(), metrics2.bounds.height())
+            size = Size(metrics2.bounds.width(), metrics2.bounds.height())
+            rotation = context.display!!.rotation
         } else {
-            // 视频的还不是很成熟，不一定都能用
-            videoCapture = VideoCapture.Builder()//录像用例配置
-                .setTargetAspectRatio(screenAspectRatio) //设置高宽比「我比较喜欢全屏」
-                //视频帧率  越高视频体积越大
-                .setVideoFrameRate(60)
-                //bit率  越大视频体积越大
-                .setBitRate(3 * 1024 * 1024)
-                .setTargetRotation(rotation)//设置旋转角度
-                //.setAudioRecordSource(MediaRecorder.AudioSource.MIC)//设置音频源麦克风
-                .build()
+            if (cameraPreview.display == null) {
+                screenAspectRatio =
+                    ManagerUtil.aspectRatio(
+                        cameraConfig.size.width,
+                        cameraConfig.size.height
+                    )
+                size = cameraConfig.size
+                rotation = context.windowManager.defaultDisplay.rotation
+            } else {
+                val metrics = DisplayMetrics().also {
+                    cameraPreview.display.getRealMetrics(it)
+                }
+                screenAspectRatio =
+                    ManagerUtil.aspectRatio(metrics.widthPixels, metrics.heightPixels)
+                size = Size(metrics.widthPixels, metrics.heightPixels)
+                rotation = cameraPreview.display.rotation
+            }
         }
-    }
-
-    private fun initImageAnalyzer(rotation: Int = Surface.ROTATION_0) {
-        imageAnalyzer = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setTargetRotation(rotation)//设置旋转角度
-            .build()
+        if (cameraConfig.rotation > 0) {
+            rotation = cameraConfig.rotation
+        }
+        preview = UseCaseHolder.caseHelper.initPreView(rotation)
+        imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(rotation)
+        imageCapture = UseCaseHolder.caseHelper.initImageCapture(screenAspectRatio, rotation, size)
+        if (cameraConfig.useNewVideoCapture) {
+            newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor)
+        } else {
+            videoCapture =
+                UseCaseHolder.caseHelper.initOldVideoCapture(screenAspectRatio, rotation)
+        }
     }
 
     /** 绑定相机实例之类的 */
     internal fun setCamera(captureMode: Int) {
         //再次重新绑定前应该先解绑 , imageAnalyzer
-        cameraProvider?.unbindAll()
+        cameraProvider.unbindAll()
         try {
             val lifeOwner = context
             //目前一次无法绑定拍照和摄像一起
@@ -287,7 +241,7 @@ abstract class CameraXManager(
                 CaptureMode.imageAnalysis -> {
                     //LEVEL_3（或更好）的相机设备才支持“预览”、“视频拍摄”、“图像分析” 三个同时绑定。这里暂定，未来可能会增加更多种绑定
                     imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
-                    camera = cameraProvider?.bindToLifecycle(
+                    camera = cameraProvider.bindToLifecycle(
                         lifeOwner,
                         cameraSelector,
                         preview,
@@ -299,7 +253,7 @@ abstract class CameraXManager(
                 }
                 CaptureMode.takePhoto -> {
                     try {
-                        camera = cameraProvider?.bindToLifecycle(
+                        camera = cameraProvider.bindToLifecycle(
                             lifeOwner, cameraSelector, preview, imageCapture
                         )
                     } catch (exc: Exception) {
@@ -309,7 +263,7 @@ abstract class CameraXManager(
                 }
                 CaptureMode.takeVideo -> {
                     try {
-                        camera = cameraProvider?.bindToLifecycle(
+                        camera = cameraProvider.bindToLifecycle(
                             lifeOwner,
                             cameraSelector,
                             preview,
@@ -407,7 +361,7 @@ abstract class CameraXManager(
     /**
      * 基于当前放大缩小
      */
-    fun changeZoom(){
+    fun changeZoom() {
         // 放大缩小
         val currentZoomRatio = zoomState?.value!!.zoomRatio
         if (currentZoomRatio > zoomState?.value!!.minZoomRatio) {
@@ -469,6 +423,6 @@ abstract class CameraXManager(
     abstract fun checkPerm(block: () -> Unit)
 
     companion object {
-        const val TAG = "相机管理器"
+        const val TAG = "tty1-相机管理器"
     }
 }

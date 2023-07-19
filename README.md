@@ -162,6 +162,21 @@ class CameraXFragment : Fragment(), ICameraXF {
 
 ```
 
+* `UseCaseHolder`  初始化预览，拍照用例，录像用例，图像分析用例
+
+  可以提供自己的实现，示例：
+
+  ```
+  class IMPL:IUseCaseHelper{
+  	........ug l
+  }
+  val impl =IMPL()
+  //在相机初始化之前调用，提供自己的实现
+  UseCaseHolder.setInitImpl(impl)
+  ```
+
+  
+
 
 ## 示例相机
 

@@ -29,9 +29,10 @@ import com.kiylx.camerax_lib.utils.Weak
  * 使用 DisplayListener 可以让您在特定情况下更新相机用例的目标旋转角度，
  * 例如在设备旋转了 180 度后系统没有销毁并重新创建 Activity 的情况下。
  */
-class DisplayRotation(context: FragmentActivity) : LifecycleEventObserver {
+class DisplayRotation(context: FragmentActivity,
+                      var listener: DisplayRotationChangeListener? = null
+) : LifecycleEventObserver {
     var activity by Weak { context }
-    var listener: DisplayRotationChangeListener? = null
 
     /**
      * 设备逆时针旋转90度（表现在这里就是270度），内容就应该顺时针旋转90度，此时应该设置为Surface.ROTATION_90

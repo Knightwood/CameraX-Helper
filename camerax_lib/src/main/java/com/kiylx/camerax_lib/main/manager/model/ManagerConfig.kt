@@ -5,6 +5,8 @@ import android.util.Size
 import androidx.camera.core.ImageCapture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import kotlinx.parcelize.Parcelize
+import android.view.Surface
+
 
 
 @Parcelize
@@ -23,6 +25,12 @@ data class ManagerConfig(
 
     @Deprecated("新的录像方式已不再使用此字段")
     var MyVideoDir: String = "",
+    /**
+     * 指定图像分析和拍照的旋转角度,默认可能为[Surface.ROTATION_0]。
+     * 默认值是根据display的旋转方向而定
+     * 因此，如果在此指定值，默认值将不会使用
+     */
+    var rotation: Int = -1
 
     ) : Parcelable {
 

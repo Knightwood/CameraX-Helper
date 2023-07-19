@@ -1,5 +1,6 @@
 package com.kiylx.camerax_lib.main.manager.imagedetection.face
 
+import android.graphics.Matrix
 import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
@@ -71,13 +72,12 @@ class FaceContourDetectionProcessor(
         imageProxy: ImageProxy,
         results: List<Face>,
         graphicOverlay: GraphicOverlay,
-        rect: Rect,
     ) {
         //清空上一次识别的面部图像位置数据，
         //添加这一次的图像数据，并刷新叠加层以绘制面部数据
         graphicOverlay.clear()
         results.forEach {
-            val faceGraphic = FaceContourGraphic(graphicOverlay, it, rect)
+            val faceGraphic = FaceContourGraphic(graphicOverlay, it, imageProxy.cropRect)
             graphicOverlay.add(faceGraphic)
         }
         //BitmapUtils.getBitmap(imageProxy) //从imageProxy中获取bitmap
@@ -92,6 +92,71 @@ class FaceContourDetectionProcessor(
 
     override fun onFailure(e: Exception) {
         Log.w(TAG, "Face Detector failed.$e")
+    }
+
+    var matrix: Matrix? = null
+
+    /**
+     * 生成一个将图像分析的坐标映射到预览视图的矩阵
+     * 在使用前置摄像头获得图像的框体后，若是绘制到屏幕，x坐标需要再镜像一下
+     * 示例：
+     * ```
+     * //视图的x轴中心
+     * val centerX = overlay.width.toFloat() / 2
+     * //前置摄像头反转
+     * if (overlay.isFrontMode()) {
+     *      rect.apply {
+     *          left = centerX + (centerX - left)
+     *          right = centerX - (right - centerX)
+     *      }
+     * }
+     *···
+     */
+    fun genMatrix(imageProxy: ImageProxy): Matrix {
+        return matrix ?: let {
+            val matrix1 = Matrix()
+            val cropRect = imageProxy.cropRect
+            val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+            // A float array of the source vertices (crop rect) in clockwise order.
+            val source = floatArrayOf(
+                cropRect.left.toFloat(),
+                cropRect.top.toFloat(),
+                cropRect.right.toFloat(),
+                cropRect.top.toFloat(),
+                cropRect.right.toFloat(),
+                cropRect.bottom.toFloat(),
+                cropRect.left.toFloat(),
+                cropRect.bottom.toFloat()
+            )
+
+            // A float array of the destination vertices in clockwise order.
+            val destination = floatArrayOf(
+                0f,
+                0f,
+                view.width.toFloat(),
+                0f,
+                view.width.toFloat(),
+                view.height.toFloat(),
+                0f,
+                view.height.toFloat()
+            )
+
+            // The destination vertexes need to be shifted based on rotation degrees. The
+            // rotation degree represents the clockwise rotation needed to correct the image.
+
+            // Each vertex is represented by 2 float numbers in the vertices array.
+            val vertexSize = 2
+            // The destination needs to be shifted 1 vertex for every 90° rotation.
+            val shiftOffset = rotationDegrees / 90 * vertexSize;
+            val tempArray = destination.clone()
+            for (toIndex in source.indices) {
+                val fromIndex = (toIndex + shiftOffset) % source.size
+                destination[toIndex] = tempArray[fromIndex]
+            }
+            matrix1.setPolyToPoly(source, 0, destination, 0, 4)
+            matrix = matrix1
+            return@let matrix1
+        }
     }
 
     companion object {

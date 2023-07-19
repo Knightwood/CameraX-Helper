@@ -11,7 +11,7 @@ import kotlin.math.ceil
  * 经由Graphic绘制到GraphicOverlay上
  * 此类承担着数据坐标的转换
  */
-abstract class Graphic(internal val overlay: GraphicOverlay) {
+abstract class Graphic(protected val overlay: GraphicOverlay) {
     var mScale: Float? = null
     var mOffsetX: Float? = null
     var mOffsetY: Float? = null

@@ -32,7 +32,6 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
                         imageProxy,
                         results,
                         graphicOverlay,
-                        it.cropRect,
                     )
                 }
                 .addOnFailureListener {
@@ -60,7 +59,6 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
         imageProxy:ImageProxy,
         results: T,
         graphicOverlay: GraphicOverlay,
-        rect: Rect,
     )
 
     protected abstract fun onFailure(e: Exception)

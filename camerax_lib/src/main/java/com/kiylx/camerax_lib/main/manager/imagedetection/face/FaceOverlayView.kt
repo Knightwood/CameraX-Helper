@@ -64,10 +64,10 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         synchronized(lock) {
-            initProcessCanvas()
+            //initProcessCanvas()
             graphics.forEach {
                 it.draw(canvas)
-                it.draw(processCanvas)
+                //it.draw(processCanvas)
             }
         }
     }
