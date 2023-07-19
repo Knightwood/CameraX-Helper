@@ -168,7 +168,7 @@ class CameraXFragment : Fragment(), ICameraXF {
 
   ```
   class IMPL:IUseCaseHelper{
-  	........ug l
+  	........省略
   }
   val impl =IMPL()
   //在相机初始化之前调用，提供自己的实现
