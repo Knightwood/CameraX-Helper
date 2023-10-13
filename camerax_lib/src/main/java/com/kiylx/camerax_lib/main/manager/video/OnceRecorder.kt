@@ -3,7 +3,6 @@ package com.kiylx.camerax_lib.main.manager.video
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
-import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
@@ -13,9 +12,9 @@ import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.manager.video.OutputKinds.*
 import com.kiylx.camerax_lib.main.store.FileMetaData
 import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -56,9 +55,20 @@ class OnceRecorder(
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
             put(MediaStore.Video.Media.MIME_TYPE, MimeTypeConsts.mp4)
         }
-        outputOption = MediaStoreOutputOptions.Builder(context.contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+        outputOption = MediaStoreOutputOptions.Builder(
+            context.contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )
             .setContentValues(contentValues)
+            .apply {
+                if (VideoCaptureConfig.fileSizeLimit > 0) {
+                    setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
+                }
+                if (VideoCaptureConfig.durationLimitMillis > 0) {
+                    setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
+                }
+            }
+            .setLocation(VideoCaptureConfig.location)
             .build()
     }
 
@@ -67,35 +77,40 @@ class OnceRecorder(
      */
     @SuppressLint("MissingPermission")
     internal fun getVideoRecording(): PendingRecording? {
-        if (VideoRecorderHolder.videoCapture == null) {
+        if (VideoCaptureHolder.videoCapture == null) {
             throw Exception("没有videoCapture")
         }
         val pendingRecording: PendingRecording? =
             when (outputKinds) {
                 FILE_DESCRIPTOR -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        VideoRecorderHolder.videoCapture!!.output
+                        VideoCaptureHolder.videoCapture!!.output
                             .prepareRecording(
                                 context,
-                                outputOption as FileDescriptorOutputOptions)
+                                outputOption as FileDescriptorOutputOptions
+                            )
                             .withAudioEnabled()
 
                     } else {
                         null
                     }
                 }
+
                 FILE -> {
-                    VideoRecorderHolder.videoCapture!!.output
+                    VideoCaptureHolder.videoCapture!!.output
                         .prepareRecording(
                             context,
-                            outputOption as FileOutputOptions)
+                            outputOption as FileOutputOptions
+                        )
                         .withAudioEnabled()
                 }
+
                 MEDIA_STORE -> {
-                    VideoRecorderHolder.videoCapture!!.output
+                    VideoCaptureHolder.videoCapture!!.output
                         .prepareRecording(
                             context,
-                            outputOption as MediaStoreOutputOptions)
+                            outputOption as MediaStoreOutputOptions
+                        )
                         .withAudioEnabled()
 
                 }
@@ -128,9 +143,14 @@ fun OnceRecorder.getMediaStoreOutput(contentValues: ContentValues? = null): Once
     if (contentValues == null) {
         getDefaultOutputOptions()
     } else {
-        outputOption = MediaStoreOutputOptions.Builder(context.contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+        outputOption = MediaStoreOutputOptions.Builder(
+            context.contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )
             .setContentValues(contentValues)
+            .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
+            .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
+            .setLocation(VideoCaptureConfig.location)
             .build()
     }
     return this
@@ -142,26 +162,26 @@ fun OnceRecorder.getMediaStoreOutput(contentValues: ContentValues? = null): Once
  */
 fun OnceRecorder.getFileDescriptorOutput(
     fileDescriptor: ParcelFileDescriptor,
-    limit: Long = -1,
 ): OnceRecorder {
     outputKinds = FILE_DESCRIPTOR
-    val tmp = FileDescriptorOutputOptions.Builder(fileDescriptor)
-    if (limit > 0)
-        tmp.setFileSizeLimit(limit)
-    outputOption = tmp.build()
+    outputOption = FileDescriptorOutputOptions.Builder(fileDescriptor)
+        .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
+        .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
+        .setLocation(VideoCaptureConfig.location)
+        .build()
     return this
 }
 
 /**
  * 生成File版本的输出配置
- * @param limit 文件大小限制
  */
-fun OnceRecorder.getFileOutputOption(file: File, limit: Long = -1): OnceRecorder {
+fun OnceRecorder.getFileOutputOption(file: File): OnceRecorder {
     outputKinds = FILE
-    val tmp = FileOutputOptions.Builder(file)
-    if (limit > 0)
-        tmp.setFileSizeLimit(limit)
-    outputOption = tmp.build()
+    outputOption = FileOutputOptions.Builder(file)
+        .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
+        .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
+        .setLocation(VideoCaptureConfig.location)
+        .build()
     return this
 }
 
@@ -174,9 +194,7 @@ fun OnceRecorder.getFileOutputOption(file: File, limit: Long = -1): OnceRecorder
 enum class OutputKinds {
     /**
      * Android O及以上使用
-     * 还未完全实现，未来也可能不实现
      */
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
     FILE_DESCRIPTOR,
 
     /**

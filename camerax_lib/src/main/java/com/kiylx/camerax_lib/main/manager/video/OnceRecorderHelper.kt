@@ -9,7 +9,6 @@ import com.kiylx.camerax_lib.main.manager.video.LocationKind.*
 import com.kiylx.camerax_lib.main.store.FileMetaData
 import com.kiylx.camerax_lib.main.store.StorageConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
-import java.util.*
 
 /**
  * 1.通过这个单例，全局设置默认的文件输出位置。

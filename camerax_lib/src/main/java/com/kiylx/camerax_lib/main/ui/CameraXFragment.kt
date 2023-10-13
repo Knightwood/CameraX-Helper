@@ -292,21 +292,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     }
 
     override fun stopTakeVideo(time: Long) {
-        if (!cameraConfig.useNewVideoCapture) {
-            fillPreview()
-        }
         cameraHolder.stopTakeVideo()
-    }
-
-    /** 用最后一帧填充画面，避免变成黑色 警告：不能用于camera-video库的视频捕获 */
-    internal fun fillPreview() {
-        //lastPreview
-        //覆盖在预览上面的图片，用于显示预览的最后一帧，这样可以避免预览在某些时候是黑色的情况
-        page.lastPreview.let {
-            mBitmapFlip = page.cameraPreview.bitmap
-            it.visibility = View.VISIBLE
-            it.setImageBitmap(mBitmapFlip)
-        }
     }
 
     override fun setCameraUseCase(mode: Int) {

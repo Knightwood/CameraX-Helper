@@ -13,6 +13,7 @@ import androidx.annotation.CallSuper
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
+import androidx.camera.video.VideoCapture
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -48,8 +49,7 @@ abstract class CameraXManager(
     //三种实例
     lateinit var imageAnalyzer: ImageAnalysis
     lateinit var imageCapture: ImageCapture
-    lateinit var videoCapture: VideoCapture //录像用例
-    lateinit var newVideoCapture: androidx.camera.video.VideoCapture<Recorder> //新版本录像用例
+    lateinit var newVideoCapture: VideoCapture<Recorder> //新版本录像用例
 
     //状态
     private lateinit var cameraSelector: CameraSelector
@@ -222,12 +222,7 @@ abstract class CameraXManager(
         preview = UseCaseHolder.caseHelper.initPreView(rotation)
         imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(rotation)
         imageCapture = UseCaseHolder.caseHelper.initImageCapture(screenAspectRatio, rotation, size)
-        if (cameraConfig.useNewVideoCapture) {
-            newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor)
-        } else {
-            videoCapture =
-                UseCaseHolder.caseHelper.initOldVideoCapture(screenAspectRatio, rotation)
-        }
+        newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor,rotation)
     }
 
     /** 绑定相机实例之类的 */
@@ -267,7 +262,7 @@ abstract class CameraXManager(
                             lifeOwner,
                             cameraSelector,
                             preview,
-                            if (cameraConfig.useNewVideoCapture) newVideoCapture else videoCapture
+                            newVideoCapture
                         )
                     } catch (exc: Exception) {
                         Log.e(TAG, "Use case binding failed", exc)

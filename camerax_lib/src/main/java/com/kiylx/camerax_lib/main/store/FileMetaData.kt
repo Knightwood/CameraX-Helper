@@ -14,5 +14,4 @@ data class FileMetaData(
     val locationKind: LocationKind = LocationKind.DCIM,
     val path: String = "",
     val uri: Uri = Uri.EMPTY,
-    val os: Int = Build.VERSION.SDK_INT,
 )

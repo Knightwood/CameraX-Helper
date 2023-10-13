@@ -61,7 +61,7 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
         processCanvas = Canvas(processBitmap)
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         synchronized(lock) {
             //initProcessCanvas()

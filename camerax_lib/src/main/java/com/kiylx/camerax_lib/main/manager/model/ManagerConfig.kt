@@ -13,18 +13,12 @@ import android.view.Surface
 data class ManagerConfig(
     var flashMode: Int = FlashModel.CAMERA_FLASH_OFF,
     var size: Size = Size(1280, 720),//android R以下，设置预览，拍照的默认分辨率
-    /**
-     * true：使用camera-video库完成视频录制功能
-     * 将来会使用camera-video库取代旧方式录制视频
-     */
-    var useNewVideoCapture: Boolean = true,
+
     /**
      * 查看[CaptureMode]
      */
     var captureMode: Int = CaptureMode.takePhoto,
 
-    @Deprecated("新的录像方式已不再使用此字段")
-    var MyVideoDir: String = "",
     /**
      * 指定图像分析和拍照的旋转角度,默认可能为[Surface.ROTATION_0]。
      * 默认值是根据display的旋转方向而定

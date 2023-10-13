@@ -88,6 +88,14 @@ fun initPhoto() {
             }
         }
     }
+视频的存储配置同拍照的存储配置相同，可以参考app示例中的MainActivity
+
+视频的其他配置
+VideoCaptureConfig.run {
+            quality = Quality.HD//设置视频 拍摄质量
+//            fileSizeLimit=100000 //文件大限制,单位bytes
+//            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
+        } 
 ```
 
 2. 直接继承自`BaseCameraXActivity`就可以自定义相机

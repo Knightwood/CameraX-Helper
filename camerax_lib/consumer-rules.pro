@@ -174,17 +174,23 @@
    public <init> (org.json.JSONObject);
 }
 
-# 不混淆AndroidX及Material，以便使用反射进行破解
--dontwarn android.support.**
--dontwarn androidx.**
+#androidx包使用混淆
+-keepnames class com.google.android.material.** {*;}
+-keepnames class androidx.** {*;}
+-keepnames public class * extends androidx.**
+-keepnames interface androidx.** {*;}
 -dontwarn com.google.android.material.**
--keep class androidx.** {*;}
--keep public class * extends androidx.**
--keep interface androidx.** {*;}
--keep class android.support.** {*;}
--keep public class * extends android.support.**
--keep interface android.support.** {*;}
--keep class com.google.android.material.** {*;}
+-dontnote com.google.android.material.**
+-dontwarn androidx.**
+
+# 保留support下的所有类及其内部类
+#-keep class android.support.** {*;}
+
+# 保留继承的 support库
+#-keep public class * extends android.support.v4.**
+#-keep public class * extends android.support.v7.**
+#-keep public class * extends android.support.annotation.**
+
 
 # XML映射问题，一些控件无法Inflate
 -keep class org.xmlpull.v1.** {*;}
@@ -204,28 +210,28 @@
 }
 
 #kotlin 相关
--dontwarn kotlin.**
--keep class kotlin.** { *; }
--keep interface kotlin.** { *; }
--keepclassmembers class kotlin.Metadata {
-    public <methods>;
-}
--keepclasseswithmembers @kotlin.Metadata class * { *; }
--keepclassmembers class **.WhenMappings {
-    <fields>;
-}
--assumenosideeffects class kotlin.jvm.internal.Intrinsics {
-    static void checkParameterIsNotNull(java.lang.Object, java.lang.String);
-}
+#-dontwarn kotlin.**
+#-keep class kotlin.** { *; }
+#-keep interface kotlin.** { *; }
+#-keepclassmembers class kotlin.Metadata {
+#    public <methods>;
+#}
+#-keepclasseswithmembers @kotlin.Metadata class * { *; }
+#-keepclassmembers class **.WhenMappings {
+#    <fields>;
+#}
+#-assumenosideeffects class kotlin.jvm.internal.Intrinsics {
+#    static void checkParameterIsNotNull(java.lang.Object, java.lang.String);
+#}
 
--keep class kotlinx.** { *; }
--keep interface kotlinx.** { *; }
--dontwarn kotlinx.**
--dontnote kotlinx.serialization.SerializationKt
-
--keep class org.jetbrains.** { *; }
--keep interface org.jetbrains.** { *; }
--dontwarn org.jetbrains.**
+#-keep class kotlinx.** { *; }
+#-keep interface kotlinx.** { *; }
+#-dontwarn kotlinx.**
+#-dontnote kotlinx.serialization.SerializationKt
+#
+#-keep class org.jetbrains.** { *; }
+#-keep interface org.jetbrains.** { *; }
+#-dontwarn org.jetbrains.**
 
 
 # >>>>>>>>>>>>>>>----------实体类---------->>>>>>>>>>>>>>>

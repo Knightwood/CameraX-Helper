@@ -10,10 +10,10 @@ import androidx.camera.video.Quality
 import com.kiylx.camerax_lib.main.manager.model.MediaType
 import com.kiylx.camerax_lib.main.manager.video.LocationKind
 import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.kiylx.cameraxexample.databinding.ActivityMainBinding
 import com.kiylx.store_lib.StoreX
 
-/** 最初是github上的CameraxFragment项目和一个演示如何使用谷歌机器学习的库给了我启发。 */
 const val ImageDetection = "imageDetection"
 
 class MainActivity : AppCompatActivity() {
@@ -94,6 +94,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun initVideo() {
+        VideoCaptureConfig.run {
+            quality = Quality.HD//设置视频 拍摄质量
+//            fileSizeLimit=100000 //文件大限制,单位bytes
+//            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
+        }
         page.rg2.setOnCheckedChangeListener { group, checkedId ->
             val relativePath = page.relativePath2.text.toString()
             when (checkedId) {
@@ -107,7 +112,6 @@ class MainActivity : AppCompatActivity() {
                             getExternalFilesDir(null)!!.absolutePath,
                             relativePath
                         )
-                        StorageConfig.quality = Quality.HD//设置视频 拍摄质量
                     }
                 }
                 R.id.save_dcim_2 -> {

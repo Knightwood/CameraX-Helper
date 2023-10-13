@@ -14,11 +14,10 @@ import java.io.File
 
 /**
  * 全局的(存储照片、视频)存储配置 用法：
- * 1. StorageConfig.prepare(application) 2.（可选）
- *    StorageConfig.configStorage()
+ * 1. StorageConfig.prepare(application)
+ * 2.（可选）StorageConfig.configStorage()
  */
 object StorageConfig {
-    var quality: Quality?=null//视频拍摄质量
     var application by Weak<Application> { null }
     lateinit var imageStorage: Storage
     lateinit var videoStorage: Storage

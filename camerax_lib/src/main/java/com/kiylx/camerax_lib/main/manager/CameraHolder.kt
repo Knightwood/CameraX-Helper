@@ -34,9 +34,9 @@ class CameraHolder(
     cameraManagerListener: CameraManagerEventListener,
     var captureResultListener: CaptureResultListener? = null,
 ) : CameraXManager(
-    cameraPreview, cameraConfig,cameraManagerListener
+    cameraPreview, cameraConfig, cameraManagerListener
 ) {
-    var graphicOverlay: Overlay?=null//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
+    var graphicOverlay: Overlay? = null//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
     private var analyzer: ImageAnalysis.Analyzer = AnalyzeUtils.emptyAnalyzer
 
     fun changeAnalyzer(analyzer: ImageAnalysis.Analyzer) {
@@ -127,78 +127,14 @@ class CameraHolder(
     }
 
     fun takeVideo() {
-        if (cameraConfig.useNewVideoCapture) {
-            anotherCaptureVideo()
-        } else {
-            captureVideo()
-        }
+        anotherCaptureVideo()
     }
 
     fun stopTakeVideo() {
         //这里是不是会自动的unbind VideoCapture
         if (currentStatus == TakeVideoState.takeVideo) {
-            if (cameraConfig.useNewVideoCapture) {
-                anotherStopCaptureVideo()
-            } else {
-                stopCaptureVideo()
-            }
+            anotherStopCaptureVideo()
         }
-    }
-
-
-    /** 拍摄视频，使用[anotherCaptureVideo]取代 */
-    @SuppressLint("RestrictedApi")
-    @Deprecated("不再受支持")
-    fun captureVideo() {
-        setCamera(ManagerUtil.TAKE_VIDEO_CASE)
-        val videoFile = ManagerUtil.createMediaFile(
-            cameraConfig.MyVideoDir,
-            ManagerUtil.VIDEO_EXTENSION
-        )
-
-        // 设置视频的元数据，这里需要后期再完善吧
-        val metadata = VideoCapture.Metadata().apply {}
-        // Create output options object which contains file + metadata
-        val outputOptions = VideoCapture.OutputFileOptions.Builder(videoFile)
-            .setMetadata(metadata)
-            .build()
-
-        currentStatus = TakeVideoState.takeVideo
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            PermissionX.init(context)
-                .permissions(ManagerUtil.REQUIRED_PERMISSIONS.asList())
-                .request { allGranted, grantedList, deniedList ->
-                    if (!allGranted)
-                        throw Exception(
-                            "缺少权限",
-                            Throwable(deniedList.toStr("缺少权限"))
-                        )
-                }
-        }
-        videoCapture.startRecording(
-            outputOptions,
-            Executors.newSingleThreadExecutor(),
-            object : VideoCapture.OnVideoSavedCallback {
-                //当视频文件存储后被调用
-                override fun onVideoSaved(outputFileResults: VideoCapture.OutputFileResults) {
-                    currentStatus = TakeVideoState.none
-                    imageAnalyze()//如果因为拍视频而解绑了图像分析，则重新绑定图像分析
-                    //captureResultListener?.onVideoRecorded(outputFileResults.savedUri?.path.toString())
-                }
-
-                override fun onError(error: Int, message: String, cause: Throwable?) {
-                    currentStatus = TakeVideoState.none
-                    handler.post(Runnable {
-                        setCamera(ManagerUtil.TAKE_PHOTO_CASE)
-                    })
-
-                    //captureResultListener?.onVideoRecorded("")
-                }
-            })
     }
 
     /**
@@ -220,17 +156,6 @@ class CameraHolder(
                 setCamera(CaptureMode.imageAnalysis)
             }
         }
-    }
-
-    /**
-     * 停止录像
-     *
-     * 录制的视频的时间
-     */
-    @SuppressLint("RestrictedApi")
-    @Deprecated("不再受支持")
-    fun stopCaptureVideo() {
-        videoCapture.stopRecording()
     }
 
     /** 翻转相机时，还需要翻转叠加层 */

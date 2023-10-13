@@ -1,26 +1,19 @@
 package com.kiylx.camerax_lib.main.manager
 
-import android.annotation.SuppressLint
 import android.util.Size
 import android.view.Surface
 import androidx.camera.core.*
 import androidx.camera.video.Recorder
-import com.kiylx.camerax_lib.main.manager.video.VideoRecorderHolder
-import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.camerax_lib.main.manager.video.VideoCaptureHolder
+import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import java.util.concurrent.ExecutorService
 
 interface IUseCaseHelper {
     fun initPreView(rotation: Int = Surface.ROTATION_0): Preview
 
-    @Deprecated("不再支持")
-    @SuppressLint("RestrictedApi")
-    fun initOldVideoCapture(
-        screenAspectRatio: Int,
-        rotation: Int = Surface.ROTATION_0
-    ): VideoCapture
-
     fun initVideoCapture(
         cameraExecutor: ExecutorService,
+        rotation: Int?=null,
     ): androidx.camera.video.VideoCapture<Recorder>
 
     fun initImageAnalyzer(rotation: Int = Surface.ROTATION_0): ImageAnalysis
@@ -57,30 +50,12 @@ object UseCaseHolder : IUseCaseHelper {
         return preview
     }
 
-    @Deprecated("不再支持")
-    @SuppressLint("RestrictedApi")
-    override fun initOldVideoCapture(
-        screenAspectRatio: Int,
-        rotation: Int
-    ): VideoCapture {
-        // 视频的还不是很成熟，不一定都能用
-        val videoCapture = VideoCapture.Builder()//录像用例配置
-            .setTargetAspectRatio(screenAspectRatio) //设置高宽比「我比较喜欢全屏」
-            //视频帧率  越高视频体积越大
-            .setVideoFrameRate(60)
-            //bit率  越大视频体积越大
-            .setBitRate(3 * 1024 * 1024)
-            .setTargetRotation(rotation)//设置旋转角度
-            //.setAudioRecordSource(MediaRecorder.AudioSource.MIC)//设置音频源麦克风
-            .build()
-        return videoCapture
-    }
-
     override fun initVideoCapture(
         cameraExecutor: ExecutorService,
+        rotation: Int?,
     ): androidx.camera.video.VideoCapture<Recorder> {
         val videoCapture =
-            VideoRecorderHolder.getVideoCapture(cameraExecutor, StorageConfig.quality)
+            VideoCaptureHolder.getVideoCapture(cameraExecutor, VideoCaptureConfig.quality,rotation)
         return videoCapture
     }
 
