@@ -76,7 +76,10 @@ class FaceContourDetectionProcessor(
         //清空上一次识别的面部图像位置数据，
         //添加这一次的图像数据，并刷新叠加层以绘制面部数据
         graphicOverlay.clear()
+        //可以用matrix来坐标映射
+//        graphicOverlay.scaleMatrix=createMatrix(imageProxy)
         results.forEach {
+            //FaceContourGraphic继承自Graphic并实现了自定义的绘制
             val faceGraphic = FaceContourGraphic(graphicOverlay, it, imageProxy.cropRect)
             graphicOverlay.add(faceGraphic)
         }
@@ -97,6 +100,27 @@ class FaceContourDetectionProcessor(
     var matrix: Matrix? = null
 
     /**
+     * 当置为true时，matrix会重建
+     */
+    var reCreateMatrix: Boolean = false
+    /**
+     * 来源：
+     * https://developer.android.google.cn/training/camerax/transform-output?hl=zh-cn
+     */
+    fun createMatrix(imageProxy: ImageProxy): Matrix {
+        return matrix?.let {
+            if (reCreateMatrix) {
+                reCreateMatrix=false
+                genMatrixInner(imageProxy)
+            } else {
+                matrix
+            }
+        } ?: let {
+            return@let genMatrixInner(imageProxy)
+        }
+    }
+
+    /**
      * 生成一个将图像分析的坐标映射到预览视图的矩阵
      * 在使用前置摄像头获得图像的框体后，若是绘制到屏幕，x坐标需要再镜像一下
      * 示例：
@@ -112,7 +136,7 @@ class FaceContourDetectionProcessor(
      * }
      *···
      */
-    fun genMatrix(imageProxy: ImageProxy): Matrix {
+    fun genMatrixInner(imageProxy: ImageProxy): Matrix {
         return matrix ?: let {
             val matrix1 = Matrix()
             val cropRect = imageProxy.cropRect

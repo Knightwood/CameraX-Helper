@@ -135,8 +135,38 @@ class FaceContourGraphic(
             imageRect.width().toFloat(),
         )//初始化缩放中心之类的
         drawBox(canvas)//画框
+//        drawBox2(canvas)//画框
         drawContours(canvas)//画所有特征点
     }
+
+    /**
+     * 使用matrix来做坐标映射
+     */
+    private fun drawBox2(canvas: Canvas?) {
+        val points = floatArrayOf(
+            face.boundingBox.left.toFloat(),
+            face.boundingBox.top.toFloat(),
+            face.boundingBox.right.toFloat(),
+            face.boundingBox.bottom.toFloat(),
+        )
+        overlay.scaleMatrix.mapPoints(points)
+        val rect = RectF(
+            points[0],
+            points[1],
+            points[2],
+            points[3],
+        )
+        val centerX = overlay.width.toFloat() / 2
+        //前置摄像头反转
+        if (overlay.isFrontMode()) {
+            rect.apply {
+                left = centerX + (centerX - left)
+                right = centerX - (right - centerX)
+            }
+        }
+        canvas?.drawRect(rect, boxPaint)
+    }
+
 
     /**
      * 画框

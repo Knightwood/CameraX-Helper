@@ -20,7 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 
 class CameraExampleActivity : BaseCameraXActivity() {
-    var analyzeResultListener: AnalyzeResultListener? = null
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
@@ -56,11 +55,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
         //监听分析结果
         (analyzer as FaceContourDetectionProcessor).analyzeListener =
-            object : AnalyzeResultListener {
-                override fun isSuccess() {
-
-                }
-            }.also { analyzeResultListener = it }
+            AnalyzeResultListener {
+                // when analyze success
+            }
     }
 
     override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
@@ -85,7 +82,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     /**
-     * 人脸识别后拍摄照片
+     * 拍摄照片
      */
     override fun captureFace() {
         cameraXF.takePhoto()
@@ -131,7 +128,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
             Log.d(tag, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
             return
         } else {
-            BitmapProcessor.analyzeListener = analyzeResultListener
+            BitmapProcessor.analyzeListener = AnalyzeResultListener {
+                // when analyze success
+            }
             flow<Boolean> {
                 while (true) {
                     delay(interval)

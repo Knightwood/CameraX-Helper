@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Point
 import android.util.AttributeSet
 import android.view.View
@@ -26,6 +27,7 @@ interface Overlay {
  */
 open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
     View(context, attrs), Overlay {
+    lateinit var scaleMatrix: Matrix//you can set a matrix to provide map point
 
     private val lock = Any()
     private val graphics: MutableList<Graphic> = ArrayList()
