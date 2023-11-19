@@ -225,15 +225,11 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 page.switchBtn.visibility = View.VISIBLE
             }
 
-            //长按拍视频的时候，在屏幕滑动可以调整焦距缩放
+            //例如长按拍视频的时候，在屏幕滑动可以调整焦距缩放
             override fun recordZoom(zoom: Float) {
                 val a = zoom
             }
 
-            //录制视频错误（拍照也会有错误，先不处理了吧）
-            override fun recordError(message: String) {
-                LogUtils.dTag(tag, message)
-            }
         })
 
     }

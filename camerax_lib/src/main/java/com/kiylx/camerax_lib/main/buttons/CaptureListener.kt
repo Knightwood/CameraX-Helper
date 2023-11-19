@@ -19,8 +19,6 @@ interface CaptureListener {
 
     fun recordZoom(zoom: Float)
 
-    fun recordError(message:String)
-
 }
 
 /**
@@ -43,8 +41,5 @@ open class DefaultCaptureListener :CaptureListener{
 
     }
 
-    override fun recordError(message: String) {
-
-    }
 
 }
