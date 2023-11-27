@@ -1,11 +1,9 @@
 package com.kiylx.cameraxexample
 
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.util.Size
 import android.view.View
-import androidx.camera.view.PreviewView
 import com.google.mlkit.vision.face.Face
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
@@ -13,7 +11,7 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetecti
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
-import com.kiylx.camerax_lib.main.store.FileMetaData
+import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
@@ -44,8 +42,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
     }
 
-    override fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        super.initCameraStart(cameraHolder, cameraPreview)
+    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
+        super.cameraHolderInitStart(cameraHolder)
+        val cameraPreview=cameraHolder.cameraPreview
         //生成图像分析器
         val analyzer = FaceContourDetectionProcessor(
             cameraPreview,
@@ -60,59 +59,31 @@ class CameraExampleActivity : BaseCameraXActivity() {
             }
     }
 
-    override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        super.initCameraFinished(cameraHolder, cameraPreview)
+    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+        super.cameraHolderInitFinish(cameraHolder)
         if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
             page.cameraControlLayout.visibility = View.INVISIBLE
         }
     }
 
-    /**
-     * 启动后自动拍照或录像
-     */
-    private fun capture() {
-        if (cameraConfig.captureMode == CaptureMode.takePhoto) {
-            //拍照
-            mBaseHandler.postDelayed(Runnable {
-                cameraXF.takePhoto()
-            }, 300)
-        } else if (cameraConfig.captureMode == CaptureMode.takeVideo) {
-            cameraXF.takeVideo()
-        }
-    }
-
-    /**
-     * 拍摄照片
-     */
-    override fun captureFace() {
-        cameraXF.takePhoto()
-        /*
-        //还可以使用预览画面里的bitmap存储为图片
-        mBaseHandler.post {
-            val bitmap = cameraXF.provideBitmap()
-            if (bitmap != null) {
-                // TODO: 存储bitmap
-            }
-        }*/
-
-    }
-
-    override fun onClick(p0: View?) {
-        TODO("Not yet implemented")
-    }
 
     /**
      * 拍完照片
      */
-    override fun photoTakeEnd(filePath: Uri?) {
-        super.photoTakeEnd(filePath)
+    override fun onPhotoTaken(saveFileData: SaveFileData?) {
+        super.onPhotoTaken(saveFileData)
+        Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
+        cameraXF.indicateTakePhoto()//拍照闪光
     }
 
     /**
      * 录完视频
      */
-    override fun videoRecordEnd(fileMetaData: FileMetaData?) {
-        super.videoRecordEnd(fileMetaData)
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {
+        super.onVideoRecorded(saveFileData)
+        saveFileData?.let {
+            Log.d(TAG, "onVideoRecorded: $it")
+        }
     }
 
 
@@ -125,7 +96,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
      */
     suspend fun runFaceDetection(interval: Long = 20L) {
         if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
-            Log.d(tag, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
+            Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
             return
         } else {
             BitmapProcessor.analyzeListener = AnalyzeResultListener {
@@ -141,7 +112,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
                 }
             }.collect {
                 cameraXF.provideBitmap()?.let { originalBitmap ->
+                    //识别图像
                     BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
+                        //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
                         BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
                     }
                 }

@@ -1,14 +1,12 @@
 package com.kiylx.camerax_lib.main.ui
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import androidx.camera.view.PreviewView
+import androidx.annotation.CallSuper
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
@@ -17,23 +15,19 @@ import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
-import com.kiylx.camerax_lib.main.store.FileMetaData
+import com.kiylx.camerax_lib.main.store.SaveFileData
 
 abstract class BaseCameraXActivity : BasicActivity(),
-    View.OnClickListener {
+   CameraXFragmentEventListener, CaptureResultListener {
+
     internal lateinit var cameraXFragment: CameraXFragment
     val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }
 
     lateinit var cameraConfig: ManagerConfig
     lateinit var mBaseHandler: Handler
     lateinit var page: ActivityCameraExampleBinding
-
-    fun getOverlay(): GraphicOverlay {
-        return page.graphicOverlayFinder
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,15 +37,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
         setCameraFragment()
-        page.flushBtn.setOnClickListener {
-            if (page.flashLayout.visibility == View.VISIBLE) {
-                page.flashLayout.visibility = View.INVISIBLE
-                page.switchBtn.visibility = View.VISIBLE
-            } else {
-                page.flashLayout.visibility = View.VISIBLE
-                page.switchBtn.visibility = View.INVISIBLE
-            }
-        }
         //切换摄像头
         page.switchBtn.setOnClickListener {
             //要保持闪光灯上一次的模式
@@ -59,81 +44,146 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 cameraXFragment.switchCamera()
             }
         }
-        page.flashOn.setOnClickListener {
-            initFlashSelectColor()
-            page.flashOn.setTextColor(resources.getColor(R.color.flash_selected))
-            page.flushBtn.setImageResource(R.drawable.flash_on)
-            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ON)
-        }
-        page.flashOff.setOnClickListener {
-            initFlashSelectColor()
-            page.flashOff.setTextColor(resources.getColor(R.color.flash_selected))
-            page.flushBtn.setImageResource(R.drawable.flash_off)
-            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_OFF)
-        }
-        page.flashAuto.setOnClickListener {
-            initFlashSelectColor()
-            page.flashAuto.setTextColor(resources.getColor(R.color.flash_selected))
-            page.flushBtn.setImageResource(R.drawable.flash_auto)
-            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_AUTO)
-        }
-        page.flashAllOn.setOnClickListener {
-            initFlashSelectColor()
-            page.flashAllOn.setTextColor(resources.getColor(R.color.flash_selected))
-            page.flushBtn.setImageResource(R.drawable.flash_all_on)
-            cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ALL_ON)
-        }
 
+        initFlashButton()
         page.closeBtn.setOnClickListener {
             closeActivity()
         }
     }
 
+
     private fun setCameraFragment() {
-        cameraXFragment = CameraXFragment.newInstance(cameraConfig)
-            .apply {
-                //设置事件监听
-                eventListener = object : CameraXFragmentEventListener {
-                    //相机管理器初始化之前
-                    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
-                        this@BaseCameraXActivity.initCameraStart(
-                            cameraHolder,
-                            page.cameraPreview
-                        )
-                    }
-
-                    //相机管理器初始化之后
-                    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
-                        this@BaseCameraXActivity.initCameraFinished(
-                            cameraHolder,
-                            page.cameraPreview
-                        )
-                        //拍照录视频操作结果通知回调
-                        setCaptureResultListener(object : CaptureResultListener {
-                            override fun onVideoRecorded(fileMetaData: FileMetaData?) {
-                                // 视频拍摄后
-                                this@BaseCameraXActivity.videoRecordEnd(fileMetaData)
-                            }
-
-                            override fun onPhotoTaken(filePath: Uri?) {
-                                Log.d("CameraXFragment", "onPhotoTaken： $filePath")
-                                //图片拍摄后
-                                this@BaseCameraXActivity.photoTakeEnd(filePath)
-                            }
-                        })
-                    }
-
-                }
-            }
+        cameraXFragment = CameraXFragment.newInstance(
+            cameraConfig,
+            //设置初始化事件监听
+            eventListener = this,
+            //拍照录视频操作结果通知回调
+            captureResultListener = this
+        )
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, cameraXFragment).commit()
     }
 
-    open fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        //指定接收屏幕反转信息的接口实现，例如这里是一个view实现的接口
-        cameraHolder.graphicOverlay = page.graphicOverlayFinder
+
+    //<editor-fold desc="相机初始化">
+
+    //相机管理器初始化之前
+    @CallSuper
+    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {}
+
+    //相机管理器初始化之后
+    @CallSuper
+    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+        //拍照，拍视频的UI 操作的各种状态处理
+        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener() {
+            override fun takePictures() {
+                cameraXFragment.takePhoto()
+            }
+
+            //开始录制视频
+            override fun recordStart() {
+                page.captureVideoBtn.visibility = View.GONE
+                LogUtils.dTag("录制activity", "开始")
+                cameraXFragment.takeVideo()
+                //录制视频时隐藏摄像头切换
+                page.switchBtn.visibility = View.GONE
+            }
+
+            //录制视频到达预定的时长，可以结束了
+            override fun recordShouldEnd(time: Long) {
+                page.captureVideoBtn.visibility = View.VISIBLE
+                LogUtils.dTag("录制activity", "停止")
+                cameraXFragment.stopTakeVideo(time)
+                page.switchBtn.visibility = View.VISIBLE
+            }
+        })
+
+        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener() {
+            //开始录制视频
+            override fun recordStart() {
+                page.fullCaptureBtn.visibility = View.GONE
+                LogUtils.dTag("录制activity", "开始")
+                cameraXFragment.takeVideo()
+                //录制视频时隐藏摄像头切换
+                page.switchBtn.visibility = View.GONE
+            }
+
+            //录制视频到达预定的时长，可以结束了
+            override fun recordShouldEnd(time: Long) {
+                page.fullCaptureBtn.visibility = View.VISIBLE
+                LogUtils.dTag("录制activity", "停止")
+                cameraXFragment.stopTakeVideo(time)
+                page.switchBtn.visibility = View.VISIBLE
+            }
+
+            //例如长按拍视频的时候，在屏幕滑动可以调整焦距缩放
+            override fun recordZoom(zoom: Float) {
+                val a = zoom
+            }
+
+        })
+
     }
 
+    @CallSuper
+    override fun cameraPreviewStreamStart() {}
+
+    @CallSuper
+    override fun switchCamera(lensFacing: Int) {
+        page.graphicOverlayFinder.toggleSelector(lensFacing)
+    }
+
+    @CallSuper
+    override fun cameraRotationChanged(rotation: Int, angle: Int) {
+        page.graphicOverlayFinder.rotationChanged(rotation, angle)
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="拍照、录像结果">
+
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {}
+
+    override fun onPhotoTaken(saveFileData: SaveFileData?) {}
+    //</editor-fold>
+
+   //<editor-fold desc="闪光设置">
+   private fun initFlashButton() {
+       page.flushBtn.setOnClickListener {
+           if (page.flashLayout.visibility == View.VISIBLE) {
+               page.flashLayout.visibility = View.INVISIBLE
+               page.switchBtn.visibility = View.VISIBLE
+           } else {
+               page.flashLayout.visibility = View.VISIBLE
+               page.switchBtn.visibility = View.INVISIBLE
+           }
+       }
+       page.flashOn.setOnClickListener {
+           initFlashSelectColor()
+           page.flashOn.setTextColor(resources.getColor(R.color.flash_selected))
+           page.flushBtn.setImageResource(R.drawable.flash_on)
+           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ON)
+       }
+       page.flashOff.setOnClickListener {
+           initFlashSelectColor()
+           page.flashOff.setTextColor(resources.getColor(R.color.flash_selected))
+           page.flushBtn.setImageResource(R.drawable.flash_off)
+           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_OFF)
+       }
+       page.flashAuto.setOnClickListener {
+           initFlashSelectColor()
+           page.flashAuto.setTextColor(resources.getColor(R.color.flash_selected))
+           page.flushBtn.setImageResource(R.drawable.flash_auto)
+           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_AUTO)
+       }
+       page.flashAllOn.setOnClickListener {
+           initFlashSelectColor()
+           page.flashAllOn.setTextColor(resources.getColor(R.color.flash_selected))
+           page.flushBtn.setImageResource(R.drawable.flash_all_on)
+           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ALL_ON)
+       }
+
+   }
     private fun initFlashSelectColor() {
         page.flashOn.setTextColor(resources.getColor(R.color.white))
         page.flashOff.setTextColor(resources.getColor(R.color.white))
@@ -143,12 +193,12 @@ abstract class BaseCameraXActivity : BasicActivity(),
         page.flashLayout.visibility = View.INVISIBLE
         page.switchBtn.visibility = View.VISIBLE
     }
+   //</editor-fold>
 
     override fun onStop() {
         super.onStop()
         mBaseHandler.removeCallbacksAndMessages(null)
     }
-
 
     open fun closeActivity(shouldInvokeFinish: Boolean = true) {
         cameraXFragment.stopTakeVideo(0)
@@ -177,74 +227,17 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
                 true
             }
+
             else -> super.onKeyDown(keyCode, event)
         }
     }
-
-
-    //相机初始化完成
-    open fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        //拍照，拍视频的UI 操作的各种状态处理
-        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener() {
-            override fun takePictures() {
-                cameraXFragment.takePhoto()
-            }
-
-            //开始录制视频
-            override fun recordStart() {
-                page.captureVideoBtn.visibility = View.GONE
-                LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.takeVideo()
-                //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility = View.GONE
-            }
-
-            //录制视频到达预定的时长，可以结束了
-            override fun recordShouldEnd(time: Long) {
-                page.captureVideoBtn.visibility = View.VISIBLE
-                LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopTakeVideo(time)
-                page.switchBtn.visibility = View.VISIBLE
-            }
-        })
-        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener() {
-            //开始录制视频
-            override fun recordStart() {
-                page.fullCaptureBtn.visibility = View.GONE
-                LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.takeVideo()
-                //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility = View.GONE
-            }
-
-            //录制视频到达预定的时长，可以结束了
-            override fun recordShouldEnd(time: Long) {
-                page.fullCaptureBtn.visibility = View.VISIBLE
-                LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopTakeVideo(time)
-                page.switchBtn.visibility = View.VISIBLE
-            }
-
-            //例如长按拍视频的时候，在屏幕滑动可以调整焦距缩放
-            override fun recordZoom(zoom: Float) {
-                val a = zoom
-            }
-
-        })
-
-    }
-
-    abstract fun captureFace()
 
     /**
      * 使用intent初始化ManagerConfig
      */
     abstract fun configAll(intent: Intent): ManagerConfig
-    open fun photoTakeEnd(filePath: Uri?) {}
-    open fun videoRecordEnd(fileMetaData: FileMetaData?) {}
-
 
     companion object {
-        const val tag = "BaseRecordVideo"
+        const val TAG = "BaseRecordVideo"
     }
 }

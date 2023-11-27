@@ -4,12 +4,15 @@
 
 适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
 
-内置了人脸识别，并预留出来了改变分析器使用其他图像分析的方法。
+内置人脸检测 ，并预留出来了改变分析器使用其他图像分析的方法。
+内置人脸识别，使用tensorflow进行检测，并输出特征点。查看 TestFileDecActivity文件
 
 推荐直接把`camerax_lib`集成到项目
 
 * 示例代码在app目录下。
-* 版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
+*
+
+版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 
 ```
 allprojects {
@@ -30,80 +33,77 @@ allprojects {
 
 ## 用法
 
-1. 存储配置
+1. 配置
 
-```
-首先是配置：
+```kotlin
+//首先是配置：
 //屏幕方向这个可选，可以固定竖屏、横屏、不设置。
 //需要在清单文件的相机activity中添加如下配置，另持有相机的activity在旋转屏幕时不被销毁重建
- android:configChanges="orientation|screenSize"
+//android:configChanges="orientation|screenSize"
+
+// CameraExampleActivity中通过重写configAll 可配置相机一些内容，intent中的键值对为自定义的内容，与库无关
+// 接收到intent，对相机进行配置
+override fun configAll(intent: Intent): ManagerConfig {
+  //是否使用人脸检测
+  val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+  return ManagerConfig().apply {
+    this.captureMode =
+      if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
+    //闪光灯设置
+    this.flashMode = FlashModel.CAMERA_FLASH_AUTO
+    this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
+  }
+}
 
 
-Application或者Activity中，初始化全局存储位置
-StorageConfig.prepare(application)//灰常重要
-对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
-例如：
-fun initPhoto() {
-        page.rg1.setOnCheckedChangeListener { group, checkedId ->
-            val relativePath = page.relativePath1.text.toString()
-            when (checkedId) {
-                R.id.save_app_1 -> {//存储到app私有目录
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        StorageConfig.configStorageApp(MediaType.photo, relativePath)
-                    } else {
-                        StorageConfig.configStorage(
-                            MediaType.photo,
-                            LocationKind.APP,
-                            getExternalFilesDir(null)!!.absolutePath,
-                            relativePath
-                        )
-                    }
-                }
-                R.id.save_dcim_1 -> {//存储到相册
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        StorageConfig.configStorageDCIM(MediaType.photo, relativePath)
-                    } else {
-                        StorageConfig.configStorage(
-                            MediaType.photo,
-                            LocationKind.DCIM,
-                            relativePath = relativePath
-                        )
-                    }
-                }
-                R.id.save_other_1 -> {//存储到其他位置
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        StoreX.with(this).safHelper.requestOneFolder {
-                            StorageConfig.configStorageOther(MediaType.photo, it)
-                            page.path1.setText(it.path, TextView.BufferType.NORMAL)
-                        }
-                    } else {
-                        StorageConfig.configStorage(
-                            MediaType.photo,
-                            LocationKind.OTHER,
-                            path = page.path1.text.toString(),
-                            relativePath = relativePath
-                        )
-                    }
-                }
-            }
-        }
-    }
-视频的存储配置同拍照的存储配置相同，可以参考app示例中的MainActivity
+//Application或者Activity中，初始化全局存储位置
+CameraStore.prepare(application)//初始化存储配置
 
-视频的其他配置
+//对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
+//例如：
+fun initPhotoStore(){
+  val relativePath = "fff"
+  //使用file绝对路径存储
+  CameraStore.configPhoto(
+    IStore.FileStoreConfig(
+      application.cacheDir.absolutePath,
+      relativePath
+    )
+  )
+  //使用MediaStore存储
+  CameraStore.configPhoto(
+    IStore.MediaStoreConfig(
+      saveCollection = FileLocate.IMAGE.uri,
+      mediaFolder = Environment.DIRECTORY_PICTURES,
+      targetFolder = relativePath
+    )
+  )
+  //使用SAF框架存储到任意文件夹
+  StoreX.with(this).safHelper.requestOneFolder {it->
+    //使用SAF框架获取某一个文件夹的授权和uri，然后配置存储
+    CameraStore.configPhoto(
+      IStore.SAFStoreConfig(it)
+    )
+  }
+}
+
+//视频的存储配置同拍照的存储配置相同，不过是把名称从`configPhoto`换成`configVideo`.可以参考app示例中的MainActivity
+
+//视频的其他配置
 VideoCaptureConfig.run {
             quality = Quality.HD//设置视频 拍摄质量
 //            fileSizeLimit=100000 //文件大限制,单位bytes
 //            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
-        } 
+        }
 ```
 
 2. 直接继承自`BaseCameraXActivity`就可以自定义相机
-3. 或者可以自己实现一个activity,内部放置一个`CameraXFragment`就可以实现相机功能
+3. 或者可以自己实现一个activity,内部放置一个`CameraXFragment`实现相机功能
 
 ## 其他介绍
 
-`CameraXFragment`实现` ICameraXF`接口，对外提供各种相机方法，实际上各类实现是由`cameraHolder`实现。
+`CameraXFragment`实现` ICameraXF`
+接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
 
 * `CameraXFragment`内部创建`CameraHolder`
 
@@ -112,62 +112,85 @@ class CameraXFragment : Fragment(), ICameraXF {
 ........
 
 //相机  
-   cameraHolder = CameraHolder(
+ cameraHolder = CameraHolder(
             page.cameraPreview,
             cameraConfig,
-            cameraManagerListener = this,//fragment实现已此接口，可以收到cameraManager传来的某些事件
+            cameraManagerListener = this,
         ).apply {
-            eventListener?.cameraHolderInitStart(this)
+            eventListener?.cameraHolderInitStart(this)//相机初始化开始
+            //拍照或录像结果监听接口
+            this@CameraXFragment.captureResultListener?.let {
+                this.captureResultListener=it
+            }
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
         }
-        eventListener?.cameraHolderInited(cameraHolder)//通知外层，holder初始化完成了，可以对holder做其他操作了
-  
 ```
 
 * `BaseCameraXActivity`
 
   持有`CameraXFragment`实现相机功能，并提供了额外的一些功能。
+
 ```kotlin
+abstract class BaseCameraXActivity : BasicActivity(),
+    CameraXFragmentEventListener, CaptureResultListener {
+    //.....
+    //初始化CameraFragment,提供相机操作
     private fun setCameraFragment() {
-        cameraXFragment = CameraXFragment.newInstance(cameraConfig)
-            .apply {
-                //设置事件监听
-                eventListener = object : CameraXFragmentEventListener {
-                    //相机管理器初始化之前
-                    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
-                        this@BaseCameraXActivity.initCameraStart(
-                            cameraHolder,
-                            page.cameraPreview
-                        )
-                    }
-
-                    //相机管理器初始化之后
-                    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
-                        this@BaseCameraXActivity.initCameraFinished(
-                            cameraHolder,
-                            page.cameraPreview
-                        )
-                        //拍照录视频操作结果通知回调
-                        setCaptureResultListener(object : CaptureResultListener {
-                            override fun onVideoRecorded(fileMetaData: FileMetaData?) {
-                                // 视频拍摄后
-                                this@BaseCameraXActivity.videoRecordEnd(fileMetaData)
-                            }
-
-                            override fun onPhotoTaken(filePath: Uri?) {
-                                Log.d("CameraXFragment", "onPhotoTaken： $filePath")
-                                //图片拍摄后
-                                this@BaseCameraXActivity.photoTakeEnd(filePath)
-                            }
-                        })
-                    }
-
-                }
-            }
+        cameraXFragment = CameraXFragment.newInstance(
+            cameraConfig,
+            eventListener = this, //1. 设置相机事件监听
+            captureResultListener = this//2. 拍照录视频操作结果通知回调
+        )
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, cameraXFragment).commit()
     }
+    //.....
+}
+```
 
+上方代码1处，CameraXFragmentEventListener 中包含了关于相机的一些回调，
+
+````kotlin
+interface CameraXFragmentEventListener {
+    /**
+     * 开始初始化CameraHolder，此时处于绑定生命周期之前. 触发时机早于[CameraManagerEventListener.initCameraStart]
+     */
+    fun cameraHolderInitStart(cameraHolder: CameraHolder)
+
+    /**
+     * cameraXHolder初始化完成 触发时机晚于[CameraManagerEventListener.initCameraFinished]
+     */
+    fun cameraHolderInitFinish(cameraHolder: CameraHolder)
+
+    /**
+     * 相机预览数据开始
+     */
+    fun cameraPreviewStreamStart() {}
+
+    /**
+     * 切换前置或后置摄像头
+     */
+    fun switchCamera(lensFacing: Int) {}
+
+    /**
+     * 设备旋转，对坐标做转换
+     */
+    fun cameraRotationChanged(rotation: Int, angle: Int) {}
+}
+````
+
+上方代码2处,CaptureResultListener 拍照录视频操作结果通知回调
+
+```kotlin
+interface CaptureResultListener {
+
+    //Called when the video record is finished and saved
+    fun onVideoRecorded(fileMetaData: FileMetaData?)
+
+    //called when the photo is taken and saved
+    fun onPhotoTaken(filePath: Uri?)
+
+}
 ```
 
 * `UseCaseHolder`  初始化预览，拍照用例，录像用例，图像分析用例
@@ -182,9 +205,6 @@ class CameraXFragment : Fragment(), ICameraXF {
   //在相机初始化之前调用，提供自己的实现
   UseCaseHolder.setInitImpl(impl)
   ```
-
-  
-
 
 ## 示例相机
 
@@ -214,8 +234,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
     }
 
-    override fun initCameraStart(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        super.initCameraStart(cameraHolder, cameraPreview)
+    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
+        super.cameraHolderInitStart(cameraHolder)
+        val cameraPreview=cameraHolder.cameraPreview
         //生成图像分析器
         val analyzer = FaceContourDetectionProcessor(
             cameraPreview,
@@ -225,24 +246,22 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
         //监听分析结果
         (analyzer as FaceContourDetectionProcessor).analyzeListener =
-            object : AnalyzeResultListener {
-                override fun isSuccess() {
-
-                }
+            AnalyzeResultListener {
+                // when analyze success
             }
     }
 
-    override fun initCameraFinished(cameraHolder: CameraHolder, cameraPreview: PreviewView) {
-        super.initCameraFinished(cameraHolder, cameraPreview)
-        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+        super.cameraHolderInitFinish(cameraHolder)
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析，因此一些界面
             page.cameraControlLayout.visibility = View.INVISIBLE
         }
     }
 
     /**
-     * 拍照或录像
+     * 调用相机拍照或录像
      */
-    private fun capture() {
+    fun capture() {
         if (cameraConfig.captureMode == CaptureMode.takePhoto) {
             //拍照
             mBaseHandler.postDelayed(Runnable {
@@ -254,12 +273,13 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     /**
-     * 拍摄照片
+     * 调用相机拍摄照片
      */
-    override fun captureFace() {
+    fun captureFace() {
             cameraXF.takePhoto()
         /*
-        //还可以使用预览画面里的bitmap存储为图片
+        //还可以使用预览画面里的bitmap存储为图片，而不拍照。
+        //但这种方式得到的照片不清晰甚至残缺
         mBaseHandler.post {
             val bitmap = cameraXF.provideBitmap()
             if (bitmap != null) {
@@ -269,23 +289,30 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
     }
 
-    override fun onClick(p0: View?) {
-        TODO("Not yet implemented")
-    }
-
     /**
      * 拍完照片
      */
-    override fun photoTakeEnd(filePath: Uri?) {
-        super.photoTakeEnd(filePath)
+    override fun onPhotoTaken(saveFileData: SaveFileData?) {
+        super.onPhotoTaken(saveFileData)
+        Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
+        cameraXF.indicateTakePhoto()//拍照闪光
     }
 
     /**
      * 录完视频
      */
-    override fun videoRecordEnd(fileMetaData: FileMetaData?) {
-        super.videoRecordEnd(fileMetaData)
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {
+        super.onVideoRecorded(saveFileData)
+        saveFileData?.let {
+            Log.d(TAG, "onVideoRecorded: $it")
+        }
     }
+    
+    //注：SaveFileData类
+ * 描述文件存储位置
+ * 若使用了mediastore，path为空，uri为content开头
+ * 若使用文件，path不为空，uri为file开头
+ * 若使用SAF，path为空，uri为content开头
 }
 ```
 
@@ -301,12 +328,50 @@ class CameraExampleActivity : BaseCameraXActivity() {
 .setMinFaceSize(0.6f)//人脸最小占图片的百分比
 ```
 
+### 除使用相机的分析流之外，还可以手动获取相机图片进行分析
+示例：CameraExampleActivity文件中
+```kotlin
+  /**
+     * 每隔20ms从预览视图中获取bitmap
+     * 然后运行图像分析，绘制矩形框
+     * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
+     */
+    suspend fun runFaceDetection(interval: Long = 20L) {
+        if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
+            Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
+            return
+        } else {
+            BitmapProcessor.analyzeListener = AnalyzeResultListener {
+                // when analyze success
+            }
+            flow<Boolean> {
+                while (true) {
+                    delay(interval)
+                    emit(stopAnalyzer)
+                    if (stopAnalyzer) {
+                        break
+                    }
+                }
+            }.collect {
+                cameraXF.provideBitmap()?.let { originalBitmap ->
+                    //识别图像
+                    BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
+                        //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
+                        BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
+                    }
+                }
+
+            }
+        }
+    }
+```
+
 ## 面部识别，特征点计算
 
 > 来源
 >
 > [文章连接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
-
+* TestFileDecActivity
 ```
 //使用TensorFlow Lite 模型的处理器
 private val model = FaceDetection.create(
@@ -383,7 +448,7 @@ page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
 })
 ```
 
-# 
+#    
 
 # tensorflow lite
 

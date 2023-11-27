@@ -1,26 +1,16 @@
 package com.kiylx.camerax_lib.main.manager
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.os.Build
+import android.net.Uri
 import android.util.Log
-import android.view.View
 import androidx.camera.core.*
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
-import androidx.core.app.ActivityCompat
-import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.Overlay
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
-import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
@@ -36,7 +26,6 @@ class CameraHolder(
 ) : CameraXManager(
     cameraPreview, cameraConfig, cameraManagerListener
 ) {
-    var graphicOverlay: Overlay? = null//相机反转之类时，通知接口。例如可以让图像分析器的叠加层在相机反转时反转图像显示等
     private var analyzer: ImageAnalysis.Analyzer = AnalyzeUtils.emptyAnalyzer
 
     fun changeAnalyzer(analyzer: ImageAnalysis.Analyzer) {
@@ -104,7 +93,9 @@ class CameraHolder(
             isReversedHorizontal = lensFacing == CameraSelector.LENS_FACING_FRONT
         }
         // 创建输出选项，包含有图片文件和其中的元数据
-        val outputOptions = ImageCaptureHelper.getFileOutputOption(metadata, context)
+        val pair = ImageCaptureHelper.getFileOutputOption(metadata, context)
+        val outputOptions = pair.first
+        val saveFileData = pair.second
 
         currentStatus = TakeVideoState.takePhoto
         // 设置拍照监听回调，当拍照动作被触发的时候
@@ -119,8 +110,10 @@ class CameraHolder(
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     currentStatus = TakeVideoState.none
-                    cameraListener?.photoTaken()
-                    captureResultListener?.onPhotoTaken(output.savedUri)
+                    output.savedUri?.let {
+                        saveFileData.uri = it
+                    }
+                    captureResultListener?.onPhotoTaken(saveFileData)
                 }
             })
 
@@ -164,12 +157,6 @@ class CameraHolder(
             stopTakeVideo()
         }
         super.switchCamera()
-        graphicOverlay?.toggleSelector()
-    }
-
-    /** 屏幕旋转的角度 */
-    override fun sensorAngleChanged(rotation: Int, angle: Int) {
-        graphicOverlay?.rotationChanged(rotation, angle)
     }
 
     /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
@@ -182,7 +169,7 @@ class CameraHolder(
         currentStatus = TakeVideoState.takeVideo
 
         val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context)
-        val videoFile = onceRecorder.fileMetaData
+        val videoFile = onceRecorder.saveFileData
 
         recording = onceRecorder.getVideoRecording()
             ?.start(Executors.newSingleThreadExecutor(),
@@ -192,9 +179,13 @@ class CameraHolder(
                             //t.outputResults.outputUri
                             currentStatus = TakeVideoState.none
                             imageAnalyze()
-                            if (t.error != VideoRecordEvent.Finalize.ERROR_NONE) {
-                                throw Exception("what the fuck")
+                            if (t.hasError()) {
+                                captureResultListener?.onVideoRecorded(null)
+                                Log.e(TAG, "accept: what the fuck",t.cause)
                             } else {
+                                if (t.outputResults.outputUri != Uri.EMPTY) {
+                                    videoFile.uri = t.outputResults.outputUri
+                                }
                                 captureResultListener?.onVideoRecorded(videoFile)
                             }
                         }

@@ -33,7 +33,7 @@ interface IUseCaseHelper {
  */
 object UseCaseHolder : IUseCaseHelper {
     var caseHelper: IUseCaseHelper = this
-        private set
+        internal set
 
     fun setInitImpl(caseHelper: IUseCaseHelper) {
         this.caseHelper = caseHelper

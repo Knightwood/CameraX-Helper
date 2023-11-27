@@ -6,12 +6,11 @@ import android.content.Context
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
-import androidx.annotation.RestrictTo
 import androidx.camera.video.*
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.manager.video.OutputKinds.*
-import com.kiylx.camerax_lib.main.store.FileMetaData
-import com.kiylx.camerax_lib.main.store.StorageConfig
+import com.kiylx.camerax_lib.main.store.SaveFileData
+import com.kiylx.camerax_lib.main.store.IStore
 import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.io.File
@@ -40,26 +39,31 @@ class OnceRecorder(
 ) {
     var outputKinds = MEDIA_STORE
     lateinit var outputOption: OutputOptions
-    lateinit var fileMetaData: FileMetaData//描述文件存放信息
+    lateinit var saveFileData: SaveFileData//描述文件存放信息
 
     /**
      * 生成默认的输出位置,输出到相册
      * 默认使用mediastore，输出到相册
      */
-    internal fun getDefaultOutputOptions() {
-        val contentValues: ContentValues = ContentValues().apply {
+    internal fun getDefaultOutputOptions(
+        storeConfig: IStore.MediaStoreConfig,
+        contentValues: ContentValues? = null,
+    ) {
+        val innerContentValues: ContentValues = contentValues ?: ContentValues().apply {
             val name = ManagerUtil.generateRandomName()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, StorageConfig.videoStorage.mediaPath)
+                put(
+                    MediaStore.Video.Media.RELATIVE_PATH,
+                    storeConfig.getRelativePath()
+                )
             }
             put(MediaStore.Video.Media.DISPLAY_NAME, name)
             put(MediaStore.Video.Media.MIME_TYPE, MimeTypeConsts.mp4)
         }
         outputOption = MediaStoreOutputOptions.Builder(
             context.contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        )
-            .setContentValues(contentValues)
+            storeConfig.saveCollection
+        ).setContentValues(innerContentValues)
             .apply {
                 if (VideoCaptureConfig.fileSizeLimit > 0) {
                     setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
@@ -138,21 +142,12 @@ fun OnceRecorder.getOutputOption(outputOptions: OutputOptions): OnceRecorder {
  * 生成mediaStore版本的输出配置。
  * 如果传入null，默认存储到相册
  */
-fun OnceRecorder.getMediaStoreOutput(contentValues: ContentValues? = null): OnceRecorder {
+fun OnceRecorder.getMediaStoreOutput(
+    storeConfig: IStore.MediaStoreConfig,
+    contentValues: ContentValues? = null
+): OnceRecorder {
     outputKinds = MEDIA_STORE//记录输出配置种类
-    if (contentValues == null) {
-        getDefaultOutputOptions()
-    } else {
-        outputOption = MediaStoreOutputOptions.Builder(
-            context.contentResolver,
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        )
-            .setContentValues(contentValues)
-            .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
-            .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
-            .setLocation(VideoCaptureConfig.location)
-            .build()
-    }
+    getDefaultOutputOptions(storeConfig, contentValues)
     return this
 }
 

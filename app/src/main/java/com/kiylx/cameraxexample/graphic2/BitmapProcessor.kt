@@ -19,11 +19,19 @@ object BitmapProcessor {
         imageProcessor.stop()
     }
 
+    /**
+     * @param bitmap 待处理识别的图像
+     * @param block 当处理成功时的回调
+     */
     suspend fun process(bitmap: Bitmap, block: OnSuccessListener<List<Face>>) =
         withContext(Dispatchers.IO) {
             imageProcessor.processBitmap(bitmap, block)
         }
 
+    /**
+     * 这就是一个普通的方法，虽然叫onSuccess，但与图像识别处理没有一点关系
+     *
+     */
     fun onSuccess(
         results: List<Face>,
         graphicOverlay: GraphicOverlay,

@@ -28,6 +28,7 @@
             android:id="@+id/relative_path1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="default"
             android:hint="相对路径(仅对存储到app私有目录和相册生效)" />
 
         <RadioGroup
@@ -74,6 +75,7 @@
             android:id="@+id/relative_path2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="default"
             android:hint="相对路径(仅对存储到app私有目录和相册生效)" />
 
         <RadioGroup

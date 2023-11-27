@@ -11,6 +11,7 @@ interface ICameraXF {
 
     fun canSwitchCamera(): Boolean
     fun switchCamera()
+    fun indicateTakePhoto(durationTime: Long=20)
     fun setFlashMode(mode: Int)
     fun getCurrentStatus(): Int
     fun stopTakeVideo(time: Long = 0)

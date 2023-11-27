@@ -19,7 +19,7 @@ import java.util.*
 import kotlin.math.sqrt
 
 /**
- * 使用tensorflow list模型处理面部图像数据，得到192各面部特征点
+ * 使用tensorflow list模型处理面部图像数据，得到192个面部特征点
  */
 class FaceDetection private constructor(
     assetManager: AssetManager,

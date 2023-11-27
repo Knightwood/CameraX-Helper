@@ -11,7 +11,9 @@ import android.view.View
 import androidx.camera.core.CameraSelector
 
 interface Overlay {
-    fun toggleSelector()
+
+    //更新当前使用的相机镜头是前置还是后置
+    fun toggleSelector(lensFacing: Int)
 
     /**
      * 设备旋转，对坐标做转换
@@ -38,10 +40,10 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
 
     fun isFrontMode() = cameraSelector == CameraSelector.LENS_FACING_FRONT
 
-    override fun toggleSelector() {
-        cameraSelector =
-            if (cameraSelector == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT
-            else CameraSelector.LENS_FACING_BACK
+    override fun toggleSelector(lensFacing: Int) {
+        cameraSelector =lensFacing
+//            if (cameraSelector == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT
+//            else CameraSelector.LENS_FACING_BACK
     }
 
     fun clear() {

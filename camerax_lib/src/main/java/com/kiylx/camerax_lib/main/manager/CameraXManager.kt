@@ -34,7 +34,7 @@ import java.util.concurrent.Executors
 如果是自由旋转，就应该旋转预览视图
 */
 abstract class CameraXManager(
-    internal val cameraPreview: PreviewView,
+    val cameraPreview: PreviewView,
     var cameraConfig: ManagerConfig,
     var cameraListener: CameraManagerEventListener? = null,//用于在这里做某些处理后，通知外层
 ) : LifecycleEventObserver {
@@ -170,12 +170,10 @@ abstract class CameraXManager(
                 }
                 //setUpPinchToZoom()
                 setCamera(cameraConfig.captureMode)//绑定实例
-
-                cameraListener?.initCameraFinished(this)
-
             },
             ContextCompat.getMainExecutor(context)
         )
+        cameraListener?.initCameraFinished(this)
     }
 
     /**
@@ -410,7 +408,9 @@ abstract class CameraXManager(
     }
 
     /** 方向传感器具体的角度值变化 方向是顺时针，0-359度 */
-    open fun sensorAngleChanged(rotation: Int, angle: Int) {}
+    open fun sensorAngleChanged(rotation: Int, angle: Int) {
+        cameraListener?.cameraRotationChanged(rotation, angle)
+    }
 
     /** 由子类提供分析器 */
     abstract fun selectAnalyzer(): ImageAnalysis.Analyzer
