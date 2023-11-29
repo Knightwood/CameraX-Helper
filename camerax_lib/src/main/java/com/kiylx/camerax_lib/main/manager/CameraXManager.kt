@@ -41,9 +41,12 @@ abstract class CameraXManager(
     internal lateinit var context: FragmentActivity
 
     //相机相关
-    private var preview: Preview? = null
-    internal var camera: Camera? = null
-    private lateinit var cameraProvider: ProcessCameraProvider
+    var preview: Preview? = null
+        internal set
+    var camera: Camera? = null
+        internal set
+    lateinit var cameraProvider: ProcessCameraProvider
+        internal set
     var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     //三种实例
@@ -52,7 +55,8 @@ abstract class CameraXManager(
     lateinit var newVideoCapture: VideoCapture<Recorder> //新版本录像用例
 
     //状态
-    private lateinit var cameraSelector: CameraSelector
+    lateinit var cameraSelector: CameraSelector
+        internal set
     var lensFacing = CameraSelector.LENS_FACING_BACK
     var currentStatus: Int = TakeVideoState.none//指示当前状态
     var whichInstance: WhichInstanceBind = WhichInstanceBind.NONE//记录当前绑定的哪一个相机实例
@@ -170,6 +174,19 @@ abstract class CameraXManager(
                 }
                 //setUpPinchToZoom()
                 setCamera(cameraConfig.captureMode)//绑定实例
+
+                // Attach the viewfinder's surface provider to preview use case
+                preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
+                cameraPreview.previewStreamState.observe(
+                    context
+                ) { streamState ->
+                    //有可能会多次调用，那怎么办呢？结合规律，他会多次调用PreviewView.StreamState.IDLE或者PreviewView.StreamState.STREAMING
+                    //所以很简单，我们记录上一次的状态如果是IDLE，而当前这一次回调是STREAMING，那么就是成功切换后的第一次调用。就只会执行一次
+                    if (lastStreamState == PreviewView.StreamState.IDLE && streamState == PreviewView.StreamState.STREAMING) {
+                        cameraListener?.previewStreamStart()
+                    }
+                    lastStreamState = streamState
+                }
             },
             ContextCompat.getMainExecutor(context)
         )
@@ -268,19 +285,6 @@ abstract class CameraXManager(
                     whichInstance = WhichInstanceBind.VIDEO
                 }
             }
-
-            // Attach the viewfinder's surface provider to preview use case
-            preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
-            cameraPreview.previewStreamState.observe(
-                lifeOwner
-            ) { streamState ->
-                //有可能会多次调用，那怎么办呢？结合规律，他会多次调用PreviewView.StreamState.IDLE或者PreviewView.StreamState.STREAMING
-                //所以很简单，我们记录上一次的状态如果是IDLE，而当前这一次回调是STREAMING，那么就是成功切换后的第一次调用。就只会执行一次
-                if (lastStreamState == PreviewView.StreamState.IDLE && streamState == PreviewView.StreamState.STREAMING) {
-                    cameraListener?.previewStreamStart()
-                }
-                lastStreamState = streamState
-            }
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -324,18 +328,17 @@ abstract class CameraXManager(
         setCameraSelector(lensFacing)
     }
 
-    private inline fun setCameraSelector(lensFacing: Int) {
+    private fun setCameraSelector(lensFacing: Int) {
         cameraSelector = CameraSelector.Builder()
             .requireLensFacing(lensFacing)
             .build()
     }
 
     fun canSwitchCamera(): Boolean {
-        val tmp = cameraProvider
-        return if (tmp == null)
+        return if (!this::cameraProvider.isInitialized)
             false
         else
-            tmp.hasBackCamera() && tmp.hasFrontCamera()
+            cameraProvider.hasBackCamera() && cameraProvider.hasFrontCamera()
     }
 
     /** 切换前后摄像头 */

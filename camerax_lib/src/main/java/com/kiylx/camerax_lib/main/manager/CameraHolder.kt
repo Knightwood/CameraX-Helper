@@ -1,8 +1,10 @@
 package com.kiylx.camerax_lib.main.manager
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.util.Log
 import androidx.camera.core.*
+import androidx.camera.video.ExperimentalPersistentRecording
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
@@ -11,6 +13,7 @@ import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
+import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
@@ -119,16 +122,6 @@ class CameraHolder(
 
     }
 
-    fun takeVideo() {
-        anotherCaptureVideo()
-    }
-
-    fun stopTakeVideo() {
-        //这里是不是会自动的unbind VideoCapture
-        if (currentStatus == TakeVideoState.takeVideo) {
-            anotherStopCaptureVideo()
-        }
-    }
 
     /**
      * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
@@ -153,8 +146,9 @@ class CameraHolder(
 
     /** 翻转相机时，还需要翻转叠加层 */
     override fun switchCamera() {
-        if (currentStatus == TakeVideoState.takeVideo) {//录制视频时得先停下来
-            stopTakeVideo()
+        if (currentStatus == TakeVideoState.takeVideo && !VideoCaptureConfig.asPersistentRecording) {
+            //如果未开启持久录制，录制视频时得先停下来
+            stopRecord()
         }
         super.switchCamera()
     }
@@ -162,8 +156,8 @@ class CameraHolder(
     /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
     private var recording: Recording? = null
 
-    /** 使用新方式实现的录制视频 */
-    fun anotherCaptureVideo() {
+    @SuppressLint("UnsafeOptInUsageError")
+    fun startRecord() {
         if (whichInstance != WhichInstanceBind.VIDEO)//如果当前绑定的不是视频捕获实例，绑定他
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
         currentStatus = TakeVideoState.takeVideo
@@ -171,31 +165,51 @@ class CameraHolder(
         val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context)
         val videoFile = onceRecorder.saveFileData
 
-        recording = onceRecorder.getVideoRecording()
-            ?.start(Executors.newSingleThreadExecutor(),
-                object : androidx.core.util.Consumer<VideoRecordEvent> {
-                    override fun accept(t: VideoRecordEvent) {
-                        if (t is VideoRecordEvent.Finalize) {
-                            //t.outputResults.outputUri
-                            currentStatus = TakeVideoState.none
-                            imageAnalyze()
-                            if (t.hasError()) {
-                                captureResultListener?.onVideoRecorded(null)
-                                Log.e(TAG, "accept: what the fuck",t.cause)
-                            } else {
-                                if (t.outputResults.outputUri != Uri.EMPTY) {
-                                    videoFile.uri = t.outputResults.outputUri
-                                }
-                                captureResultListener?.onVideoRecorded(videoFile)
+        val pendingRecording = onceRecorder.getVideoRecording(newVideoCapture)
+        if (VideoCaptureConfig.asPersistentRecording) {
+            //持久性录制
+            pendingRecording.asPersistentRecording()
+        }
+        recording = pendingRecording.start(Executors.newSingleThreadExecutor(),
+            object : androidx.core.util.Consumer<VideoRecordEvent> {
+                override fun accept(t: VideoRecordEvent) {
+                    if (t is VideoRecordEvent.Finalize) {
+                        //t.outputResults.outputUri
+                        currentStatus = TakeVideoState.none
+                        imageAnalyze()
+                        if (t.hasError()) {
+                            captureResultListener?.onVideoRecorded(null)
+                            Log.e(TAG, "accept: what the fuck", t.cause)
+                        } else {
+                            if (t.outputResults.outputUri != Uri.EMPTY) {
+                                videoFile.uri = t.outputResults.outputUri
                             }
+                            captureResultListener?.onVideoRecorded(videoFile)
                         }
                     }
-                })
+                }
+            })
 
     }
 
-    fun anotherStopCaptureVideo() {
-        recording?.stop()
-        recording = null
+    fun stopRecord() {
+        //这里是不是会自动的unbind VideoCapture
+        if (currentStatus == TakeVideoState.takeVideo) {
+            recording?.stop()
+            recording = null
+        }
     }
+
+    fun pauseRecord() {
+        recording?.pause()
+    }
+
+    fun resumeRecord() {
+        recording?.resume()
+    }
+
+    fun recordMute(mute: Boolean) {
+        recording?.mute(mute)
+    }
+
 }

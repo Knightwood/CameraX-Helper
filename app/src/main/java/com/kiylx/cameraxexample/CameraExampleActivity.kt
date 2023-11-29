@@ -33,7 +33,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
     }
 
     override fun closeActivity(shouldInvokeFinish: Boolean) {
-        cameraXF.stopTakeVideo(0)
+        cameraXF.stopRecord(0)
 
         if (shouldInvokeFinish) {
             mBaseHandler.postDelayed(Runnable {

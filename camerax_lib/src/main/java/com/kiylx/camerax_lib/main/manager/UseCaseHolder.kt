@@ -4,8 +4,7 @@ import android.util.Size
 import android.view.Surface
 import androidx.camera.core.*
 import androidx.camera.video.Recorder
-import com.kiylx.camerax_lib.main.manager.video.VideoCaptureHolder
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
+import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
 import java.util.concurrent.ExecutorService
 
 interface IUseCaseHelper {
@@ -13,7 +12,7 @@ interface IUseCaseHelper {
 
     fun initVideoCapture(
         cameraExecutor: ExecutorService,
-        rotation: Int?=null,
+        rotation: Int=Surface.ROTATION_0,
     ): androidx.camera.video.VideoCapture<Recorder>
 
     fun initImageAnalyzer(rotation: Int = Surface.ROTATION_0): ImageAnalysis
@@ -52,10 +51,10 @@ object UseCaseHolder : IUseCaseHelper {
 
     override fun initVideoCapture(
         cameraExecutor: ExecutorService,
-        rotation: Int?,
+        rotation: Int,
     ): androidx.camera.video.VideoCapture<Recorder> {
         val videoCapture =
-            VideoCaptureHolder.getVideoCapture(cameraExecutor, VideoCaptureConfig.quality,rotation)
+            OnceRecorderHelper.getVideoCapture(cameraExecutor,rotation)
         return videoCapture
     }
 

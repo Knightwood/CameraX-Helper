@@ -20,7 +20,7 @@ data class ManagerConfig(
     var captureMode: Int = CaptureMode.takePhoto,
 
     /**
-     * 指定图像分析和拍照的旋转角度,默认可能为[Surface.ROTATION_0]。
+     * 指定图像分析、拍照、录制的旋转角度,默认可能为[Surface.ROTATION_0]。
      * 默认值是根据display的旋转方向而定
      * 因此，如果在此指定值，默认值将不会使用
      */

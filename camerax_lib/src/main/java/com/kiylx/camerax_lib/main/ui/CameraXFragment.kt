@@ -27,8 +27,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.common.util.concurrent.ListenableFuture
 import com.kiylx.camerax_lib.databinding.FragmentCameraxBinding
-import com.kiylx.camerax_lib.main.manager.*
-import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.CAMERA_CONFIG
+import com.kiylx.camerax_lib.main.manager.CameraHolder
+import com.kiylx.camerax_lib.main.manager.CameraXManager
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
+import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
+import com.kiylx.camerax_lib.main.manager.model.CameraManagerEventListener
+import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
+import com.kiylx.camerax_lib.main.manager.model.FlashModel
+import com.kiylx.camerax_lib.main.manager.model.ICameraXF
+import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
 import kotlinx.coroutines.delay
@@ -305,16 +313,28 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         return cameraHolder.currentStatus
     }
 
-    override fun takeVideo() {
-        cameraHolder.takeVideo()
+    override fun startRecord() {
+        cameraHolder.startRecord()
     }
 
     override fun refreshBinding() {
         cameraHolder.refreshBinding()
     }
 
-    override fun stopTakeVideo(time: Long) {
-        cameraHolder.stopTakeVideo()
+    override fun pauseRecord() {
+        cameraHolder.pauseRecord()
+    }
+
+    override fun resumeRecord() {
+        cameraHolder.resumeRecord()
+    }
+
+    override fun recordMute(mute: Boolean) {
+        cameraHolder.recordMute(mute)
+    }
+
+    override fun stopRecord(time: Long) {
+        cameraHolder.stopRecord()
     }
 
     override fun setCameraUseCase(mode: Int) {
@@ -342,6 +362,8 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     override fun zoom2(zoomValue: Float) {
         cameraHolder.zoomDirectly(zoomValue)
     }
+
+    override fun cameraHolder(): CameraHolder=cameraHolder
 
     /**
      * 设置曝光补偿

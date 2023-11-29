@@ -17,21 +17,21 @@ import java.io.File
 import java.util.*
 
 /**
+ * 录制的完整过程：
  *1. 创建 Recorder，配置QualitySelector。
  *2. 使用创建好的Recorder，生成VideoCapture，并绑定用例。
- *3. 创建OutputOptions，这个配置了文件生成的名称，路径等
+ *3. 创建OutputOptions，这个配置了文件生成的名称，路径，输出到那个文件
  *4. 使用 videoCapture.output.prepareRecording(context,outputOption) 方法生成PendingRecording对象。
  *5. PendingRecording对象调用start开始录像并得到Recording对象 ，使用 pause()/resume()/stop() 来控制录制操作。
  *
- * 配置输出选项(OutputOptions)，从VideoCapture中获取Recording，用它录视频
- * 目前Android10以上，支持输出到相册和app私有目录
- * Android10一下，支持输出到任意位置
+ * 此类作用：
+ * 配置输出选项(OutputOptions)，以及从VideoCapture中获取Recording，用来录视频。每次录制都要new一个实例
  *
  * 三种使用方式对OnceRecorder配置好OutputOptions。
- *             1. OnceRecorder(context).getMediaStoreOutput(contentValues)
- *             2. OnceRecorder(context).getFileOutputOption(file)
- *             3. OnceRecorder(context).getFileDescriptorOutput(fileDescriptor)
- * 然后调用onceRecorder.getVideoRecording()获取PendingRecording对象，这个对象就用来拍视频了。
+ *             1. OnceRecorder(context).buildMediaStoreOutput(contentValues)
+ *             2. OnceRecorder(context).buildFileOutputOption(file)
+ *             3. OnceRecorder(context).buildFileDescriptorOutput(fileDescriptor)
+ * 然后调用onceRecorder.getVideoRecording(videoCapture)获取PendingRecording对象，这个对象就用来拍视频了。
  *
  */
 class OnceRecorder(
@@ -43,9 +43,9 @@ class OnceRecorder(
 
     /**
      * 生成默认的输出位置,输出到相册
-     * 默认使用mediastore，输出到相册
+     * 默认使用MediaStore，输出到相册
      */
-    internal fun getDefaultOutputOptions(
+    fun buildMediaStoreOutputOptions(
         storeConfig: IStore.MediaStoreConfig,
         contentValues: ContentValues? = null,
     ) {
@@ -80,15 +80,15 @@ class OnceRecorder(
      * 根据输出配置(outputOption)，从VideoCapture生成一个新的PendingRecording，此实例就能拿来录制了。
      */
     @SuppressLint("MissingPermission")
-    internal fun getVideoRecording(): PendingRecording? {
-        if (VideoCaptureHolder.videoCapture == null) {
-            throw Exception("没有videoCapture")
+    fun getVideoRecording(videoCapture: VideoCapture<Recorder>): PendingRecording {
+        if (!this::outputOption.isInitialized){
+            throw IllegalArgumentException("outputOption is not Initialized")
         }
-        val pendingRecording: PendingRecording? =
+        val pendingRecording: PendingRecording =
             when (outputKinds) {
                 FILE_DESCRIPTOR -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        VideoCaptureHolder.videoCapture!!.output
+                        videoCapture.output
                             .prepareRecording(
                                 context,
                                 outputOption as FileDescriptorOutputOptions
@@ -96,12 +96,13 @@ class OnceRecorder(
                             .withAudioEnabled()
 
                     } else {
-                        null
+                        throw IllegalArgumentException("当使用FileDescriptorOutputOptions时，" +
+                                "prepareRecording方法@RequiresApi(26)")
                     }
                 }
 
                 FILE -> {
-                    VideoCaptureHolder.videoCapture!!.output
+                    videoCapture.output
                         .prepareRecording(
                             context,
                             outputOption as FileOutputOptions
@@ -110,7 +111,7 @@ class OnceRecorder(
                 }
 
                 MEDIA_STORE -> {
-                    VideoCaptureHolder.videoCapture!!.output
+                    videoCapture.output
                         .prepareRecording(
                             context,
                             outputOption as MediaStoreOutputOptions
@@ -128,7 +129,7 @@ class OnceRecorder(
 /**
  * 外部生成outputOptions，这里就直接赋值，记录输出种类就可以了
  */
-fun OnceRecorder.getOutputOption(outputOptions: OutputOptions): OnceRecorder {
+fun OnceRecorder.buildOutputOption(outputOptions: OutputOptions): OnceRecorder {
     this.outputOption = outputOptions
     when (outputOptions) {//记录输出配置种类
         is MediaStoreOutputOptions -> this.outputKinds = MEDIA_STORE
@@ -142,12 +143,12 @@ fun OnceRecorder.getOutputOption(outputOptions: OutputOptions): OnceRecorder {
  * 生成mediaStore版本的输出配置。
  * 如果传入null，默认存储到相册
  */
-fun OnceRecorder.getMediaStoreOutput(
+fun OnceRecorder.buildMediaStoreOutput(
     storeConfig: IStore.MediaStoreConfig,
     contentValues: ContentValues? = null
 ): OnceRecorder {
     outputKinds = MEDIA_STORE//记录输出配置种类
-    getDefaultOutputOptions(storeConfig, contentValues)
+    buildMediaStoreOutputOptions(storeConfig, contentValues)
     return this
 }
 
@@ -155,7 +156,7 @@ fun OnceRecorder.getMediaStoreOutput(
  * 生成FileDescriptor版本的输出配置
  * 要求Android8以上
  */
-fun OnceRecorder.getFileDescriptorOutput(
+fun OnceRecorder.buildFileDescriptorOutput(
     fileDescriptor: ParcelFileDescriptor,
 ): OnceRecorder {
     outputKinds = FILE_DESCRIPTOR
@@ -170,7 +171,7 @@ fun OnceRecorder.getFileDescriptorOutput(
 /**
  * 生成File版本的输出配置
  */
-fun OnceRecorder.getFileOutputOption(file: File): OnceRecorder {
+fun OnceRecorder.buildFileOutput(file: File): OnceRecorder {
     outputKinds = FILE
     outputOption = FileOutputOptions.Builder(file)
         .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
@@ -184,21 +185,9 @@ fun OnceRecorder.getFileOutputOption(file: File): OnceRecorder {
  * 描述使用哪种类型的[FileOutputOptions]
  * 不暴露给外界，外界也不应该关心这里使用那种类型去保存文件。
  *
- * 外界只应设置[LocationKind]及文件存储路径。
  */
 enum class OutputKinds {
-    /**
-     * Android O及以上使用
-     */
     FILE_DESCRIPTOR,
-
-    /**
-     * 在Android Q以下会使用它
-     */
     FILE,
-
-    /**
-     * Android Q 及以上会使用它
-     */
     MEDIA_STORE
 }

@@ -1,12 +1,7 @@
 package com.kiylx.camerax_lib.main.store
 
 import android.location.Location
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.OutputOptions
 import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import com.kiylx.camerax_lib.main.manager.video.VideoCaptureHolder
 
 object VideoCaptureConfig {
     /**
@@ -47,4 +42,10 @@ object VideoCaptureConfig {
      */
     var quality: Quality? = null
 
+    /**
+     * 实验特性
+     * 持久性录制，若开启此特性，
+     * 在切换摄像头时保持录制而不停止
+     */
+    var asPersistentRecording =false
 }

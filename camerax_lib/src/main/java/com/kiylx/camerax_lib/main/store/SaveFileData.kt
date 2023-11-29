@@ -1,7 +1,6 @@
 package com.kiylx.camerax_lib.main.store
 
 import android.net.Uri
-import com.kiylx.camerax_lib.main.manager.video.LocationKind
 
 /**
  * 描述文件存储位置

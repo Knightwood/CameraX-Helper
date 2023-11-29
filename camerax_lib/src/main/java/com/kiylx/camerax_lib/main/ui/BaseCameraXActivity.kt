@@ -18,12 +18,17 @@ import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.store.SaveFileData
+import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 
 abstract class BaseCameraXActivity : BasicActivity(),
    CameraXFragmentEventListener, CaptureResultListener {
 
-    internal lateinit var cameraXFragment: CameraXFragment
-    val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }
+    internal lateinit var cameraXFragment: CameraXFragment//相机功能实现者
+
+    /**
+     * 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment
+     */
+    val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }//
 
     lateinit var cameraConfig: ManagerConfig
     lateinit var mBaseHandler: Handler
@@ -84,7 +89,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
             override fun recordStart() {
                 page.captureVideoBtn.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.takeVideo()
+                cameraXFragment.startRecord()
                 //录制视频时隐藏摄像头切换
                 page.switchBtn.visibility = View.GONE
             }
@@ -93,7 +98,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
             override fun recordShouldEnd(time: Long) {
                 page.captureVideoBtn.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopTakeVideo(time)
+                cameraXFragment.stopRecord(time)
                 page.switchBtn.visibility = View.VISIBLE
             }
         })
@@ -103,16 +108,18 @@ abstract class BaseCameraXActivity : BasicActivity(),
             override fun recordStart() {
                 page.fullCaptureBtn.visibility = View.GONE
                 LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.takeVideo()
+                cameraXFragment.startRecord()
                 //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility = View.GONE
+                if (!VideoCaptureConfig.asPersistentRecording) {
+                    page.switchBtn.visibility = View.GONE
+                }
             }
 
             //录制视频到达预定的时长，可以结束了
             override fun recordShouldEnd(time: Long) {
                 page.fullCaptureBtn.visibility = View.VISIBLE
                 LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopTakeVideo(time)
+                cameraXFragment.stopRecord(time)
                 page.switchBtn.visibility = View.VISIBLE
             }
 
@@ -201,7 +208,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
     }
 
     open fun closeActivity(shouldInvokeFinish: Boolean = true) {
-        cameraXFragment.stopTakeVideo(0)
+        cameraXFragment.stopRecord(0)
         if (shouldInvokeFinish) {
             mBaseHandler.postDelayed(Runnable {
                 this.finish()

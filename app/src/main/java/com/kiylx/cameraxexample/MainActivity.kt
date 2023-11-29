@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
     fun initVideo() {
         VideoCaptureConfig.run {
             quality = Quality.HD//设置视频 拍摄质量
+            asPersistentRecording=true
 //            fileSizeLimit=100000 //文件大限制,单位bytes
 //            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
         }
