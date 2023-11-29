@@ -58,36 +58,4 @@ sealed class IStore(
     }
 }
 
-/**
- * 默认保存到相册文件夹
- */
-object CameraStore {
-    var application by Weak<Application> { null }
-    internal lateinit var imageStorage: IStore
-    internal lateinit var videoStorage: IStore
 
-    fun prepare(application: Application): CameraStore {
-        this.application = application
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {//android 10 及以上
-            this.imageStorage = IStore.MediaStoreConfig()
-            this.videoStorage = IStore.MediaStoreConfig()
-        } else {
-            this.imageStorage = IStore.FileStoreConfig(
-                parentPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath
-            )
-            this.videoStorage = IStore.FileStoreConfig(
-                parentPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath
-            )
-        }
-        return this
-    }
-
-    fun configPhoto(storeConfig: IStore) {
-        this.imageStorage = storeConfig
-    }
-
-    fun configVideo(storeConfig: IStore) {
-        this.videoStorage = storeConfig
-    }
-
-}

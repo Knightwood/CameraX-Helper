@@ -132,9 +132,11 @@ abstract class CameraXManager(
             ON_CREATE -> {
                 initManager()
             }
+
             ON_DESTROY -> {
                 destroy()
             }
+
             else -> {}
         }
     }
@@ -170,7 +172,7 @@ abstract class CameraXManager(
                 }
                 //配置屏幕方向监听
                 if (displayRotation == null) {
-                    displayRotation = DisplayRotation(context,displayRotationListener)
+                    displayRotation = DisplayRotation(context, displayRotationListener)
                 }
                 //setUpPinchToZoom()
                 setCamera(cameraConfig.captureMode)//绑定实例
@@ -237,7 +239,7 @@ abstract class CameraXManager(
         preview = UseCaseHolder.caseHelper.initPreView(rotation)
         imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(rotation)
         imageCapture = UseCaseHolder.caseHelper.initImageCapture(screenAspectRatio, rotation, size)
-        newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor,rotation)
+        newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor, rotation)
     }
 
     /** 绑定相机实例之类的 */
@@ -261,6 +263,7 @@ abstract class CameraXManager(
                     currentStatus = TakeVideoState.imageDetection
                     whichInstance = WhichInstanceBind.IMAGE_DETECTION
                 }
+
                 CaptureMode.takePhoto -> {
                     try {
                         camera = cameraProvider.bindToLifecycle(
@@ -271,6 +274,7 @@ abstract class CameraXManager(
                     }
                     whichInstance = WhichInstanceBind.PICTURE
                 }
+
                 CaptureMode.takeVideo -> {
                     try {
                         camera = cameraProvider.bindToLifecycle(

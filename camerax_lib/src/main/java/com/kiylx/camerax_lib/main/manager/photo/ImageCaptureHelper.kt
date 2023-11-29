@@ -6,7 +6,7 @@ import android.provider.MediaStore
 import androidx.camera.core.ImageCapture
 import androidx.documentfile.provider.DocumentFile
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import com.kiylx.camerax_lib.main.store.CameraStore
+import com.kiylx.camerax_lib.main.store.CameraXStoreConfig
 import com.kiylx.camerax_lib.main.store.IStore
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.store_lib.kit.MimeTypeConsts
@@ -24,7 +24,7 @@ class ImageCaptureHelper {
             context: Context,
         ): Pair<ImageCapture.OutputFileOptions,SaveFileData> {
             val saveFileData =SaveFileData()
-            val storageConfig = CameraStore.imageStorage//读取全局的图像存储配置
+            val storageConfig = CameraXStoreConfig.imageStorage//读取全局的图像存储配置
             var outputOptions: ImageCapture.OutputFileOptions? = null//根据不同的存储配置生成不同的OutputOptions
             when (storageConfig) {
                 is IStore.SAFStoreConfig -> {

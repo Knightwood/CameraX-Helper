@@ -9,12 +9,11 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.VideoCapture
 import androidx.documentfile.provider.DocumentFile
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import com.kiylx.camerax_lib.main.store.CameraStore
+import com.kiylx.camerax_lib.main.store.CameraXStoreConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.IStore
 import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
-import com.kiylx.store_lib.kit.MimeTypeConsts.it
 import java.util.concurrent.ExecutorService
 
 /**
@@ -47,7 +46,7 @@ object OnceRecorderHelper {
      * //获取一个一次性录制工具，并配置输出信息
      * val onceRecorder = OnceRecorder(context).buildFileOutputOption(videoFile)
      * 可以使用[OnceRecorderHelper.newOnceRecorder]快速获取OnceRecorder，
-     * [OnceRecorderHelper.newOnceRecorder]将根据[CameraStore.videoStorage]自动配置好输出信息
+     * [OnceRecorderHelper.newOnceRecorder]将根据[CameraXStoreConfig.videoStorage]自动配置好输出信息
      *
      * //传入videoCapture获取[VideoRecording]对象，用此对象进行录制
      * var recording: Recording? = onceRecorder.getVideoRecording(videoCapture)//使用这个录制视频，暂停，恢复，停止录制
@@ -94,6 +93,7 @@ object OnceRecorderHelper {
         videoCapture = VideoCapture.Builder<Recorder>(recorder)
             .apply {
                 setTargetRotation(rotation)
+                setMirrorMode(VideoCaptureConfig.mirrorMode)
             }
             .build()
         return videoCapture
@@ -106,7 +106,7 @@ object OnceRecorderHelper {
      * val onceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)//获取一个一次性录制工具
      */
     fun newOnceRecorder(context: Context): OnceRecorder {
-        when (val storageConfig = CameraStore.videoStorage) {
+        when (val storageConfig = CameraXStoreConfig.videoStorage) {
             is IStore.SAFStoreConfig -> {
                 val name = ManagerUtil.generateRandomName()
                 val uri = storageConfig.parentUri

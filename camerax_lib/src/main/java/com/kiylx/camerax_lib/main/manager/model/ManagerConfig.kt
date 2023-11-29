@@ -55,8 +55,3 @@ class FlashModel {
         const val CAMERA_FLASH_ALL_ON = 777    //常亮模式
     }
 }
-
-object MediaType {
-    const val photo = 1
-    const val video = 2
-}

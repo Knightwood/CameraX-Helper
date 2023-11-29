@@ -1,6 +1,7 @@
 package com.kiylx.camerax_lib.main.store
 
 import android.location.Location
+import androidx.camera.core.MirrorMode
 import androidx.camera.video.Quality
 
 object VideoCaptureConfig {
@@ -44,8 +45,14 @@ object VideoCaptureConfig {
 
     /**
      * 实验特性
-     * 持久性录制，若开启此特性，
+     * 持久性录制，若开启此特性，必须手动调用停止录制，
+     * 不会因为生命周期销毁或没有界面而停止
      * 在切换摄像头时保持录制而不停止
      */
     var asPersistentRecording =false
+
+    /**
+     * 镜像设置
+     */
+    var mirrorMode: Int=MirrorMode.MIRROR_MODE_ON_FRONT_ONLY
 }
