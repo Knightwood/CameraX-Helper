@@ -5,6 +5,7 @@ import android.media.CamcorderProfile
 import android.view.Surface
 import androidx.camera.core.impl.UseCaseConfigFactory
 import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.PendingRecording
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -50,7 +51,7 @@ object OnceRecorderHelper {
      * 可以使用[OnceRecorderHelper.newOnceRecorder]快速获取OnceRecorder，
      * [OnceRecorderHelper.newOnceRecorder]将根据[CameraXStoreConfig.videoStorage]自动配置好输出信息
      *
-     * //传入videoCapture获取[VideoRecording]对象，用此对象进行录制
+     * //传入videoCapture获取[PendingRecording]对象，用此对象进行录制
      * var recording: Recording? = onceRecorder.getVideoRecording(videoCapture)//使用这个录制视频，暂停，恢复，停止录制
      * recording?.start()//开始录制
      * 这个是一次性的，下一次录制视频，要获取一个新的onceRecorder

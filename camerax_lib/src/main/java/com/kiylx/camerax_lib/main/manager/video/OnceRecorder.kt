@@ -66,12 +66,8 @@ class OnceRecorder(
             storeConfig.saveCollection
         ).setContentValues(innerContentValues)
             .apply {
-                if (recordConfig.fileSizeLimit > 0) {
-                    setFileSizeLimit(recordConfig.fileSizeLimit)
-                }
-                if (recordConfig.durationLimitMillis > 0) {
-                    setDurationLimitMillis(recordConfig.durationLimitMillis)
-                }
+                setFileSizeLimit(recordConfig.fileSizeLimit.inWholeBytes)
+                setDurationLimitMillis(recordConfig.durationLimitMillis)
             }
             .setLocation(recordConfig.location)
             .build()
@@ -164,7 +160,7 @@ fun OnceRecorder.buildFileDescriptorOutput(
 ): OnceRecorder {
     outputKinds = FILE_DESCRIPTOR
     outputOption = FileDescriptorOutputOptions.Builder(fileDescriptor)
-        .setFileSizeLimit(recordConfig.fileSizeLimit)
+        .setFileSizeLimit(recordConfig.fileSizeLimit.inWholeBytes)
         .setDurationLimitMillis(recordConfig.durationLimitMillis)
         .setLocation(recordConfig.location)
         .build()
@@ -177,7 +173,7 @@ fun OnceRecorder.buildFileDescriptorOutput(
 fun OnceRecorder.buildFileOutput(file: File): OnceRecorder {
     outputKinds = FILE
     outputOption = FileOutputOptions.Builder(file)
-        .setFileSizeLimit(recordConfig.fileSizeLimit)
+        .setFileSizeLimit(recordConfig.fileSizeLimit.inWholeBytes)
         .setDurationLimitMillis(recordConfig.durationLimitMillis)
         .setLocation(recordConfig.location)
         .build()

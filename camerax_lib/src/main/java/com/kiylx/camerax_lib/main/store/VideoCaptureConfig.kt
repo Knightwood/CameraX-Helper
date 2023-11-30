@@ -4,6 +4,8 @@ import android.location.Location
 import android.os.Parcelable
 import androidx.camera.core.MirrorMode
 import com.kiylx.camerax_lib.main.manager.video.CameraRecordQuality
+import com.kiylx.camerax_lib.utils.DataSize
+import com.kiylx.camerax_lib.utils.DataSize.Companion.kb
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -34,12 +36,12 @@ data class VideoRecordConfig(
     var durationLimitMillis: Long = 0,
 
     /**
-     * 文件大小限制
+     * 文件大小限制，为0无限制
      * Sets the limit for the file length in bytes.
      * When used with Recorder to generate recording, if the specified file size limit is reached while the recording is being recorded, the recording will be finalized with VideoRecordEvent.Finalize.ERROR_FILE_SIZE_LIMIT_REACHED.
      * If not set or set with zero, the file size will be unlimited. If set with a negative value, an IllegalArgumentException will be thrown.
      */
-    var fileSizeLimit: Long = 0,
+    var fileSizeLimit: DataSize = 0.kb,
 
     /**
      * 视频录制质量，查看[CameraRecordQuality]，当设置的视频拍摄质量不支持时，将会自动寻找支持的最高质量

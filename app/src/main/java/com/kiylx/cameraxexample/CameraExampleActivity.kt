@@ -16,6 +16,7 @@ import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
+import com.kiylx.camerax_lib.utils.DataSize.Companion.mb
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -30,8 +31,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
         //视频录制配置(可选)
         val videoRecordConfig = VideoRecordConfig(
             quality = CameraRecordQuality.HD,//设置视频拍摄质量
-            asPersistentRecording = true,//实验特性，保持长时间录制
-//            fileSizeLimit=100000, //文件大限制,单位bytes
+//            asPersistentRecording = true,//实验特性，保持长时间录制
+//            fileSizeLimit=5.mb, //文件大限制,单位bytes
 //            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
         )
         //拍照配置(可选)

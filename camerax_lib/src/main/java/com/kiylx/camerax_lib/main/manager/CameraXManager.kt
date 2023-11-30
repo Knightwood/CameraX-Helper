@@ -27,6 +27,7 @@ import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
 import com.kiylx.camerax_lib.main.manager.model.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /*
 如果视图是强制竖屏或横屏，就不该旋转预览视图
@@ -147,7 +148,7 @@ abstract class CameraXManager(
     }
 
     private fun destroy() {
-        cameraExecutor.shutdown()
+        cameraExecutor.awaitTermination(1,TimeUnit.SECONDS)
         handler.removeCallbacksAndMessages(null)
     }
 

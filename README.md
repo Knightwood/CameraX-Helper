@@ -3,9 +3,12 @@
 集成了拍照，录制视频，人脸识别等的camerax库。
 
 适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
+Android10 以下，大家都很熟悉。
 
-内置人脸检测 ，并预留出来了改变分析器使用其他图像分析的方法。
-内置人脸识别，使用tensorflow进行检测，并输出特征点。查看 TestFileDecActivity文件
+内置人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
+内置人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
+可以拍照，录制，暂停/继续录制，双指缩放，点按对焦，闪光灯，手电筒。
+自定义配置相机功能，例如拍照时水平翻转或垂直翻转，分辨率和宽高比；视频的镜像翻转，文件或时长限制，视频清晰度等。
 
 推荐直接把`camerax_lib`集成到项目
 
@@ -32,9 +35,15 @@ allprojects {
 <img src="screenshots/1.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
 
 ## 用法
+如需使用，可直接将camerax_lib module集成到项目。
+camerax_lib module 中提供了BaseCameraXActivity和CameraXFragment类，后者持有cameraHolder实现相机功能，
+前者则持有CameraXFragment,提供更进一步的封装。
+
+整体的相机实现示例可以看app module下的`CameraExampleActivity`类。
+
 
 1. 配置
-
+以CameraExampleActivity为例
 ```kotlin
 //首先是配置：
 //屏幕方向这个可选，可以固定竖屏、横屏、不设置。
@@ -44,13 +53,10 @@ allprojects {
 // CameraExampleActivity中通过重写configAll 可配置相机一些内容，intent中的键值对为自定义的内容，与库无关
 // 接收到intent，对相机进行配置
 override fun configAll(intent: Intent): ManagerConfig {
-  //是否使用人脸检测
-  val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
   //视频录制配置(可选)
   val videoRecordConfig = VideoRecordConfig(
     quality = CameraRecordQuality.HD,//设置视频拍摄质量
-    asPersistentRecording = true,//实验特性，保持长时间录制
-//            fileSizeLimit=100000, //文件大限制,单位bytes
+//            fileSizeLimit=100.mb, //文件大小限制。
 //            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
     //...省略
   )
@@ -61,6 +67,8 @@ override fun configAll(intent: Intent): ManagerConfig {
       //...省略
   )
   //整体的配置
+  //是否使用人脸检测
+  val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
   return ManagerConfig().apply {
     this.recordConfig = videoRecordConfig
     this.captureMode =
@@ -72,31 +80,31 @@ override fun configAll(intent: Intent): ManagerConfig {
 
 
 //Application或者Activity中，初始化全局存储位置
-CameraStore.prepare(application)//初始化存储配置
+CameraXStoreConfig.prepare(application)//初始化存储配置
 
 //对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
-//例如：
+//例如：对于拍照的存储配置
 fun initPhotoStore(){
   val relativePath = "fff"
   //使用file绝对路径存储
-  CameraStore.configPhoto(
+  CameraXStoreConfig.configPhoto(
     IStore.FileStoreConfig(
       application.cacheDir.absolutePath,
       relativePath
     )
   )
   //使用MediaStore存储
-  CameraStore.configPhoto(
+  CameraXStoreConfig.configPhoto(
     IStore.MediaStoreConfig(
       saveCollection = FileLocate.IMAGE.uri,
-      mediaFolder = Environment.DIRECTORY_PICTURES,
+      mediaFolder = Environment.DIRECTORY_DCIM,
       targetFolder = relativePath
     )
   )
   //使用SAF框架存储到任意文件夹
   StoreX.with(this).safHelper.requestOneFolder {it->
     //使用SAF框架获取某一个文件夹的授权和uri，然后配置存储
-    CameraStore.configPhoto(
+    CameraXStoreConfig.configPhoto(
       IStore.SAFStoreConfig(it)
     )
   }
@@ -155,6 +163,7 @@ fun initPhotoStore(){
 
 `CameraXFragment`实现` ICameraXF`
 接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
+`ICameraXF`接口则是为了屏蔽fragment的相关方法
 
 * `CameraXFragment`内部创建`CameraHolder`
 
@@ -419,6 +428,62 @@ class CameraExampleActivity : BaseCameraXActivity() {
         }
     }
 ```
+最简单的mlkit中人脸检测使用：
+````kotlin
+//使用时需要：
+val process=FileVisionProcessor()
+process.processBitmap(bitmap){list->
+    
+}
+
+class FileVisionProcessor {
+    private val executor = ScopedExecutor(TaskExecutors.MAIN_THREAD)
+    //检测器
+    private val detector: FaceDetector
+
+    init {
+        //初始化检测器
+        val options = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)//在检测人脸时更注重速度还是准确性，精确模式会检测到比快速模式更少的人脸
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_NONE)//轮廓检测
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)//面部特征点
+            //.setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)//是否将人脸分为不同类别（例如“微笑”和“眼睛睁开”）。
+            .setMinFaceSize(1.0f)//人脸最小占图片的百分比
+            //.enableTracking() //disable when contour is enable https://developers.google.com/ml-kit/vision/face-detection/android
+            .build()
+
+        detector = FaceDetection.getClient(options)
+        Log.v(TAG, "Face detector options: $options")
+
+    }
+
+    fun stop() {
+        detector.close()
+    }
+    //使用检测器开始处理图片
+    fun processBitmap(bitmap: Bitmap, listener: OnSuccessListener<List<Face>>) {
+        detectInImage(InputImage.fromBitmap(bitmap, 0))
+            .addOnSuccessListener(executor, listener)
+            .addOnFailureListener(
+                executor,
+                OnFailureListener { e: Exception ->
+                    val error = "Failed to process. Error: " + e.localizedMessage
+                    Log.d(TAG, error)
+                    e.printStackTrace()
+                }
+            )
+    }
+
+    private fun detectInImage(image: InputImage): Task<List<Face>> {
+        return detector.process(image)
+    }
+
+    companion object {
+        const val TAG = "文件处理"
+    }
+}
+
+````
 
 ## 面部识别，特征点计算
 
@@ -487,7 +552,7 @@ page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
     override fun recordStart() {
         page.captureVideoBtn.visibility = View.GONE
         LogUtils.dTag("录制activity", "开始")
-        cameraXF.takeVideo()
+        cameraXF.startRecord()
         //录制视频时隐藏摄像头切换
         page.switchBtn.visibility=View.GONE
     }
@@ -496,7 +561,7 @@ page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener(){
     override fun recordShouldEnd(time: Long) {
         page.captureVideoBtn.visibility = View.VISIBLE
         LogUtils.dTag("录制activity", "停止")
-        cameraXF.stopTakeVideo(time)
+        cameraXF.stopRecord(time)
         page.switchBtn.visibility=View.VISIBLE
     }
 })
@@ -530,3 +595,20 @@ https://discuss.tensorflow.org/t/tensorflow-lite-aar-2-9-0-android-integration/1
 * 如果需要更简便的使用方式，可以同时引入`TensorFlow Lite Task Library`
 
 详情参考https://tensorflow.google.cn/lite/inference_with_metadata/overview?hl=zh-cn
+
+
+## 工具类 DataSize，使用时数字加上".单位"
+[来源](https://github.com/forJrking/KotlinSkillsUpgrade/blob/main/kup/src/main/java/com/example/kup/DataSize.kt)
+简化单位换算
+例如：
+```kotlin
+//原来的方式
+val tenMegabytes = 10 * 1024 * 1024//10mb
+//简化后，会自动换算为bytes
+val tenMegabytes =10.mb
+//其他例子：
+    100.mb
+    100.kb
+    100.gb
+    100.bytes
+```

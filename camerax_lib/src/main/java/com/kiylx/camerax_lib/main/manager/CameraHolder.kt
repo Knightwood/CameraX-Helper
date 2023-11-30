@@ -89,6 +89,20 @@ class CameraHolder(
         super.reBindUseCase()
     }
 
+    /**
+     * 可以启用或停用手电筒（手电筒应用）
+     * 启用手电筒后，无论闪光灯模式设置如何，手电筒在拍照和拍视频时都会保持开启状态。
+     * 仅当手电筒被停用时，ImageCapture 中的 flashMode 才会起作用。
+     */
+    fun useTorch(b: Boolean) {
+        camera?.run {
+            val flashCanUse = cameraInfo.hasFlashUnit()
+            if (flashCanUse) {
+                cameraControl.enableTorch(b)
+            }
+        }
+    }
+
     /** 拍照处理方法(这里只是拍照，录制视频另外有方法) 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照 拍照前会检查用例绑定 */
     fun takePhoto(imageCaptureConfig: ImageCaptureConfig? = null) {
         if (imageCaptureConfig != null) {
@@ -122,7 +136,7 @@ class CameraHolder(
                     throw IllegalArgumentException("未知参数")
                 }
             }
-            isReversedVertical=when (captureConfig.verticalMirrorMode) {
+            isReversedVertical = when (captureConfig.verticalMirrorMode) {
                 MirrorMode.MIRROR_MODE_ON_FRONT_ONLY -> {
                     lensFacing == CameraSelector.LENS_FACING_FRONT
                 }
@@ -139,7 +153,7 @@ class CameraHolder(
                     throw IllegalArgumentException("未知参数")
                 }
             }
-            location=captureConfig.location
+            location = captureConfig.location
         }
         // 创建输出选项，包含有图片文件和其中的元数据
         val pair = ImageCaptureHelper.getFileOutputOption(metadata, context)
@@ -153,7 +167,9 @@ class CameraHolder(
             outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed:-----------------\n\n ${exc.message}", exc)
-                    captureResultListener?.onPhotoTaken(null)
+                    handler.post {
+                        captureResultListener?.onPhotoTaken(null)
+                    }
                     currentStatus = TakeVideoState.none
                 }
 
@@ -162,7 +178,10 @@ class CameraHolder(
                     output.savedUri?.let {
                         saveFileData.uri = it
                     }
-                    captureResultListener?.onPhotoTaken(saveFileData)
+                    handler.post {
+                        captureResultListener?.onPhotoTaken(saveFileData)
+                    }
+
                 }
             })
 
@@ -233,13 +252,17 @@ class CameraHolder(
                         currentStatus = TakeVideoState.none
                         imageAnalyze()
                         if (t.hasError()) {
-                            captureResultListener?.onVideoRecorded(null)
+                            handler.post {
+                                captureResultListener?.onVideoRecorded(null)
+                            }
                             Log.e(TAG, "accept: what the fuck", t.cause)
                         } else {
                             if (t.outputResults.outputUri != Uri.EMPTY) {
                                 videoFile.uri = t.outputResults.outputUri
                             }
-                            captureResultListener?.onVideoRecorded(videoFile)
+                            handler.post{
+                                captureResultListener?.onVideoRecorded(videoFile)
+                            }
                         }
                     }
                 }

@@ -36,9 +36,7 @@ object MyFileProcessor {
         block: (bitmap: Bitmap?) -> Unit,
     ) {
         val bitmap = BitmapUtils.getBitmapFromContentUri(contentResolver, uri)
-        process(bitmap) {
-            block(it)
-        }
+        process(bitmap,block)
     }
 
     /**

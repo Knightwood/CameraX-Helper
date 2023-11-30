@@ -147,8 +147,12 @@ abstract class BaseCameraXActivity : BasicActivity(),
     //</editor-fold>
 
     //<editor-fold desc="拍照、录像结果">
-
-    override fun onVideoRecorded(saveFileData: SaveFileData?) {}
+    @CallSuper
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {
+        //录制结束，更新按钮状态
+        page.captureVideoBtn.recordEnd()
+        page.captureVideoBtn.recordEnd()
+    }
 
     override fun onPhotoTaken(saveFileData: SaveFileData?) {}
     //</editor-fold>

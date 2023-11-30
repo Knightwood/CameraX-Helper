@@ -32,6 +32,7 @@ open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
     lateinit var scaleMatrix: Matrix//you can set a matrix to provide map point
 
     private val lock = Any()
+    //GraphicOverlay只是个普通的view，而绘制工作都委托给Graphic实现类
     private val graphics: MutableList<Graphic> = ArrayList()
 
     var cameraSelector: Int = CameraSelector.LENS_FACING_BACK
