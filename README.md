@@ -46,10 +46,25 @@ allprojects {
 override fun configAll(intent: Intent): ManagerConfig {
   //是否使用人脸检测
   val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+  //视频录制配置(可选)
+  val videoRecordConfig = VideoRecordConfig(
+    quality = CameraRecordQuality.HD,//设置视频拍摄质量
+    asPersistentRecording = true,//实验特性，保持长时间录制
+//            fileSizeLimit=100000, //文件大限制,单位bytes
+//            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
+    //...省略
+  )
+  //拍照配置(可选)
+  val imageCaptureConfig =ImageCaptureConfig(
+    horizontalMirrorMode= MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //水平翻转
+    verticalMirrorMode = MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //垂直翻转
+      //...省略
+  )
+  //整体的配置
   return ManagerConfig().apply {
+    this.recordConfig = videoRecordConfig
     this.captureMode =
       if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
-    //闪光灯设置
     this.flashMode = FlashModel.CAMERA_FLASH_AUTO
     this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
   }
@@ -89,13 +104,49 @@ fun initPhotoStore(){
 
 //视频的存储配置同拍照的存储配置相同，不过是把名称从`configPhoto`换成`configVideo`.可以参考app示例中的MainActivity
 
-//视频的其他配置
-VideoCaptureConfig.run {
-            quality = Quality.HD//设置视频 拍摄质量
-//            fileSizeLimit=100000 //文件大限制,单位bytes
-//            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
-        }
 ```
+* `UseCaseHolder` 类初始化预览，拍照用例，录像用例，图像分析用例
+  指定[resolutionSelector]，提供预览与拍照所需要的分辨率与纵横比筛选
+```kotlin
+    //不提供自己的实现，指定筛选条件用于预览和拍照
+    UseCaseHolder.resolutionSelector = ResolutionSelector.Builder()
+        //分辨率筛选
+        .setResolutionFilter { supportedSizes, rotationDegrees ->
+            supportedSizes
+        }
+        //纵横比选择策略 16:9 比例
+        .setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY)
+        //分辨率策略选择最高可用分辨率
+        .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+        //设置允许的分辨率模式。
+        .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
+        .build()
+```
+
+如默认的初始化不满足需要，可以调用[setInitImpl]方法，提供自己所需要的初始化
+示例：使某个类继承自IUseCaseHelper，并实现初始化预览，拍照用例，录像用例，图像分析用例的方法
+  ```
+  class IMPL:IUseCaseHelper{
+  	........省略
+   override fun initVideoCapture(
+        cameraExecutor: ExecutorService,
+        screenAspectRatio: Int,
+        rotation: Int,
+        size: Size,
+        cameraConfig: ManagerConfig
+    ): androidx.camera.video.VideoCapture<Recorder> {
+        val videoCapture =
+            OnceRecorderHelper.getVideoCapture(cameraExecutor, rotation, cameraConfig.recordConfig)
+        return videoCapture
+    }
+    ........省略
+    
+  }
+  val impl =IMPL()
+  //在相机初始化之前调用，提供自己的实现
+  UseCaseHolder.setInitImpl(impl)
+  
+  ```
 
 2. 直接继承自`BaseCameraXActivity`就可以自定义相机
 3. 或者可以自己实现一个activity,内部放置一个`CameraXFragment`实现相机功能
@@ -193,22 +244,25 @@ interface CaptureResultListener {
 }
 ```
 
-* `UseCaseHolder`  初始化预览，拍照用例，录像用例，图像分析用例
-
-  可以提供自己的实现，示例：
-
-  ```
-  class IMPL:IUseCaseHelper{
-  	........省略
-  }
-  val impl =IMPL()
-  //在相机初始化之前调用，提供自己的实现
-  UseCaseHolder.setInitImpl(impl)
-  ```
-
 ## 示例相机
-
+CameraExampleActivity 继承自 BaseCameraXActivity，
+后者在内部维护了一个cameraxFragment，此类持有了cameraholder实现相机功能，
+BaseCameraXActivity还生成了一个CameraXF类实现ICameraXF接口，功能委托给CameraXFragment，
+如此可屏蔽fragment相关实现，方便相机操作，还可以获取cameraholder，此类可提供更多的相机操作
 ```
+class CameraXF(private val cameraXF: CameraXFragment) : ICameraXF by cameraXF
+
+abstract class BaseCameraXActivity : BasicActivity(),
+   CameraXFragmentEventListener, CaptureResultListener {
+
+    internal lateinit var cameraXFragment: CameraXFragment//相机功能实现者
+
+    /**
+     * 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment
+     */
+    val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }//
+}
+
 class CameraExampleActivity : BaseCameraXActivity() {
 
     /**

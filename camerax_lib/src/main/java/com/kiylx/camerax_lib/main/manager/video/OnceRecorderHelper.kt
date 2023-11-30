@@ -1,7 +1,9 @@
 package com.kiylx.camerax_lib.main.manager.video
 
 import android.content.Context
+import android.media.CamcorderProfile
 import android.view.Surface
+import androidx.camera.core.impl.UseCaseConfigFactory
 import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
@@ -12,7 +14,7 @@ import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.store.CameraXStoreConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.IStore
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.util.concurrent.ExecutorService
 
@@ -30,7 +32,7 @@ import java.util.concurrent.ExecutorService
 object OnceRecorderHelper {
     /**
      * videoCapture是由Recorder生成
-     * 如果[VideoCaptureConfig]给出“quality”，就用它生成VideoCapture，
+     * 如果[VideoRecordConfig]给出“quality”，就用它生成VideoCapture，
      * 否则，自动挑选一个比较合适的“quality”生成VideoCapture
      *
      * 配置VideoCapture，不包含录制视频。
@@ -38,13 +40,13 @@ object OnceRecorderHelper {
      * 使用此类获取videoCapture，之后绑定用例。
      *
      * 用法：1.获取videoCapture用例。
-     *          videoCapture = OnceRecorderHelper.getVideoCapture(cameraExecutor,rotation) 获取videoCapture用例。
+     *          videoCapture = OnceRecorderHelper.getVideoCapture(cameraExecutor,rotation,recordConfig) 获取videoCapture用例。
      *      2.绑定用例。
      *          camera = cameraProvider?.bindToLifecycle(lifeOwner,cameraSelector,preview,videoCapture)
      *
      * 绑定用例之后，用此方法录制视频：
      * //获取一个一次性录制工具，并配置输出信息
-     * val onceRecorder = OnceRecorder(context).buildFileOutputOption(videoFile)
+     * val onceRecorder = OnceRecorder(context,recordConfig).buildFileOutputOption(videoFile)
      * 可以使用[OnceRecorderHelper.newOnceRecorder]快速获取OnceRecorder，
      * [OnceRecorderHelper.newOnceRecorder]将根据[CameraXStoreConfig.videoStorage]自动配置好输出信息
      *
@@ -55,7 +57,8 @@ object OnceRecorderHelper {
      */
     fun getVideoCapture(
         executor: ExecutorService,
-        rotation: Int= Surface.ROTATION_0,
+        rotation: Int = Surface.ROTATION_0,
+        videoConfig: VideoRecordConfig = VideoRecordConfig(),
     ): VideoCapture<Recorder> {
         var qualitySelector: QualitySelector = QualitySelector.from(Quality.LOWEST)//默认录制质量为最低画质
 
@@ -75,16 +78,19 @@ object OnceRecorderHelper {
             )
         }
 
-        VideoCaptureConfig.quality?.let {
-            qualitySelector = QualitySelector.from(it)
-        } ?: setSupportedQuality()
+        val parsedQuality = CameraRecordQuality.getQuality(videoConfig.quality)
+        if (parsedQuality != null) {
+            qualitySelector = QualitySelector.from(parsedQuality)
+        } else {
+            setSupportedQuality()
+        }
 
         val recorder = Recorder.Builder()
             .setExecutor(executor)
             .setQualitySelector(qualitySelector)
             .apply {
-                if (VideoCaptureConfig.encodingBitRate > 0) {
-                    this.setTargetVideoEncodingBitRate(VideoCaptureConfig.encodingBitRate)
+                if (videoConfig.encodingBitRate > 0) {
+                    this.setTargetVideoEncodingBitRate(videoConfig.encodingBitRate)
                 }
             }
             .build()
@@ -93,7 +99,7 @@ object OnceRecorderHelper {
         videoCapture = VideoCapture.Builder<Recorder>(recorder)
             .apply {
                 setTargetRotation(rotation)
-                setMirrorMode(VideoCaptureConfig.mirrorMode)
+                setMirrorMode(videoConfig.mirrorMode)
             }
             .build()
         return videoCapture
@@ -103,9 +109,9 @@ object OnceRecorderHelper {
     /**
      * 获取OnceRecorder，
      * 简化下面代码
-     * val onceRecorder = OnceRecorder(context).getFileOutputOption(videoFile)//获取一个一次性录制工具
+     * val onceRecorder = OnceRecorder(context,recordConfig).getFileOutputOption(videoFile)//获取一个一次性录制工具
      */
-    fun newOnceRecorder(context: Context): OnceRecorder {
+    fun newOnceRecorder(context: Context, recordConfig: VideoRecordConfig): OnceRecorder {
         when (val storageConfig = CameraXStoreConfig.videoStorage) {
             is IStore.SAFStoreConfig -> {
                 val name = ManagerUtil.generateRandomName()
@@ -114,7 +120,7 @@ object OnceRecorderHelper {
                     DocumentFile.fromTreeUri(context, uri)?.createFile(MimeTypeConsts.mp4, name)
                 val uri2 = df!!.uri
                 val fd = context.contentResolver.openFileDescriptor(uri2, "rw")
-                return OnceRecorder(context).buildFileDescriptorOutput(fd!!)
+                return OnceRecorder(context, recordConfig).buildFileDescriptorOutput(fd!!)
                     .apply {
                         this.saveFileData = SaveFileData(uri = uri2)
                     }
@@ -125,7 +131,7 @@ object OnceRecorderHelper {
                     storageConfig.getFullPath(),
                     ManagerUtil.VIDEO_EXTENSION
                 )
-                return OnceRecorder(context).buildFileOutput(videoFile)
+                return OnceRecorder(context, recordConfig).buildFileOutput(videoFile)
                     .apply {
                         this.saveFileData = SaveFileData(
                             videoFile.absolutePath,
@@ -135,10 +141,14 @@ object OnceRecorderHelper {
             }
 
             is IStore.MediaStoreConfig -> {
-                return OnceRecorder(context).buildMediaStoreOutput(storageConfig)
+                return OnceRecorder(context, recordConfig).buildMediaStoreOutput(storageConfig)
                     .apply {
                         this.saveFileData = SaveFileData()
                     }
+            }
+
+            else -> {
+                throw IllegalArgumentException("哪来的？？")
             }
         }
     }
@@ -154,5 +164,33 @@ fun Quality.qualityToString(): String {
         Quality.HD -> "HD"
         Quality.SD -> "SD"
         else -> throw IllegalArgumentException()
+    }
+}
+
+/**
+ * 详情： [CamcorderProfile] , [Quality]
+ */
+class CameraRecordQuality {
+    companion object {
+        const val LOWEST = CamcorderProfile.QUALITY_LOW
+        const val HIGHEST = CamcorderProfile.QUALITY_HIGH
+        const val UHD = CamcorderProfile.QUALITY_2160P
+        const val FHD = CamcorderProfile.QUALITY_1080P
+        const val HD = CamcorderProfile.QUALITY_720P
+        const val SD = CamcorderProfile.QUALITY_480P
+        const val AUTO = -100
+
+        fun getQuality(index: Int): Quality? {
+            return when (index) {
+                LOWEST -> Quality.LOWEST
+                HIGHEST -> Quality.HIGHEST
+                UHD -> Quality.UHD
+                FHD -> Quality.FHD
+                HD -> Quality.HD
+                SD -> Quality.SD
+                AUTO -> null
+                else -> throw IllegalArgumentException("参数不符合")
+            }
+        }
     }
 }

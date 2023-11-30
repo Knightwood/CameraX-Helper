@@ -18,7 +18,6 @@ import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.store.SaveFileData
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 
 abstract class BaseCameraXActivity : BasicActivity(),
    CameraXFragmentEventListener, CaptureResultListener {
@@ -110,7 +109,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 LogUtils.dTag("录制activity", "开始")
                 cameraXFragment.startRecord()
                 //录制视频时隐藏摄像头切换
-                if (!VideoCaptureConfig.asPersistentRecording) {
+                if (!cameraConfig.recordConfig.asPersistentRecording) {
                     page.switchBtn.visibility = View.GONE
                 }
             }

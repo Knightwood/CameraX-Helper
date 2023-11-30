@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.video.Quality
 import com.kiylx.camerax_lib.main.store.CameraXStoreConfig
 import com.kiylx.camerax_lib.main.store.IStore
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
 import com.kiylx.cameraxexample.databinding.ActivityMainBinding
 import com.kiylx.store_lib.StoreX
 import com.kiylx.store_lib.mediastore.FileLocate
@@ -91,12 +90,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun initVideo() {
-        VideoCaptureConfig.run {
-            quality = Quality.HD//设置视频 拍摄质量
-            asPersistentRecording=true
-//            fileSizeLimit=100000 //文件大限制,单位bytes
-//            durationLimitMillis =1000*15 //录制时长限制，单位毫秒
-        }
         page.rg2.setOnCheckedChangeListener { group, checkedId ->
             val relativePath = page.relativePath2.text.toString()
             when (checkedId) {

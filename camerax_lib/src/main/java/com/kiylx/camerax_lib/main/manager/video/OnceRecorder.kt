@@ -11,7 +11,7 @@ import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import com.kiylx.camerax_lib.main.manager.video.OutputKinds.*
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.IStore
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.store_lib.kit.MimeTypeConsts
 import java.io.File
 import java.util.*
@@ -36,6 +36,7 @@ import java.util.*
  */
 class OnceRecorder(
     var context: Context,
+    var recordConfig: VideoRecordConfig,
 ) {
     var outputKinds = MEDIA_STORE
     lateinit var outputOption: OutputOptions
@@ -65,14 +66,14 @@ class OnceRecorder(
             storeConfig.saveCollection
         ).setContentValues(innerContentValues)
             .apply {
-                if (VideoCaptureConfig.fileSizeLimit > 0) {
-                    setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
+                if (recordConfig.fileSizeLimit > 0) {
+                    setFileSizeLimit(recordConfig.fileSizeLimit)
                 }
-                if (VideoCaptureConfig.durationLimitMillis > 0) {
-                    setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
+                if (recordConfig.durationLimitMillis > 0) {
+                    setDurationLimitMillis(recordConfig.durationLimitMillis)
                 }
             }
-            .setLocation(VideoCaptureConfig.location)
+            .setLocation(recordConfig.location)
             .build()
     }
 
@@ -81,7 +82,7 @@ class OnceRecorder(
      */
     @SuppressLint("MissingPermission")
     fun getVideoRecording(videoCapture: VideoCapture<Recorder>): PendingRecording {
-        if (!this::outputOption.isInitialized){
+        if (!this::outputOption.isInitialized) {
             throw IllegalArgumentException("outputOption is not Initialized")
         }
         val pendingRecording: PendingRecording =
@@ -96,8 +97,10 @@ class OnceRecorder(
                             .withAudioEnabled()
 
                     } else {
-                        throw IllegalArgumentException("当使用FileDescriptorOutputOptions时，" +
-                                "prepareRecording方法@RequiresApi(26)")
+                        throw IllegalArgumentException(
+                            "当使用FileDescriptorOutputOptions时，" +
+                                    "prepareRecording方法@RequiresApi(26)"
+                        )
                     }
                 }
 
@@ -161,9 +164,9 @@ fun OnceRecorder.buildFileDescriptorOutput(
 ): OnceRecorder {
     outputKinds = FILE_DESCRIPTOR
     outputOption = FileDescriptorOutputOptions.Builder(fileDescriptor)
-        .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
-        .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
-        .setLocation(VideoCaptureConfig.location)
+        .setFileSizeLimit(recordConfig.fileSizeLimit)
+        .setDurationLimitMillis(recordConfig.durationLimitMillis)
+        .setLocation(recordConfig.location)
         .build()
     return this
 }
@@ -174,9 +177,9 @@ fun OnceRecorder.buildFileDescriptorOutput(
 fun OnceRecorder.buildFileOutput(file: File): OnceRecorder {
     outputKinds = FILE
     outputOption = FileOutputOptions.Builder(file)
-        .setFileSizeLimit(VideoCaptureConfig.fileSizeLimit)
-        .setDurationLimitMillis(VideoCaptureConfig.durationLimitMillis)
-        .setLocation(VideoCaptureConfig.location)
+        .setFileSizeLimit(recordConfig.fileSizeLimit)
+        .setDurationLimitMillis(recordConfig.durationLimitMillis)
+        .setLocation(recordConfig.location)
         .build()
     return this
 }

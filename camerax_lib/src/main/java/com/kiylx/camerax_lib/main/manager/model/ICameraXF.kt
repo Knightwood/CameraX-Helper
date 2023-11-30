@@ -1,8 +1,11 @@
 package com.kiylx.camerax_lib.main.manager.model
 
 import android.graphics.Bitmap
+import android.location.Location
 import androidx.camera.view.PreviewView
 import com.kiylx.camerax_lib.main.manager.CameraHolder
+import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 
 /**
  * fragment实现这些接口，其实是把这些功能委托给CameraHolder去做
@@ -19,13 +22,20 @@ interface ICameraXF {
 
     //<editor-fold desc="视频录制">
     fun stopRecord(time: Long = 0)
-    fun startRecord()
+
+    /**
+     * @param recordConfig 录制视频的配置，传入配置将覆盖默认配置
+     */
+    fun startRecord(recordConfig: VideoRecordConfig? = null)
+
     fun pauseRecord()
     fun resumeRecord()
     fun recordMute(mute: Boolean)
     //</editor-fold>
-
-    fun takePhoto()
+    /**
+     * @param imageCaptureConfig 拍照的配置，传入配置将覆盖默认配置
+     */
+    fun takePhoto(imageCaptureConfig: ImageCaptureConfig?=null)
     fun getCameraPreview(): PreviewView
     fun provideBitmap(): Bitmap?
     fun zoom(delta: Float)
@@ -41,6 +51,8 @@ interface ICameraXF {
      * @param mode 默认： [CaptureMode.takePhoto]
      */
     fun setCameraUseCase(mode: Int = CaptureMode.takePhoto)
-    fun refreshBinding()
+    fun reBindUseCase()
     fun cameraHolder(): CameraHolder
+
+    fun reSetConfig(func: ManagerConfig.() -> Unit)
 }

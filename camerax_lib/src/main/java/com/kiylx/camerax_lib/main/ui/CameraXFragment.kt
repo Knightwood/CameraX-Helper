@@ -37,6 +37,8 @@ import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ICameraXF
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
 import kotlinx.coroutines.delay
@@ -125,7 +127,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     override fun initCameraFinished(cameraXManager: CameraXManager) {
         initTouchListener()
         eventListener?.cameraHolderInitFinish(cameraHolder)
-         //通知holder初始化完成了，可以对holder做其他操作了
+        //通知holder初始化完成了，可以对holder做其他操作了
     }
 
     override fun switchCamera(lensFacing: Int) {
@@ -313,12 +315,12 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         return cameraHolder.currentStatus
     }
 
-    override fun startRecord() {
-        cameraHolder.startRecord()
+    override fun startRecord(recordConfig: VideoRecordConfig?) {
+        cameraHolder.startRecord(recordConfig)
     }
 
-    override fun refreshBinding() {
-        cameraHolder.refreshBinding()
+    override fun reBindUseCase() {
+        cameraHolder.reBindUseCase()
     }
 
     override fun pauseRecord() {
@@ -341,8 +343,8 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         cameraHolder.setCamera(mode)
     }
 
-    override fun takePhoto() {
-        cameraHolder.takePhoto()
+    override fun takePhoto(imageCaptureConfig: ImageCaptureConfig?) {
+        cameraHolder.takePhoto(imageCaptureConfig)
     }
 
     override fun getCameraPreview(): PreviewView {
@@ -363,7 +365,16 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         cameraHolder.zoomDirectly(zoomValue)
     }
 
-    override fun cameraHolder(): CameraHolder=cameraHolder
+    override fun cameraHolder(): CameraHolder = cameraHolder
+
+    /**
+     * 可以通过获取[cameraHolder.cameraConfig]，然后重新赋值来调整现有的配置，
+     * 也可以调用此方法调整现有配置
+     */
+    override fun reSetConfig(func: ManagerConfig.() -> Unit) {
+        cameraHolder.cameraConfig.func()
+        reBindUseCase()
+    }
 
     /**
      * 设置曝光补偿

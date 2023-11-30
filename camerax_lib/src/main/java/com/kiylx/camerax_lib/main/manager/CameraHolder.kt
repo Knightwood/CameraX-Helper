@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.util.Log
 import androidx.camera.core.*
-import androidx.camera.video.ExperimentalPersistentRecording
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
@@ -13,7 +12,8 @@ import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
-import com.kiylx.camerax_lib.main.store.VideoCaptureConfig
+import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.permissionx.guolindev.PermissionX
 import com.permissionx.guolindev.callback.ExplainReasonCallbackWithBeforeParam
 import com.permissionx.guolindev.callback.ForwardToSettingsCallback
@@ -21,6 +21,9 @@ import com.permissionx.guolindev.request.ExplainScope
 import com.permissionx.guolindev.request.ForwardScope
 import java.util.concurrent.Executors
 
+/**
+ * 实现拍照，录制等功能
+ */
 class CameraHolder(
     cameraPreview: PreviewView,
     cameraConfig: ManagerConfig,
@@ -81,9 +84,18 @@ class CameraHolder(
             }
     }
 
+    override fun reBindUseCase() {
+        stopRecord()
+        super.reBindUseCase()
+    }
 
     /** 拍照处理方法(这里只是拍照，录制视频另外有方法) 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照 拍照前会检查用例绑定 */
-    fun takePhoto() {
+    fun takePhoto(imageCaptureConfig: ImageCaptureConfig? = null) {
+        if (imageCaptureConfig != null) {
+            cameraConfig.imageCaptureConfig = imageCaptureConfig
+        }
+        val captureConfig = cameraConfig.imageCaptureConfig
+
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
         if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
             setCamera(CaptureMode.takePhoto)
@@ -93,7 +105,41 @@ class CameraHolder(
         val metadata = ImageCapture.Metadata().apply {
             // 用前置摄像头的话要镜像画面
             // Mirror image when using the front camera
-            isReversedHorizontal = lensFacing == CameraSelector.LENS_FACING_FRONT
+            isReversedHorizontal = when (captureConfig.horizontalMirrorMode) {
+                MirrorMode.MIRROR_MODE_ON_FRONT_ONLY -> {
+                    lensFacing == CameraSelector.LENS_FACING_FRONT
+                }
+
+                MirrorMode.MIRROR_MODE_ON -> {
+                    true
+                }
+
+                MirrorMode.MIRROR_MODE_OFF -> {
+                    false
+                }
+
+                else -> {
+                    throw IllegalArgumentException("未知参数")
+                }
+            }
+            isReversedVertical=when (captureConfig.verticalMirrorMode) {
+                MirrorMode.MIRROR_MODE_ON_FRONT_ONLY -> {
+                    lensFacing == CameraSelector.LENS_FACING_FRONT
+                }
+
+                MirrorMode.MIRROR_MODE_ON -> {
+                    true
+                }
+
+                MirrorMode.MIRROR_MODE_OFF -> {
+                    false
+                }
+
+                else -> {
+                    throw IllegalArgumentException("未知参数")
+                }
+            }
+            location=captureConfig.location
         }
         // 创建输出选项，包含有图片文件和其中的元数据
         val pair = ImageCaptureHelper.getFileOutputOption(metadata, context)
@@ -146,7 +192,7 @@ class CameraHolder(
 
     /** 翻转相机时，还需要翻转叠加层 */
     override fun switchCamera() {
-        if (currentStatus == TakeVideoState.takeVideo && !VideoCaptureConfig.asPersistentRecording) {
+        if (currentStatus == TakeVideoState.takeVideo && !cameraConfig.recordConfig.asPersistentRecording) {
             //如果未开启持久录制，录制视频时得先停下来
             stopRecord()
         }
@@ -156,17 +202,26 @@ class CameraHolder(
     /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
     private var recording: Recording? = null
 
+    /**
+     * 开始录制
+     * @param videoRecordConfig 将覆盖原有配置
+     */
     @SuppressLint("UnsafeOptInUsageError")
-    fun startRecord() {
+    fun startRecord(videoRecordConfig: VideoRecordConfig? = null) {
+        if (videoRecordConfig != null) {
+            this.cameraConfig.recordConfig = videoRecordConfig //覆盖原有配置
+        }
+        val recordConfig = cameraConfig.recordConfig
+
         if (whichInstance != WhichInstanceBind.VIDEO)//如果当前绑定的不是视频捕获实例，绑定他
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
         currentStatus = TakeVideoState.takeVideo
 
-        val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context)
+        val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context, recordConfig)
         val videoFile = onceRecorder.saveFileData
 
-        val pendingRecording = onceRecorder.getVideoRecording(newVideoCapture)
-        if (VideoCaptureConfig.asPersistentRecording) {
+        val pendingRecording = onceRecorder.getVideoRecording(videoCapture)
+        if (recordConfig.asPersistentRecording) {
             //持久性录制
             pendingRecording.asPersistentRecording()
         }

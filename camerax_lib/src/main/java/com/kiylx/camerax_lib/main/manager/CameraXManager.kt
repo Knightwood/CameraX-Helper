@@ -8,7 +8,6 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Range
 import android.util.Size
-import android.view.Surface
 import androidx.annotation.CallSuper
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -52,7 +51,7 @@ abstract class CameraXManager(
     //三种实例
     lateinit var imageAnalyzer: ImageAnalysis
     lateinit var imageCapture: ImageCapture
-    lateinit var newVideoCapture: VideoCapture<Recorder> //新版本录像用例
+    lateinit var videoCapture: VideoCapture<Recorder> //新版本录像用例
 
     //状态
     lateinit var cameraSelector: CameraSelector
@@ -198,7 +197,7 @@ abstract class CameraXManager(
     /**
      * 重新构建用例，并且绑定用例
      */
-    fun refreshBinding() {
+    open fun reBindUseCase() {
         initUseCase()
         setCamera(cameraConfig.captureMode)
     }
@@ -236,10 +235,10 @@ abstract class CameraXManager(
         if (cameraConfig.rotation > 0) {
             rotation = cameraConfig.rotation
         }
-        preview = UseCaseHolder.caseHelper.initPreView(rotation)
-        imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(rotation)
-        imageCapture = UseCaseHolder.caseHelper.initImageCapture(screenAspectRatio, rotation, size)
-        newVideoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor, rotation)
+        preview = UseCaseHolder.caseHelper.initPreView(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
+        imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
+        imageCapture = UseCaseHolder.caseHelper.initImageCapture(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
+        videoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor, screenAspectRatio, rotation, size,cameraConfig)
     }
 
     /** 绑定相机实例之类的 */
@@ -281,7 +280,7 @@ abstract class CameraXManager(
                             lifeOwner,
                             cameraSelector,
                             preview,
-                            newVideoCapture
+                            videoCapture
                         )
                     } catch (exc: Exception) {
                         Log.e(TAG, "Use case binding failed", exc)

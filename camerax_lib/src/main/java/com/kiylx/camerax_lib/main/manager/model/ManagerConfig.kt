@@ -6,12 +6,14 @@ import androidx.camera.core.ImageCapture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
 import kotlinx.parcelize.Parcelize
 import android.view.Surface
-
+import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 
 
 @Parcelize
 data class ManagerConfig(
     var flashMode: Int = FlashModel.CAMERA_FLASH_OFF,
+
     var size: Size = Size(1280, 720),//android R以下，设置预览，拍照的默认分辨率
 
     /**
@@ -24,9 +26,18 @@ data class ManagerConfig(
      * 默认值是根据display的旋转方向而定
      * 因此，如果在此指定值，默认值将不会使用
      */
-    var rotation: Int = -1
+    var rotation: Int = -1,
 
-    ) : Parcelable {
+    /**
+     * 视频录制配置
+     */
+    var recordConfig: VideoRecordConfig = VideoRecordConfig(),
+    /**
+     * 拍照配置
+     */
+    var imageCaptureConfig: ImageCaptureConfig = ImageCaptureConfig()
+
+) : Parcelable {
 
     fun isUsingImageAnalyzer(): Boolean {
         return captureMode == CaptureMode.imageAnalysis

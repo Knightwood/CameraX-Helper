@@ -11,7 +11,10 @@ import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetecti
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.video.CameraRecordQuality
+import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
+import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
@@ -24,7 +27,18 @@ class CameraExampleActivity : BaseCameraXActivity() {
      */
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+        //视频录制配置(可选)
+        val videoRecordConfig = VideoRecordConfig(
+            quality = CameraRecordQuality.HD,//设置视频拍摄质量
+            asPersistentRecording = true,//实验特性，保持长时间录制
+//            fileSizeLimit=100000, //文件大限制,单位bytes
+//            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
+        )
+        //拍照配置(可选)
+        val imageCaptureConfig =ImageCaptureConfig()
+        //整体的配置
         return ManagerConfig().apply {
+            this.recordConfig = videoRecordConfig
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
@@ -44,7 +58,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
         super.cameraHolderInitStart(cameraHolder)
-        val cameraPreview=cameraHolder.cameraPreview
+        val cameraPreview = cameraHolder.cameraPreview
         //生成图像分析器
         val analyzer = FaceContourDetectionProcessor(
             cameraPreview,
