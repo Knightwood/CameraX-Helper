@@ -136,6 +136,15 @@ class CameraButton @JvmOverloads constructor(
 
     }
 
+    /**
+     * 点按录制和长按录制，点按拍照。
+     * 当手指按下的时候，就启动一个延迟500毫秒的逻辑，
+     *  1.当500毫秒后没收松开手指，就会开始录制，此时即为长按事件，松开手指时停止录制
+     *  2.当500毫秒内松开手指，就会把这个延迟逻辑取消掉，并认为是个点击事件而不是长按事件
+     * 还有根据模式进行判断：
+     *  1.如果是点击拍照，full模式，则点击为拍照，长按为录制
+     *  2.如果是点击录制，则点击为录制
+     */
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -176,15 +185,16 @@ class CameraButton @JvmOverloads constructor(
         if (state == STATE_PRESS) {
             if (captureListener != null) {
                 when (buttonMode) {
+                    //点击录视频和停止录制逻辑
                     BUTTON_STATE_ONLY_RECORDER -> {
                         if (buttonEvent == EVENT_RECORDERING) {
                             timer.cancel() //停止计时器
                             recordEnd()    //录制结束
                         } else {
-                            //录视频
                             postDelayed(longPressRunnable, 500);    //同时延长500启动长按后处理的逻辑Runnable
                         }
                     }
+                    //拍照
                     BUTTON_STATE_ONLY_CAPTURE ,BUTTON_STATE_BOTH -> {
                         startCaptureAnimation(button_inside_radius)
                     }

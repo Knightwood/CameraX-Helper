@@ -4,24 +4,37 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updatePadding
 import com.kiylx.camerax_lib.main.manager.imagedetection.facedetection.FaceDetection
 import com.kiylx.camerax_lib.main.manager.imagedetection.filevision.MyFileProcessor
+import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
+import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
+import com.kiylx.cameraxexample.databinding.ActivityTestFileDecBinding
 import com.kiylx.store_lib.StoreX
+import com.kiylx.store_lib.kit.MimeTypeConsts.it
 
 class TestFileDecActivity : AppCompatActivity() {
-    private val model = FaceDetection.create(
-        this.assets,
-        TF_OD_API_MODEL_FILE,
-        TF_OD_API_LABELS_FILE,
-        TF_OD_API_IS_QUANTIZED
-    )
+    private lateinit var model: FaceDetection
+    private lateinit var page :ActivityTestFileDecBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_test_file_dec)
+        page= ActivityTestFileDecBinding.inflate(layoutInflater)
+        setContentView(page.root)
+        setWindowEdgeToEdge{
+            page.root.updatePadding(top=it.top,bottom=it.bottom)
+        }
+        statusBarTheme(true)
+
         findViewById<Button>(R.id.select).setOnClickListener {
             selectFileShow()
         }
+        model=FaceDetection.create(
+            this.assets,
+            TF_OD_API_MODEL_FILE,
+            TF_OD_API_LABELS_FILE,
+            TF_OD_API_IS_QUANTIZED
+        )
     }
 
 
@@ -46,9 +59,9 @@ class TestFileDecActivity : AppCompatActivity() {
 
         // MobileFaceNet
         private const val TF_OD_API_INPUT_SIZE = 112
-        private const val TF_OD_API_IS_QUANTIZED = false
-        private const val TF_OD_API_MODEL_FILE = "mobile_face_net.tflite"
-        private const val TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt"
+        const val TF_OD_API_IS_QUANTIZED = false
+        const val TF_OD_API_MODEL_FILE = "mobile_face_net.tflite"
+        const val TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt"
 
     }
 }

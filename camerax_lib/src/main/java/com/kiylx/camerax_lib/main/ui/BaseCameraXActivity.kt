@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import androidx.annotation.CallSuper
+import androidx.core.view.updatePadding
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
@@ -16,8 +17,11 @@ import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
 import com.kiylx.camerax_lib.main.manager.model.*
-import com.kiylx.camerax_lib.main.manager.ui.setWindowEdgeToEdge
+import com.kiylx.camerax_lib.main.manager.util.navBarTheme
+import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
+import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
 import com.kiylx.camerax_lib.main.store.SaveFileData
+import com.kiylx.camerax_lib.view.IFlashButtonState
 
 abstract class BaseCameraXActivity : BasicActivity(),
    CameraXFragmentEventListener, CaptureResultListener {
@@ -36,11 +40,16 @@ abstract class BaseCameraXActivity : BasicActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         page = ActivityCameraExampleBinding.inflate(layoutInflater)
-        setWindowEdgeToEdge(page.root, page.settingLayout.id, page.cameraControlLayout.id)
         setContentView(page.root)
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
         setCameraFragment()
+        setWindowEdgeToEdge{
+            page.settingLayout.updatePadding(top=it.top)
+            page.cameraControlLayout.updatePadding(bottom=it.bottom)
+        }
+        statusBarTheme(light = false)
+        navBarTheme(light = false)
         //切换摄像头
         page.switchBtn.setOnClickListener {
             //要保持闪光灯上一次的模式
@@ -48,8 +57,11 @@ abstract class BaseCameraXActivity : BasicActivity(),
                 cameraXFragment.switchCamera()
             }
         }
+        //闪光灯按钮
+        page.btnFlushSwitch.stateInference= IFlashButtonState {
+            cameraXF.setFlashMode(it)
+        }
 
-        initFlashButton()
         page.closeBtn.setOnClickListener {
             closeActivity()
         }
@@ -156,54 +168,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     override fun onPhotoTaken(saveFileData: SaveFileData?) {}
     //</editor-fold>
-
-   //<editor-fold desc="闪光设置">
-   private fun initFlashButton() {
-       page.flushBtn.setOnClickListener {
-           if (page.flashLayout.visibility == View.VISIBLE) {
-               page.flashLayout.visibility = View.INVISIBLE
-               page.switchBtn.visibility = View.VISIBLE
-           } else {
-               page.flashLayout.visibility = View.VISIBLE
-               page.switchBtn.visibility = View.INVISIBLE
-           }
-       }
-       page.flashOn.setOnClickListener {
-           initFlashSelectColor()
-           page.flashOn.setTextColor(resources.getColor(R.color.flash_selected))
-           page.flushBtn.setImageResource(R.drawable.flash_on)
-           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ON)
-       }
-       page.flashOff.setOnClickListener {
-           initFlashSelectColor()
-           page.flashOff.setTextColor(resources.getColor(R.color.flash_selected))
-           page.flushBtn.setImageResource(R.drawable.flash_off)
-           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_OFF)
-       }
-       page.flashAuto.setOnClickListener {
-           initFlashSelectColor()
-           page.flashAuto.setTextColor(resources.getColor(R.color.flash_selected))
-           page.flushBtn.setImageResource(R.drawable.flash_auto)
-           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_AUTO)
-       }
-       page.flashAllOn.setOnClickListener {
-           initFlashSelectColor()
-           page.flashAllOn.setTextColor(resources.getColor(R.color.flash_selected))
-           page.flushBtn.setImageResource(R.drawable.flash_all_on)
-           cameraXFragment.setFlashMode(FlashModel.CAMERA_FLASH_ALL_ON)
-       }
-
-   }
-    private fun initFlashSelectColor() {
-        page.flashOn.setTextColor(resources.getColor(R.color.white))
-        page.flashOff.setTextColor(resources.getColor(R.color.white))
-        page.flashAuto.setTextColor(resources.getColor(R.color.white))
-        page.flashAllOn.setTextColor(resources.getColor(R.color.white))
-
-        page.flashLayout.visibility = View.INVISIBLE
-        page.switchBtn.visibility = View.VISIBLE
-    }
-   //</editor-fold>
 
     override fun onStop() {
         super.onStop()

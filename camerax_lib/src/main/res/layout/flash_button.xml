@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/flush_btn"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/switch_camera_button_alt"
+        android:padding="10dp"
+        android:src="@drawable/flash_off"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        />
+
+    <HorizontalScrollView
+        android:id="@+id/flash_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:visibility="invisible"
+        android:layout_toEndOf="@id/flush_btn"
+        android:layout_centerVertical="true"
+        >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/flash_on"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:paddingTop="2dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="2dp"
+                android:text="打开"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+               />
+
+            <TextView
+                android:id="@+id/flash_all_on"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:paddingTop="2dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="2dp"
+                android:text="常亮"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                />
+
+            <TextView
+                android:id="@+id/flash_auto"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:paddingTop="2dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="2dp"
+                android:text="自动"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                 />
+
+            <TextView
+                android:id="@+id/flash_off"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingLeft="10dp"
+                android:paddingTop="2dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="2dp"
+                android:text="关闭"
+                android:textColor="@color/flash_selected"
+                android:textSize="16sp"
+               />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+</RelativeLayout>

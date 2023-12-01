@@ -8,6 +8,9 @@ import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.video.Quality
+import androidx.core.view.updatePadding
+import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
+import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
 import com.kiylx.camerax_lib.main.store.CameraXStoreConfig
 import com.kiylx.camerax_lib.main.store.IStore
 import com.kiylx.cameraxexample.databinding.ActivityMainBinding
@@ -23,6 +26,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         page = ActivityMainBinding.inflate(layoutInflater)
         setContentView(page.root)
+        setWindowEdgeToEdge{
+            page.root.updatePadding(top=it.top,bottom=it.bottom)
+        }
+        statusBarTheme(true)
         page.one.setOnClickListener {
             val intent: Intent = Intent(this, CameraExampleActivity::class.java)
             intent.putExtra(ImageDetection, false)
