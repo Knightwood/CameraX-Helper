@@ -16,8 +16,8 @@ object CameraXStoreConfig {
     fun prepare(application: Application): CameraXStoreConfig {
         this.application = application
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {//android 10 及以上
-            this.imageStorage = IStore.MediaStoreConfig()
-            this.videoStorage = IStore.MediaStoreConfig()
+            this.imageStorage = IStore.MediaStoreConfig(saveCollection = FileLocate.IMAGE.uri)
+			this.videoStorage = IStore.MediaStoreConfig(saveCollection = FileLocate.VIDEO.uri)
         } else {
             this.imageStorage = IStore.FileStoreConfig(
                 parentPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath
