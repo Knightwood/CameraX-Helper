@@ -137,7 +137,7 @@ object UseCaseHolder : IUseCaseHelper {
 
         // ImageCapture，用于拍照功能
         val imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setCaptureMode(config.captureMode)
             //设置初始目标旋转，如果旋转改变，我们将不得不再次调用它在此用例的生命周期中
             .setTargetRotation(rotation)
             .setJpegQuality(config.jpegQuality)

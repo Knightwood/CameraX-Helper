@@ -2,6 +2,8 @@ package com.kiylx.camerax_lib.main.store
 
 import android.location.Location
 import android.os.Parcelable
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
 import androidx.camera.core.MirrorMode
 import com.kiylx.camerax_lib.main.manager.video.CameraRecordQuality
 import com.kiylx.camerax_lib.utils.DataSize
@@ -86,6 +88,15 @@ data class ImageCaptureConfig(
      * jpeg quality
      * @IntRange(from = 1, to = 100)
      */
-    var jpegQuality: Int = 100
+    var jpegQuality: Int = 100,
+    /**
+     * [ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY]：缩短图片拍摄的延迟时间。
+     * [ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY]：提高图片拍摄的图片质量。
+     * 如果设备不符合最低要求，CameraX 便会回退到 CAPTURE_MODE_MINIMIZE_LATENCY。
+     *
+     * 零快门延迟仅适用于图片拍摄用例。无法为视频拍摄用例或相机扩展程序启用该功能。
+     * 由于使用闪光灯会增加延迟时间，因此当闪光灯开启或处于自动模式时，零快门延迟将不起作用。
+     */
+    var captureMode:Int =ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
 
 ) : Parcelable

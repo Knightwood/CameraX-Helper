@@ -198,6 +198,7 @@ abstract class CameraXManager(
     /**
      * 重新构建用例，并且绑定用例
      */
+    @CallSuper
     open fun reBindUseCase() {
         initUseCase()
         setCamera(cameraConfig.captureMode)

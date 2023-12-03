@@ -2,6 +2,7 @@ package com.kiylx.camerax_lib.main.manager.model
 
 import android.graphics.Bitmap
 import android.location.Location
+import androidx.camera.core.ImageCapture
 import androidx.camera.view.PreviewView
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
@@ -33,9 +34,16 @@ interface ICameraXF {
     fun recordMute(mute: Boolean)
     //</editor-fold>
     /**
+     * 拍照，并保存为文件
      * @param imageCaptureConfig 拍照的配置，传入配置将覆盖默认配置
      */
     fun takePhoto(imageCaptureConfig: ImageCaptureConfig?=null)
+
+    /**
+     * 拍照，但不保存为文件，自行处理图像数据
+     */
+    fun takePhotoInMem(callback: ImageCapture.OnImageCapturedCallback)
+
     fun getCameraPreview(): PreviewView
     fun provideBitmap(): Bitmap?
     fun zoom(delta: Float)

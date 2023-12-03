@@ -85,6 +85,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
 1. 调用CameraXStoreConfig.prepare(application)//初始化存储配置
 2. 调用CameraXStoreConfig.configPhoto()配置图片存储位置
 3. 调用CameraXStoreConfig.configVideo()配置录制存储位置，使用方式与配置图片没有区别，仅方法名称不同
+
 一共有三种存储方式：file，MediaStore，saf访问框架
 
 ```kotlin
@@ -205,11 +206,22 @@ abstract class BaseCameraXActivity : BasicActivity(),
 class CameraExampleActivity : BaseCameraXActivity() {
 
     /**
-     * 这里直接构建了配置，我没有使用intent传入配置。
+     * 这里直接构建了配置，是否使用人脸检测使用了使用intent传入boolean值。
      */
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+        //视频录制配置(可选)
+        val videoRecordConfig = VideoRecordConfig(
+            quality = CameraRecordQuality.HD,//设置视频拍摄质量
+//            asPersistentRecording = true,//实验特性，保持长时间录制
+//            fileSizeLimit=5.mb, //文件大限制,单位bytes
+//            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
+        )
+        //拍照配置(可选)
+        val imageCaptureConfig = ImageCaptureConfig()
+        //整体的配置
         return ManagerConfig().apply {
+            this.recordConfig = videoRecordConfig
             this.captureMode =
                 if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
@@ -311,10 +323,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
 ## 其他介绍
 
-`CameraXFragment`实现` ICameraXF`
-接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
-`ICameraXF`接口则是为了屏蔽fragment的相关方法
-
+* `CameraXFragment`实现` ICameraXF`接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
+* `ICameraXF`接口则是为了屏蔽fragment的相关方法
 * `CameraXFragment`内部创建`CameraHolder`
 
 ```
@@ -624,9 +634,10 @@ class BaseImageAnalyzer : ImageAnalysis.Analyzer {
 
 > 来源
 
-> [文章连接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
+> [文章链接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
 * TestFileDecActivity
 * 若需要连接到相机分析流，请看上面章节
+* 加载tensorflow lite模型，运行检测，请看`FaceDetection.kt`文件
 ```
 //使用TensorFlow Lite 模型的处理器
 private val model = FaceDetection.create(
@@ -674,6 +685,11 @@ StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
     app:longPassRecord="true" //开启长按录制
     app:layout_constraintTop_toTopOf="parent"
     app:size="80" />
+    
+    属性：
+    buttonMode 可选值：only_capture，only_record，both
+    maxDuration 秒
+    longPassRecord 是否可长按录制
 ```
 
 使用示例
@@ -730,7 +746,7 @@ https://discuss.tensorflow.org/t/tensorflow-lite-aar-2-9-0-android-integration/1
 
 详情参考https://tensorflow.google.cn/lite/inference_with_metadata/overview?hl=zh-cn
 
-# 工具类 DataSize，使用时数字加上".单位"
+## 工具类 DataSize，使用时数字加上".单位"
 [来源](https://github.com/forJrking/KotlinSkillsUpgrade/blob/main/kup/src/main/java/com/example/kup/DataSize.kt)
 简化单位换算
 例如：

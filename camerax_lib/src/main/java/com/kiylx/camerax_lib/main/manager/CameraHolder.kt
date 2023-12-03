@@ -184,9 +184,20 @@ class CameraHolder(
 
                 }
             })
-
     }
 
+    /**
+     * 为拍摄的图片提供内存缓冲区,自行处理，而不保存为文件
+     */
+    fun takePhotoInMem(callback: ImageCapture.OnImageCapturedCallback) {
+        //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
+        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
+            setCamera(CaptureMode.takePhoto)
+        }
+        currentStatus = TakeVideoState.takePhoto
+        imageCapture.takePicture(cameraExecutor, callback)
+        currentStatus = TakeVideoState.none
+    }
 
     /**
      * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
@@ -260,7 +271,7 @@ class CameraHolder(
                             if (t.outputResults.outputUri != Uri.EMPTY) {
                                 videoFile.uri = t.outputResults.outputUri
                             }
-                            handler.post{
+                            handler.post {
                                 captureResultListener?.onVideoRecorded(videoFile)
                             }
                         }

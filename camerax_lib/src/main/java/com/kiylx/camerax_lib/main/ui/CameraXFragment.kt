@@ -20,6 +20,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExposureState
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.FocusMeteringResult
+import androidx.camera.core.ImageCapture
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -345,6 +346,10 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
 
     override fun takePhoto(imageCaptureConfig: ImageCaptureConfig?) {
         cameraHolder.takePhoto(imageCaptureConfig)
+    }
+
+    override fun takePhotoInMem(callback: ImageCapture.OnImageCapturedCallback) {
+        cameraHolder.takePhotoInMem(callback = callback)
     }
 
     override fun getCameraPreview(): PreviewView {
