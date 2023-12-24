@@ -27,7 +27,7 @@ interface Overlay {
  * 如果不限制activity的方向，任其自由旋转，没有问题
  * 如果限制为横屏或竖屏，没有问题。但此时旋转手机，面部识别后，绘制坐标会缺失旋转变换。
  */
-open class GraphicOverlay(context: Context?, attrs: AttributeSet?) :
+open class GraphicOverlayView(context: Context?, attrs: AttributeSet?) :
     View(context, attrs), Overlay {
     lateinit var scaleMatrix: Matrix//you can set a matrix to provide map point
 

@@ -281,6 +281,9 @@ class CameraHolder(
 
     }
 
+    /**
+     * 停止录制
+     */
     fun stopRecord() {
         //这里是不是会自动的unbind VideoCapture
         if (currentStatus == TakeVideoState.takeVideo) {
@@ -289,14 +292,23 @@ class CameraHolder(
         }
     }
 
+    /**
+     * 暂停录制
+     */
     fun pauseRecord() {
         recording?.pause()
     }
 
+    /**
+     * 恢复录制
+     */
     fun resumeRecord() {
         recording?.resume()
     }
 
+    /**
+     * 录制时静音
+     */
     fun recordMute(mute: Boolean) {
         recording?.mute(mute)
     }

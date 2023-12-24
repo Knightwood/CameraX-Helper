@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         Log.e(tag, "onCreate")
-        CameraXStoreConfig.prepare(application)//初始化存储配置
         initPhoto()
         initVideo()
     }

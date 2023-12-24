@@ -1,7 +1,6 @@
 package com.kiylx.camerax_lib.main.manager.imagedetection.face
 
 import android.graphics.Matrix
-import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.PreviewView
@@ -19,7 +18,7 @@ import java.io.IOException
  */
 class FaceContourDetectionProcessor(
     private val preview: PreviewView,
-    private val view: GraphicOverlay,
+    private val view: GraphicOverlayView,
 ) : BaseImageAnalyzer<List<Face>>() {
     var analyzeListener: AnalyzeResultListener? = null
 
@@ -46,7 +45,7 @@ class FaceContourDetectionProcessor(
 
     private val detector = FaceDetection.getClient(realTimeOpts)
 
-    override val graphicOverlay: GraphicOverlay
+    override val graphicOverlayView: GraphicOverlayView
         get() = view
     override val cameraPreview: PreviewView
         get() = preview
@@ -65,26 +64,26 @@ class FaceContourDetectionProcessor(
 
     /**
      * @param results 人脸列表
-     * @param graphicOverlay 叠加层
+     * @param overlayView 叠加层
      * @param rect :  imageProxy.image.cropRect: 获取与此帧关联的裁剪矩形。裁剪矩形使用最大分辨率平面中的坐标指定图像中有效像素的区域。
      */
     override fun onSuccess(
         imageProxy: ImageProxy,
         results: List<Face>,
-        graphicOverlay: GraphicOverlay,
+        overlayView: GraphicOverlayView,
     ) {
         //清空上一次识别的面部图像位置数据，
         //添加这一次的图像数据，并刷新叠加层以绘制面部数据
-        graphicOverlay.clear()
+        overlayView.clear()
         //可以用matrix来坐标映射
 //        graphicOverlay.scaleMatrix=createMatrix(imageProxy)
         results.forEach {
             //FaceContourGraphic继承自Graphic并实现了自定义的绘制
-            val faceGraphic = FaceContourGraphic(graphicOverlay, it, imageProxy.cropRect)
-            graphicOverlay.add(faceGraphic)
+            val faceGraphic = FaceContourGraphic(overlayView, it, imageProxy.cropRect)
+            overlayView.add(faceGraphic)
         }
         //BitmapUtils.getBitmap(imageProxy) //从imageProxy中获取bitmap
-        graphicOverlay.postInvalidate()
+        overlayView.postInvalidate()
         if (results.isNotEmpty()) {
             if (System.currentTimeMillis() - timeLast > backPress) {
                 analyzeListener?.isSuccess()

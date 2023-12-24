@@ -74,6 +74,10 @@ object UseCaseHolder : IUseCaseHelper {
         .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
         .build()
 
+    /**
+     * 相机初始化前调用此方法以替换默认的usecase初始化
+     * 或者相机初始化后调用此方法，再调用[CameraXManager.reBindUseCase]重新初始化相机
+     */
     fun setInitImpl(caseHelper: IUseCaseHelper) {
         this.caseHelper = caseHelper
     }

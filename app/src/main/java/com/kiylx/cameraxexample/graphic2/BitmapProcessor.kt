@@ -5,7 +5,7 @@ import android.view.View
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.mlkit.vision.face.Face
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.imagedetection.filevision.FileVisionProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +34,7 @@ object BitmapProcessor {
      */
     fun onSuccess(
         results: List<Face>,
-        graphicOverlay: GraphicOverlay,
+        graphicOverlay: GraphicOverlayView,
     ) {
         graphicOverlay.clear()
         results.filterFace().run {

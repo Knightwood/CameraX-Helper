@@ -161,8 +161,7 @@ abstract class CameraXManager(
                 cameraProvider = cameraProviderFuture.get()
 
                 //设置默认摄像头，默认是后置的摄像头，没有后面的再切换到前面的来
-                val cameraProviderTmp = cameraProvider
-                parseCameraSelector(cameraProviderTmp)
+                parseCameraSelector(cameraProvider)
                 initUseCase()
                 //配置传感器方向监听
                 if (sensorRotation == null) {
@@ -324,10 +323,10 @@ abstract class CameraXManager(
     }
 
     /** 获取当前使用的摄像头，并设置变量 */
-    private fun parseCameraSelector(cameraProviderTmp: ProcessCameraProvider?) {
+    private fun parseCameraSelector(cameraProvider: ProcessCameraProvider) {
         lensFacing = when {
-            cameraProviderTmp!!.hasBackCamera() -> CameraSelector.LENS_FACING_BACK
-            cameraProviderTmp.hasFrontCamera() -> CameraSelector.LENS_FACING_FRONT
+            cameraProvider.hasBackCamera() -> CameraSelector.LENS_FACING_BACK
+            cameraProvider.hasFrontCamera() -> CameraSelector.LENS_FACING_FRONT
             else -> throw IllegalStateException("Back and front camera are unavailable")
         }
         setCameraSelector(lensFacing)

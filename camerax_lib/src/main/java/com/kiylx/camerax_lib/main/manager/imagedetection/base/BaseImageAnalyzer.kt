@@ -2,19 +2,17 @@ package com.kiylx.camerax_lib.main.manager.imagedetection.base
 
 import android.annotation.SuppressLint
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.PreviewView
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlay
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.util.*
 
 abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
 
-    abstract val graphicOverlay: GraphicOverlay
+    abstract val graphicOverlayView: GraphicOverlayView
     abstract val cameraPreview: PreviewView
 
     @SuppressLint("UnsafeExperimentalUsageError", "UnsafeOptInUsageError")
@@ -31,12 +29,12 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
                     onSuccess(
                         imageProxy,
                         results,
-                        graphicOverlay,
+                        graphicOverlayView,
                     )
                 }
                 .addOnFailureListener {
-                    graphicOverlay.clear()
-                    graphicOverlay.postInvalidate()
+                    graphicOverlayView.clear()
+                    graphicOverlayView.postInvalidate()
                     onFailure(it)
                 }
                 .addOnCompleteListener {
@@ -58,7 +56,7 @@ abstract class BaseImageAnalyzer<T> : ImageAnalysis.Analyzer {
     protected abstract fun onSuccess(
         imageProxy:ImageProxy,
         results: T,
-        graphicOverlay: GraphicOverlay,
+        overlayView: GraphicOverlayView,
     )
 
     protected abstract fun onFailure(e: Exception)

@@ -5,10 +5,10 @@
 适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
 Android10 以下，大家都很熟悉。
 
-内置人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
-内置人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
-可以拍照，录制，暂停/继续录制，双指缩放，点按对焦，闪光灯，手电筒。
-自定义配置相机功能，例如拍照时水平翻转或垂直翻转，分辨率和宽高比；视频的镜像翻转，文件或时长限制，视频清晰度等。
+- 内置人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
+- 内置人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
+- 可以拍照，录制，暂停/继续录制，双指缩放，点按对焦，闪光灯，手电筒。
+- 自定义配置相机功能，例如拍照时水平翻转或垂直翻转，分辨率和宽高比；视频的镜像翻转，文件或时长限制，视频清晰度等。
 
 * 示例代码在app目录下。
 
@@ -17,14 +17,15 @@ Android10 以下，大家都很熟悉。
 <img src="screenshots/1.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
 
 # 用法
-使用时可直接将`camerax_lib` module集成到项目，进行修改，不建议引入dependencies中引入打包好的aar
 `camerax_lib` module 中提供了`BaseCameraXActivity`和`CameraXFragment`类，后者持有`cameraHolder`实现相机功能，
 前者则持有`CameraXFragment`,提供更进一步的封装。
 
 整体的相机实现示例可以看app module下的`CameraExampleActivity`类。
+'CameraX'版本：1.3.0
+_长期维护中_
 
-
-版本号 [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
+- 使用时可直接将`camerax_lib` module集成到项目，进行修改，**不建议dependencies中引入打包好的aar**
+~~版本号~~ [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
 ```
  dependencies {
 	        implementation 'com.github.Knightwood:SimpleCameraX:Tag'
@@ -81,23 +82,15 @@ class CameraExampleActivity : BaseCameraXActivity() {
 ```
 
 #### 存储配置：
-全局的统一配置类: `CameraXStoreConfig`
-1. 调用CameraXStoreConfig.prepare(application)//初始化存储配置
-2. 调用CameraXStoreConfig.configPhoto()配置图片存储位置
-3. 调用CameraXStoreConfig.configVideo()配置录制存储位置，使用方式与配置图片没有区别，仅方法名称不同
+全局的统一配置类: `CameraXStoreConfig`，若不进行配置，则默认存储到相册`CameraX`文件夹下
+1. 调用CameraXStoreConfig.configPhoto()配置图片存储位置
+2. 调用CameraXStoreConfig.configVideo()配置录制存储位置，使用方式与配置图片没有区别，仅方法名称不同
 
 一共有三种存储方式：file，MediaStore，saf访问框架
 
 ```kotlin
 class CameraExampleActivity : BaseCameraXActivity() {
-  
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
     
-    //Application或者Activity中，初始化全局存储位置
-    CameraXStoreConfig.prepare(application)//初始化存储配置
-  }
-
     //对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
     //例如：对于拍照的存储配置
   fun initPhotoStore() {
@@ -415,17 +408,7 @@ interface CaptureResultListener {
 
 ## 人脸检测
 
-`FaceContourDetectionProcessor`文件中配置检测模式。
-
-```
-.setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)//在检测人脸时更注重速度还是准确性，精确模式会检测到比快速模式更少的人脸
-.setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)//轮廓检测
-.setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)//面部特征点
-.setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)//是否将人脸分为不同类别（例如“微笑”和“眼睛睁开”）。
-.setMinFaceSize(0.6f)//人脸最小占图片的百分比
-```
-
-### 最简单的ml-kit中人脸检测使用：
+### google ml-kit教程：
 #### ml-kit的检测器
 * 定义一个类，在类里加载ml-kit的检测器，然后，提供图像即可进行处理，本示例不包含连接到相机分析流部分
 
@@ -519,8 +502,8 @@ class BaseImageAnalyzer : ImageAnalysis.Analyzer {
   }
 }
 ```
-
-* 连接到相机分析流示例：
+### 本库中ml-kit使用：
+* 使用google ml-kit 并连接到相机分析流示例：
 还是以CameraExampleActivity 为例：
 
 1. 需要在配置相机时，指定模式为CaptureMode.imageAnalysis

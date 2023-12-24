@@ -15,7 +15,7 @@ import java.io.IOException
 import kotlin.math.abs
 
 class FaceContourDetectionProcessor(
-    private val view: GraphicOverlay,
+    private val view: GraphicOverlayView,
     private val analyzeListener: AnalyzeResultListener? = null,
 ) :
     BaseImageAnalyzer<List<Face>>() {
@@ -40,7 +40,7 @@ class FaceContourDetectionProcessor(
 
     private val detector = FaceDetection.getClient(realTimeOpts)
 
-    override val graphicOverlay: GraphicOverlay
+    override val graphicOverlay: GraphicOverlayView
         get() = view
 
     override fun detectInImage(image: InputImage): Task<List<Face>> {
@@ -57,7 +57,7 @@ class FaceContourDetectionProcessor(
 
     override fun onSuccess(
         results: List<Face>,
-        graphicOverlay: GraphicOverlay,
+        graphicOverlay: GraphicOverlayView,
         rect: Rect,
         imageProxy: ImageProxy,
     ) {

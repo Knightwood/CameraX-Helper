@@ -11,7 +11,7 @@ import kotlin.math.ceil
  * 经由Graphic绘制到GraphicOverlay上
  * 此类承担着数据坐标的转换
  */
-abstract class Graphic(protected val overlay: GraphicOverlay) {
+abstract class Graphic(protected val overlay: GraphicOverlayView) {
     var mScale: Float? = null
     var mOffsetX: Float? = null
     var mOffsetY: Float? = null
@@ -100,11 +100,11 @@ abstract class Graphic(protected val overlay: GraphicOverlay) {
 }
 
 /**
- * 承担实际上的面部数据的绘，绘制到[GraphicOverlay]
+ * 承担实际上的面部数据的绘，绘制到[GraphicOverlayView]
  * 每一个面部数据都会生成一个[FaceContourGraphic]实例
  */
 class FaceContourGraphic(
-    overlay: GraphicOverlay,
+    overlay: GraphicOverlayView,
     private val face: Face,
     private val imageRect: Rect,
 ) : Graphic(overlay) {
