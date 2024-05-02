@@ -3,15 +3,12 @@ package com.kiylx.cameraxexample
 import android.content.Intent
 import android.util.Log
 import android.util.Size
-import android.view.View
-import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.face.Face
+import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.CameraHolder
-import com.kiylx.camerax_lib.main.manager.analyer.TensorFlowLink
 import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
-import com.kiylx.camerax_lib.main.manager.imagedetection.facedetection.FaceDetection
-import com.kiylx.camerax_lib.main.manager.imagedetection.filevision.MyFileProcessor
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
@@ -20,11 +17,9 @@ import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
-import com.kiylx.camerax_lib.utils.DataSize.Companion.mb
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
-import kotlin.time.Duration.Companion.minutes
 
 class CameraExampleActivity : BaseCameraXActivity() {
 
@@ -70,10 +65,9 @@ class CameraExampleActivity : BaseCameraXActivity() {
         //生成图像分析器
         val analyzer = FaceContourDetectionProcessor(
             cameraPreview,
-            page.graphicOverlayFinder,
-        ).also {
-            cameraHolder.changeAnalyzer(it)//设置图像分析器
-        }
+            findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder),
+        )
+        setUpAnalyzer(analyzer)//设置分析器
         //监听分析结果
         (analyzer as FaceContourDetectionProcessor).analyzeListener =
             AnalyzeResultListener {
@@ -102,20 +96,10 @@ class CameraExampleActivity : BaseCameraXActivity() {
 //                }
 //            }
 //
-//        }.also {
-//            cameraHolder.changeAnalyzer(it)//设置图像分析器
 //        }
+//        setUpAnalyzer(tensorFlowLink)//设置分析器
 
     }
-
-    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
-        super.cameraHolderInitFinish(cameraHolder)
-        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
-            page.cameraControlLayout.visibility = View.INVISIBLE
-        }
-    }
-
-
         /**
          * 拍完照片
          */
@@ -164,7 +148,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
                         //识别图像
                         BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
                             //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
-                            BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
+                            BitmapProcessor.onSuccess(faces,  findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder))
                         }
                     }
 

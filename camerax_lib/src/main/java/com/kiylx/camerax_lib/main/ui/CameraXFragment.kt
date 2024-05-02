@@ -12,10 +12,12 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.Range
+import android.util.SparseArray
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.LayoutRes
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExposureState
 import androidx.camera.core.FocusMeteringAction
@@ -24,10 +26,9 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.common.util.concurrent.ListenableFuture
-import com.kiylx.camerax_lib.databinding.FragmentCameraxBinding
+import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.CAMERA_CONFIG
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.CameraXManager
@@ -42,23 +43,64 @@ import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.utils.ANIMATION_SLOW_MILLIS
 import com.kiylx.camerax_lib.view.CameraXPreviewViewTouchListener
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.kiylx.camerax_lib.view.FocusImageView
 import java.util.concurrent.TimeUnit
 
 class CameraXF(private val cameraXF: CameraXFragment) : ICameraXF by cameraXF
 
-/**  content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
-class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
+/**
+ * CameraXFragment View holder
+ *
+ * @param v
+ * @constructor
+ */
+open class ViewHolder(val v: View) {
+    val viewCache: SparseArray<View> = SparseArray()
+    val viewCacheNull: SparseArray<Boolean> = SparseArray()
+    fun <T:View> findViewNull(id: Int): T? {
+        val result = viewCache.get(id)
+        if (result != null) {
+            return result as T
+        } else {
+            val b = viewCacheNull.get(id)
+            if (b != null) {
+                return null
+            } else {
+                val view = v.findViewById<View>(id)
+                if (view == null) {
+                    viewCacheNull.put(id, true)
+                } else {
+                    viewCache.put(id, view)
+                }
+                return view as T
+            }
+        }
+    }
+
+    fun <T : View> findView(id: Int): T {
+        return (viewCache.get(id) ?: run {
+            val view: T = v.findViewById<T>(id)!!
+            viewCache.put(id, view)
+            view
+        }) as T
+    }
+
+}
+
+/** content 根布局，跟布局里面要包含预览、对焦、遮盖预览的图像视图等内容 */
+open class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
+    internal var layoutId: Int = 0//自定义布局文件
     var eventListener: CameraXFragmentEventListener? = null
     lateinit var cameraHolder: CameraHolder
-    lateinit var page: FragmentCameraxBinding
-    private var mBitmapFlip: Bitmap? = null//临时存储bitmap
+    // CameraXFragment所需
+    val cameraPreviewView: PreviewView by lazy {
+        requireView().findViewById(R.id.camera_preview)
+    }
 
     //相机的配置：存储路径，闪光灯模式，
-    private lateinit var cameraConfig: ManagerConfig
+    internal lateinit var cameraConfig: ManagerConfig
     private lateinit var broadcastManager: LocalBroadcastManager
-    private var captureResultListener: CaptureResultListener? = null
+    internal var captureResultListener: CaptureResultListener? = null
 
     //音量下降按钮接收器用于触发快门
     private val volumeDownReceiver = object : BroadcastReceiver() {
@@ -88,8 +130,31 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        page = FragmentCameraxBinding.inflate(layoutInflater, container, false)
-        return page.root
+        val root = provideView(inflater, container, savedInstanceState)
+        return root
+    }
+
+    /**
+     * 此方法初始化所需要的布局，从默认布局创建或是从指定的layoutId布局创建
+     *
+     * 重写此方法提供自定义的布局。 必须包含一个[PreviewView]
+     *
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
+    open fun provideView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        //创建根布局，要么使用layoutId指定的布局创建，要么使用默认布局创建
+        val root: View = if (layoutId > 0) {
+            layoutInflater.inflate(layoutId, container, false)
+        } else
+            layoutInflater.inflate(R.layout.fragment_camerax, container, false)
+        return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -106,26 +171,38 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
 
     private fun initCameraHolder() {
         cameraHolder = CameraHolder(
-            page.cameraPreview,
+            cameraPreviewView,
             cameraConfig,
             cameraManagerListener = this,
         )
         cameraHolder.run {
+            //camerax初始化前
             eventListener?.cameraHolderInitStart(this)
             //拍照或录像结果监听
             this@CameraXFragment.captureResultListener?.let {
                 this.captureResultListener = it
             }
+            //这里绑定生命周期后，内部会自动触发camerax的初始化
             bindLifecycle(requireActivity())//非常重要，绝对不能漏了绑定生命周期
         }
     }
 
     //<editor-fold desc="CameraManagerEventListener">
+    /**
+     * [initCameraHolder]
+     * ->[CameraXFragmentEventListener.cameraHolderInitStart] ->
+     * [CameraXManager.bindLifecycle]
+     * ->[CameraXManager.initManager]->[CameraManagerEventListener.initCameraStart]
+     * ->[CameraManagerEventListener.initCameraFinished]->[CameraXFragmentEventListener.cameraHolderInitFinish]
+     *
+     * @param cameraXManager
+     */
     override fun initCameraStart(cameraXManager: CameraXManager) {
         super.initCameraStart(cameraXManager)
     }
 
     override fun initCameraFinished(cameraXManager: CameraXManager) {
+        cameraHolder.initZoomState()
         initTouchListener()
         eventListener?.cameraHolderInitFinish(cameraHolder)
         //通知holder初始化完成了，可以对holder做其他操作了
@@ -140,7 +217,6 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     }
 
     override fun previewStreamStart() {
-        flipImageViewRecycler()
         eventListener?.cameraPreviewStreamStart()
     }
     //</editor-fold>
@@ -160,7 +236,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     private fun indicateSuccess(durationTime: Long) {
         // 显示一个闪光动画来告知用户照片已经拍好了。在华为等手机上好像有点问题啊 cameraPreview
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            page.root.let { cameraUIContainer ->
+            view?.let { cameraUIContainer ->
                 cameraUIContainer.postDelayed({
                     cameraUIContainer.foreground = ColorDrawable(Color.WHITE)
                     cameraUIContainer.postDelayed(
@@ -171,32 +247,15 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         }
     }
 
-    /** 预览数据开始后，去掉假设的画面帧 */
-    private fun flipImageViewRecycler() {
-        page.lastPreview.let {
-            viewLifecycleOwner.lifecycleScope.launch {
-                delay(200)
-                it.setImageBitmap(null)
-                it.visibility = View.GONE
-                if (mBitmapFlip != null) {
-                    mBitmapFlip?.recycle()
-                    mBitmapFlip = null
-                }
-            }/*handler.postDelayed(Runnable {
-                it.setImageBitmap(null)
-                it.visibility = View.GONE
-                if (mBitmapFlip != null) {
-                    mBitmapFlip?.recycle()
-                    mBitmapFlip = null
-                }
-            }, 200)*/
-        }
-
-    }
-
     /** 相机点击等相关操作监听，焦距操作 */
-    private fun initTouchListener() {
-        cameraHolder.initZoomState()
+    open fun initTouchListener() {}
+
+    /**
+     * Setup touch focus 初始化触摸对焦
+     *
+     * @param focusView
+     */
+    fun setupTouchFocus(focusView: FocusImageView) {
         val cameraXPreviewViewTouchListener =
             CameraXPreviewViewTouchListener(this.requireContext()).apply {
                 this.setCustomTouchListener(object :
@@ -211,8 +270,8 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
 
                     // 点击操作
                     override fun click(x: Float, y: Float) {
-                        page.focusView.let { focus ->
-                            val factory = page.cameraPreview.meteringPointFactory
+                        focusView.let { focus ->
+                            val factory = cameraPreviewView.meteringPointFactory
                             // 设置对焦位置
                             val point = factory.createPoint(x, y)
                             val action =
@@ -239,7 +298,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
                                         Log.e(TAG, e.toString())
                                     }
                                 },
-                                ContextCompat.getMainExecutor(this@CameraXFragment.requireContext())
+                                ContextCompat.getMainExecutor(requireContext())
                             )
                         }
                     }
@@ -255,7 +314,7 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
                 })
             }
         // 添加监听事件
-        page.cameraPreview.setOnTouchListener(cameraXPreviewViewTouchListener)
+        cameraPreviewView.setOnTouchListener(cameraXPreviewViewTouchListener)
     }
 
     override fun onDestroyView() {
@@ -264,19 +323,28 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         broadcastManager.unregisterReceiver(volumeDownReceiver)
     }
 
+    open fun close() {
+        this.stopRecord(0)
+    }
+
     companion object {
         const val TAG = "NewCameraxFragment"
 
         /**
          * @param cameraConfig [ManagerConfig]
+         * @param eventListener [CameraXFragmentEventListener]
+         * @param captureResultListener [CaptureResultListener]
+         * @param layoutId 替换默认的布局，其中必须包含 id = R.id.camera_preview的视图
          * @return A new instance of fragment NewCameraXFragment.
          */
         @JvmStatic
         fun newInstance(
             cameraConfig: ManagerConfig,
             eventListener: CameraXFragmentEventListener,
-            captureResultListener: CaptureResultListener
+            captureResultListener: CaptureResultListener,
+            @LayoutRes layoutId: Int = 0
         ) = CameraXFragment().apply {
+            this.layoutId = layoutId
             this.arguments = Bundle().apply {
                 putParcelable(CAMERA_CONFIG, cameraConfig)
             }
@@ -372,54 +440,38 @@ class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
 
     override fun cameraHolder(): CameraHolder = cameraHolder
 
-    /**
-     * 可以通过获取[cameraHolder.cameraConfig]，然后重新赋值来调整现有的配置，
-     * 也可以调用此方法调整现有配置
-     */
+    /** 可以通过获取[cameraHolder.cameraConfig]，然后重新赋值来调整现有的配置， 也可以调用此方法调整现有配置 */
     override fun reSetConfig(func: ManagerConfig.() -> Unit) {
         cameraHolder.cameraConfig.func()
         reBindUseCase()
     }
 
-    /**
-     * 设置曝光补偿
-     */
+    /** 设置曝光补偿 */
     fun setExposure(value: Int) = cameraHolder.setExposure(value)
 
-    /**
-     * 查询曝光补偿范围
-     */
+    /** 查询曝光补偿范围 */
     fun queryExposureRange(): Range<Int> = cameraHolder.queryExposureRange()
 
-    /**
-     * 查询当前相机的曝光参数
-     */
+    /** 查询当前相机的曝光参数 */
     fun queryExposureState(): ExposureState? = cameraHolder.queryExposureState()
 }
 
 interface CameraXFragmentEventListener {
     /**
-     * 开始初始化CameraHolder，此时处于绑定生命周期之前. 触发时机早于[CameraManagerEventListener.initCameraStart]
+     * 开始初始化CameraHolder，此时处于绑定生命周期之前.
+     * 触发时机早于[CameraManagerEventListener.initCameraStart]
      */
     fun cameraHolderInitStart(cameraHolder: CameraHolder)
 
-    /**
-     * cameraXHolder初始化完成 触发时机晚于[CameraManagerEventListener.initCameraFinished]
-     */
+    /** cameraXHolder初始化完成 触发时机晚于[CameraManagerEventListener.initCameraFinished] */
     fun cameraHolderInitFinish(cameraHolder: CameraHolder)
 
-    /**
-     * 相机预览数据开始
-     */
+    /** 相机预览数据开始 */
     fun cameraPreviewStreamStart() {}
 
-    /**
-     * 切换前置或后置摄像头
-     */
+    /** 切换前置或后置摄像头 */
     fun switchCamera(lensFacing: Int) {}
 
-    /**
-     * 设备旋转，对坐标做转换
-     */
+    /** 设备旋转，对坐标做转换 */
     fun cameraRotationChanged(rotation: Int, angle: Int) {}
 }

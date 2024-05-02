@@ -6,65 +6,102 @@ import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.widget.LinearLayout
 import androidx.annotation.CallSuper
+import androidx.camera.core.ImageAnalysis.Analyzer
 import androidx.core.view.updatePadding
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.blankj.utilcode.util.LogUtils
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.databinding.ActivityCameraExampleBinding
+import com.kiylx.camerax_lib.databinding.BottomControllerPanelBinding
 import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
+import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
+import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.manager.util.navBarTheme
 import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
 import com.kiylx.camerax_lib.main.store.SaveFileData
+import com.kiylx.camerax_lib.view.ControllerPanel
+import com.kiylx.camerax_lib.view.FlashButton
+import com.kiylx.camerax_lib.view.IControllerPanel
+import com.kiylx.camerax_lib.view.IControllerPanelEventListener
 import com.kiylx.camerax_lib.view.IFlashButtonState
 
 abstract class BaseCameraXActivity : BasicActivity(),
-   CameraXFragmentEventListener, CaptureResultListener {
+    CameraXFragmentEventListener, CaptureResultListener {
 
     internal lateinit var cameraXFragment: CameraXFragment//相机功能实现者
 
-    /**
-     * 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment
-     */
+    /** 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment */
     val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }//
 
     lateinit var cameraConfig: ManagerConfig
     lateinit var mBaseHandler: Handler
-    lateinit var page: ActivityCameraExampleBinding
+    lateinit var controllerPanel: IControllerPanel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        page = ActivityCameraExampleBinding.inflate(layoutInflater)
-        setContentView(page.root)
+        setContentView(provideView(savedInstanceState))
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
         setCameraFragment()
-        setWindowEdgeToEdge{
-            page.settingLayout.updatePadding(top=it.top)
-            page.cameraControlLayout.updatePadding(bottom=it.bottom)
-        }
+        edge2edge()
         statusBarTheme(light = false)
         navBarTheme(light = false)
-        //切换摄像头
-        page.switchBtn.setOnClickListener {
+        configFlashButton()
+    }
+
+    var controllerPanelEventListener = object : IControllerPanelEventListener {
+        override fun switchCamera() {
             //要保持闪光灯上一次的模式
             if (cameraXFragment.canSwitchCamera()) {
                 cameraXFragment.switchCamera()
             }
         }
+
+        override fun switchCaptureBtnType(type: Int) {
+            //这里可以监听到切换按钮的模式
+        }
+    }
+
+    open fun configFlashButton(){
         //闪光灯按钮
-        page.btnFlushSwitch.stateInference= IFlashButtonState {
+        findViewById<FlashButton>(R.id.btn_flush_switch).stateInference = IFlashButtonState {
             cameraXF.setFlashMode(it)
         }
+    }
 
-        page.closeBtn.setOnClickListener {
-            closeActivity()
+    open fun edge2edge() {
+        setWindowEdgeToEdge {
+            this.findViewById<LinearLayout>(R.id.top_container).updatePadding(top = it.top)
         }
+    }
+
+    /**
+     * 重写此方法提供自定义布局，提供底部的控制面板交互功能
+     *
+     * @param savedInstanceState
+     * @return
+     */
+    open fun provideView(
+        savedInstanceState: Bundle?
+    ): View {
+        val page = ActivityCameraExampleBinding.inflate(layoutInflater)
+        val controllerPanelBinding = BottomControllerPanelBinding.bind(page.root)//处理merge标签
+        //底部控制面板交互功能
+        controllerPanel = ControllerPanel(this, controllerPanelBinding)
+        controllerPanel.initAll()
+        controllerPanel.eventListener = controllerPanelEventListener
+        return page.root
+    }
+
+    fun setUpAnalyzer(analyzer: Analyzer) {
+        cameraXFragment.cameraHolder.changeAnalyzer(analyzer)
     }
 
 
@@ -85,75 +122,58 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     //相机管理器初始化之前
     @CallSuper
-    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {}
+    override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
+    }
 
     //相机管理器初始化之后
     @CallSuper
     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
-        //拍照，拍视频的UI 操作的各种状态处理
-        page.fullCaptureBtn.setCaptureListener(object : DefaultCaptureListener() {
-            override fun takePictures() {
-                cameraXFragment.takePhoto()
-            }
+        //focusView初始化触摸对焦
+        cameraXFragment.setupTouchFocus(findViewById(R.id.focus_view))
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+            controllerPanel.showHideAll(true)
+        }
+        controllerPanel.captureListener = //拍照，拍视频的UI 操作的各种状态处理
+            object : DefaultCaptureListener() {
+                override fun takePictures() {
+                    cameraXFragment.takePhoto()
+                }
 
-            //开始录制视频
-            override fun recordStart() {
-                page.captureVideoBtn.visibility = View.GONE
-                LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.startRecord()
-                //录制视频时隐藏摄像头切换
-                page.switchBtn.visibility = View.GONE
-            }
+                //开始录制视频
+                override fun recordStart() {
+                    LogUtils.dTag("录制activity", "开始")
+                    cameraXFragment.startRecord()
+                    controllerPanel.showHideCameraSwitch(true)
+                    //录制视频时隐藏摄像头切换
+                    if (!cameraConfig.recordConfig.asPersistentRecording) {
+                        controllerPanel.showHideUseCaseSwitch(true)
+                    }
+                }
 
-            //录制视频到达预定的时长，可以结束了
-            override fun recordShouldEnd(time: Long) {
-                page.captureVideoBtn.visibility = View.VISIBLE
-                LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopRecord(time)
-                page.switchBtn.visibility = View.VISIBLE
-            }
-        })
+                //1. 录制视频到达预定的时长结束
+                //2. 或者手动按下按钮录制结束
+                override fun recordShouldEnd(time: Long) {
+                    LogUtils.dTag("录制activity", "停止")
+                    cameraXFragment.stopRecord(time)
+                    controllerPanel.showHideCameraSwitch(false)
+                    controllerPanel.showHideUseCaseSwitch(false)
 
-        page.captureVideoBtn.setCaptureListener(object : DefaultCaptureListener() {
-            //开始录制视频
-            override fun recordStart() {
-                page.fullCaptureBtn.visibility = View.GONE
-                LogUtils.dTag("录制activity", "开始")
-                cameraXFragment.startRecord()
-                //录制视频时隐藏摄像头切换
-                if (!cameraConfig.recordConfig.asPersistentRecording) {
-                    page.switchBtn.visibility = View.GONE
                 }
             }
-
-            //录制视频到达预定的时长，可以结束了
-            override fun recordShouldEnd(time: Long) {
-                page.fullCaptureBtn.visibility = View.VISIBLE
-                LogUtils.dTag("录制activity", "停止")
-                cameraXFragment.stopRecord(time)
-                page.switchBtn.visibility = View.VISIBLE
-            }
-
-            //例如长按拍视频的时候，在屏幕滑动可以调整焦距缩放
-            override fun recordZoom(zoom: Float) {
-                val a = zoom
-            }
-
-        })
-
     }
 
     @CallSuper
-    override fun cameraPreviewStreamStart() {}
+    override fun cameraPreviewStreamStart() {
+    }
 
     @CallSuper
     override fun switchCamera(lensFacing: Int) {
-        page.graphicOverlayFinder.toggleSelector(lensFacing)
+        findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder).toggleSelector(lensFacing)
     }
 
     @CallSuper
     override fun cameraRotationChanged(rotation: Int, angle: Int) {
-        page.graphicOverlayFinder.rotationChanged(rotation, angle)
+        findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder).rotationChanged(rotation, angle)
     }
 
     //</editor-fold>
@@ -161,9 +181,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
     //<editor-fold desc="拍照、录像结果">
     @CallSuper
     override fun onVideoRecorded(saveFileData: SaveFileData?) {
-        //录制结束，更新按钮状态
-        page.captureVideoBtn.recordEnd()
-        page.captureVideoBtn.recordEnd()
+
     }
 
     override fun onPhotoTaken(saveFileData: SaveFileData?) {}
@@ -186,8 +204,8 @@ abstract class BaseCameraXActivity : BasicActivity(),
     /**
      * 音量减按钮触发拍照，如果需要复制这份代码就可以
      *
-     * When key down event is triggered,
-     * relay it via local broadcast so fragments can handle it
+     * When key down event is triggered, relay it via local broadcast so
+     * fragments can handle it
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return when (keyCode) {
@@ -206,9 +224,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
         }
     }
 
-    /**
-     * 使用intent初始化ManagerConfig
-     */
+    /** 使用intent初始化ManagerConfig */
     abstract fun configAll(intent: Intent): ManagerConfig
 
     companion object {

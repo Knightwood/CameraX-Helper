@@ -7,7 +7,6 @@ import android.os.Environment
 import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.video.Quality
 import androidx.core.view.updatePadding
 import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
@@ -26,8 +25,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         page = ActivityMainBinding.inflate(layoutInflater)
         setContentView(page.root)
-        setWindowEdgeToEdge{
-            page.root.updatePadding(top=it.top,bottom=it.bottom)
+        setWindowEdgeToEdge {
+            page.root.updatePadding(top = it.top, bottom = it.bottom)
         }
         statusBarTheme(true)
         page.one.setOnClickListener {
@@ -44,6 +43,11 @@ class MainActivity : AppCompatActivity() {
         page.third.setOnClickListener {
             val intent: Intent = Intent(this, TestFileDecActivity::class.java)
             intent.putExtra(ImageDetection, true)
+            startActivity(intent)
+        }
+        page.four.setOnClickListener {
+            val intent: Intent = Intent(this, CameraExampleActivity2::class.java)
+            intent.putExtra(ImageDetection, false)
             startActivity(intent)
         }
         Log.e(tag, "onCreate")
@@ -63,6 +67,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+
                 R.id.save_dcim_1 -> {
                     //默认保存到相册
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {//android 10 及以上

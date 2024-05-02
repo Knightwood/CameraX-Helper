@@ -1,4 +1,4 @@
-package com.kiylx.cameraxexample
+package com.kiylx.camera.compose_camerax
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.kiylx.cameraxexample", appContext.packageName)
+        assertEquals("com.kiylx.camera.compose_camerax.test", appContext.packageName)
     }
 }

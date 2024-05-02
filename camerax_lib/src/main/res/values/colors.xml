@@ -10,4 +10,28 @@
     <color name="icFocused">#DDFFFFFF</color>
     <color name="icPressed">#AAFFFFFF</color>
     <color name="black_overlay">#66000000</color>
+
+
+
+    <color name="whiteAlpha85">#26ffffff</color>
+    <color name="whiteAlpha80">#33ffffff</color>
+    <color name="whiteAlpha60">#66ffffff</color>
+    <color name="whiteAlpha50">#80ffffff</color>
+    <color name="whiteAlpha35">#a6ffffff</color>
+    <color name="whiteAlpha25">#bfffffff</color>
+    <color name="whiteAlpha20">#ccffffff</color>
+    <color name="whiteAlpha10">#e6ffffff</color>
+    <color name="blackAlpha95">#0d000000</color>
+    <color name="blackAlpha85">#26000000</color>
+    <color name="blackAlpha80">#33000000</color>
+    <color name="blackAlpha70">#4d000000</color>
+    <color name="blackAlpha60">#66000000</color><!---->
+    <color name="blackAlpha55">#73000000</color>
+    <color name="blackAlpha50">#80000000</color>
+    <color name="blackAlpha45">#8c000000</color>
+    <color name="blackAlpha20">#cc000000</color><!---->
+
+
+    <color name="orange1">#FFAB40</color>
+
 </resources>

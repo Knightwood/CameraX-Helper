@@ -68,10 +68,10 @@ class CameraExampleActivity : BaseCameraXActivity() {
       //...省略
     )
     //整体的配置
-    //是否使用人脸检测
-    val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
+    val useImageDetection = intent.getBooleanExtra(ImageDetection, false)    //是否使用图像分析
     return ManagerConfig().apply {
-      this.recordConfig = videoRecordConfig
+      this.recordConfig = videoRecordConfig 
+//    这里制定了打开相机时的默认模式，图像分析、拍照、录像等。
       this.captureMode =
         if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
       this.flashMode = FlashModel.CAMERA_FLASH_AUTO

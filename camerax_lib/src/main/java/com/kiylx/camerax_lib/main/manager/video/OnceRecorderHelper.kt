@@ -32,7 +32,11 @@ import java.util.concurrent.ExecutorService
  */
 object OnceRecorderHelper {
     /**
-     * videoCapture是由Recorder生成
+     * videoCapture是一个视频录制用例，可以配置视频录制的一些配置，
+     * Recorder则是VideoOutput 的一种实现，用于启动保存到文件、ParcelFileDescriptor 或 MediaStore 的视频录制。，而且需要关联到某一个videoCapture
+     * 录制视频时，就需要通过recorder得到Recording，进行录制。
+     * Recording是一次性的，每次录制都需要获取一个新的。
+     *
      * 如果[VideoRecordConfig]给出“quality”，就用它生成VideoCapture，
      * 否则，自动挑选一个比较合适的“quality”生成VideoCapture
      *

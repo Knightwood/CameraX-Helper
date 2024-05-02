@@ -1,4 +1,4 @@
-package com.kiylx.cameraxexample
+package com.kiylx.camera.compose_camerax
 
 import org.junit.Test
 

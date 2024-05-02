@@ -7,7 +7,7 @@ import com.kiylx.camerax_lib.main.manager.CameraXManager
  */
 interface CameraManagerEventListener {
     /**
-     * manager在绑定生命周期后，触发生命周期，开始执行初始化
+     * manager在绑定生命周期后，在camerax初始化并绑定用例之前
      */
     fun initCameraStart(cameraXManager: CameraXManager) {}
 

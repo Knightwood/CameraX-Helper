@@ -17,9 +17,11 @@ import java.io.File
 import java.util.*
 
 /**
- * 录制的完整过程：
+ *配置每一次的视频录制的输出位置，以及通过配置好的VideoCapture用例获得Recording来录制视频
+ *
+ * 使用过程：
  *1. 创建 Recorder，配置QualitySelector。
- *2. 使用创建好的Recorder，生成VideoCapture，并绑定用例。
+ *2. 使用创建好的Recorder，生成VideoCapture用例，并进行绑定。
  *3. 创建OutputOptions，这个配置了文件生成的名称，路径，输出到那个文件
  *4. 使用 videoCapture.output.prepareRecording(context,outputOption) 方法生成PendingRecording对象。
  *5. PendingRecording对象调用start开始录像并得到Recording对象 ，使用 pause()/resume()/stop() 来控制录制操作。

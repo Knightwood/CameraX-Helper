@@ -7,14 +7,30 @@
     android:layout_height="match_parent"
     tools:context=".main.ui.BaseCameraXActivity">
 
-    <androidx.fragment.app.FragmentContainerView
+    <FrameLayout
         android:id="@id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.camera.view.PreviewView
+            android:id="@id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.kiylx.camerax_lib.view.FocusImageView
+            android:id="@id/focus_view"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            app:focus_fail_id="@drawable/focus_focus_failed"
+            app:focus_focusing_id="@drawable/focus_focusing"
+            app:focus_success_id="@drawable/focus_focused" />
+
+    </FrameLayout>
+
 
     <com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
         android:id="@id/graphicOverlay_finder"
@@ -25,18 +41,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <com.kiylx.camerax_lib.view.FocusImageView
-            android:id="@id/focus_view"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
-            app:focus_fail_id="@drawable/focus_focus_failed"
-            app:focus_focusing_id="@drawable/focus_focusing"
-            app:focus_success_id="@drawable/focus_focused" />
-    </FrameLayout>
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/bottom_controller_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="full_capture_btn,photo_view_btn,switch_btn" />
 
     <LinearLayout
         android:id="@+id/top_container"

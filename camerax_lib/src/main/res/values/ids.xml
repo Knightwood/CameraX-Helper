@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--一个相机布局里必须要有的-->
-    <item name="graphicOverlay_finder" type="id" /><!--com.kiylx.camerax_lib.main.manager.imagedection.face.GraphicOverlay-->
-    <item name="camera_preview" type="id" /><!--androidx.camera.view.PreviewView-->
-    <item name="focus_view" type="id" /><!--com.kiylx.camerax_lib.view.FocusImageView-->
-    <item name="last_preview" type="id" /><!--ImageView-->
+    <!--一必须要有的-->
+    <item name="camera_preview" type="id" /><!--相机预览 androidx.camera.view.PreviewView-->
+    <item name="focus_view" type="id" /><!--对焦框 com.kiylx.camerax_lib.view.FocusImageView-->
+
+    <!--相机布局里的id-->
+    <item name="fragment_container" type="id" /><!--存放相机fragment-->
+    <item name="graphicOverlay_finder" type="id" /><!--图像分析绘制信息的叠加层视图 com.kiylx.camerax_lib.main.manager.imagedection.face.GraphicOverlay-->
+
 </resources>

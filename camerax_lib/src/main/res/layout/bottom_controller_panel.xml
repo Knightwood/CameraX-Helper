@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/bottom_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/blackAlpha80"
+        android:paddingTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/switch_usercase_controller" />
+
+    <LinearLayout
+        android:id="@+id/switch_usercase_controller"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/full_capture_btn"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        app:layout_constraintBottom_toTopOf="@id/full_capture_btn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/btn_record_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="录制视频"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/btn_take_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:paddingHorizontal="16dp"
+            android:text="拍照"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+    </LinearLayout>
+
+    <com.kiylx.camerax_lib.main.buttons.CameraButton
+        android:id="@+id/full_capture_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="36dp"
+        app:buttonMode="only_capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:longPassRecord="false"
+        app:size="80" />
+
+    <!-- switch buttons -->
+    <ImageView
+        android:id="@+id/switch_btn"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignTop="@id/full_capture_btn"
+        android:layout_alignBottom="@id/full_capture_btn"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="24dp"
+        android:padding="10dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_switch"
+        app:layout_constraintBottom_toBottomOf="@id/full_capture_btn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/full_capture_btn"
+        app:layout_constraintTop_toTopOf="@id/full_capture_btn" />
+
+    <ImageButton
+        android:id="@+id/photo_view_btn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignTop="@id/full_capture_btn"
+        android:layout_alignBottom="@id/full_capture_btn"
+        android:layout_alignParentStart="true"
+        android:layout_marginRight="15dp"
+        android:background="@drawable/ic_photo"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/full_capture_btn"
+        app:layout_constraintEnd_toStartOf="@id/full_capture_btn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/full_capture_btn" />
+</merge>
