@@ -4,12 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kiylx.camera.compose_camerax"
+    namespace = "com.kiylx.camera.camerax_analyzer_tensorflow"
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 26
-
+        minSdk = 23
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -37,6 +36,8 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
 
-    compileOnly(project(":camerax_lib"))
+    api("org.tensorflow:tensorflow-lite-api:2.9.0")
+    api("org.tensorflow:tensorflow-lite:2.9.0")
 
+    compileOnly(project(":camerax_lib"))
 }

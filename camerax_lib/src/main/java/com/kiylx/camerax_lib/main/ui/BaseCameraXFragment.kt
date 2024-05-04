@@ -23,7 +23,7 @@ import com.kiylx.camerax_lib.databinding.FragmentCameraxExampleBinding
 import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CAMERA_CONFIG
 import com.kiylx.camerax_lib.main.manager.CameraXManager
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.view.ControllerPanel

@@ -4,9 +4,9 @@ import android.graphics.Bitmap
 import android.view.View
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.mlkit.vision.face.Face
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
-import com.kiylx.camerax_lib.main.manager.imagedetection.filevision.FileVisionProcessor
+import com.kiylx.camera.camerax_analyzer.filevision.FileVisionProcessor
+import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs

@@ -11,7 +11,6 @@ android {
 
     defaultConfig {
         minSdk = 23
-        targetSdk = 32
 //        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
@@ -83,11 +82,7 @@ dependencies {
     // If you want to additionally use the CameraX Extensions library
     api ("androidx.camera:camera-extensions:$camerax_version")
     api("com.blankj:utilcodex:1.31.0")
-    api("com.google.mlkit:face-detection:16.1.5")
     api("com.guolindev.permissionx:permissionx:1.6.1")
-
-    api("org.tensorflow:tensorflow-lite-api:2.9.0")
-    api("org.tensorflow:tensorflow-lite:2.9.0")
 }
 
 afterEvaluate {

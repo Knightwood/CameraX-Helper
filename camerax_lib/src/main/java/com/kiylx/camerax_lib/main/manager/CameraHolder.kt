@@ -7,7 +7,7 @@ import androidx.camera.core.*
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeUtils
+import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzerProvider
 import com.kiylx.camerax_lib.main.manager.model.*
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
@@ -32,7 +32,7 @@ class CameraHolder(
 ) : CameraXManager(
     cameraPreview, cameraConfig, cameraManagerListener
 ) {
-    private var analyzer: ImageAnalysis.Analyzer = AnalyzeUtils.emptyAnalyzer
+    private var analyzer: ImageAnalysis.Analyzer = AnalyzerProvider.emptyAnalyzer
 
     fun changeAnalyzer(analyzer: ImageAnalysis.Analyzer) {
         this.analyzer = analyzer

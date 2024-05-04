@@ -4,8 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import com.google.mlkit.vision.face.Face
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.Graphic
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.Graphic
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 
 class Graphic2(overlay: GraphicOverlayView, val faces: Face) : Graphic(overlay) {
     private val boxPaint: Paint = Paint().apply {

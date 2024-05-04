@@ -4,11 +4,11 @@ import android.content.Intent
 import android.util.Log
 import android.util.Size
 import com.google.mlkit.vision.face.Face
+import com.kiylx.camera.camerax_analyzer.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.CameraHolder
-import com.kiylx.camerax_lib.main.manager.imagedetection.base.AnalyzeResultListener
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.FaceContourDetectionProcessor
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
+import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig

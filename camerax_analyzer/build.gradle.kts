@@ -4,12 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kiylx.camera.compose_camerax"
+    namespace = "com.kiylx.camera.camerax_analyzer"
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 26
-
+        minSdk = 23
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -32,11 +31,10 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")
-
+    api("com.google.mlkit:face-detection:16.1.5")
     compileOnly(project(":camerax_lib"))
 
 }

@@ -19,7 +19,7 @@ import com.kiylx.camerax_lib.main.buttons.DefaultCaptureListener
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_ACTION
 import com.kiylx.camerax_lib.main.manager.KEY_CAMERA_EVENT_EXTRA
-import com.kiylx.camerax_lib.main.manager.imagedetection.face.GraphicOverlayView
+import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.manager.util.navBarTheme
