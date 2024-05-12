@@ -69,7 +69,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
         }
     }
 
-    open fun configFlashButton(){
+    open fun configFlashButton() {
         //闪光灯按钮
         findViewById<FlashButton>(R.id.btn_flush_switch).stateInference = IFlashButtonState {
             cameraXF.setFlashMode(it)
@@ -97,6 +97,34 @@ abstract class BaseCameraXActivity : BasicActivity(),
         controllerPanel = ControllerPanel(this, controllerPanelBinding)
         controllerPanel.initAll()
         controllerPanel.eventListener = controllerPanelEventListener
+        //拍照，拍视频的UI 操作的各种状态处理
+        (controllerPanel as ControllerPanel).setCaptureListener(
+            object : DefaultCaptureListener() {
+                override fun takePictures() {
+                    cameraXFragment.takePhoto()
+                }
+
+                //开始录制视频
+                override fun recordStart() {
+                    LogUtils.dTag("录制activity", "开始")
+                    cameraXFragment.startRecord()
+                    controllerPanel.showHideCameraSwitch(true)
+                    //录制视频时隐藏摄像头切换
+                    if (!cameraConfig.recordConfig.asPersistentRecording) {
+                        controllerPanel.showHideUseCaseSwitch(true)
+                    }
+                }
+
+                //1. 录制视频到达预定的时长结束
+                //2. 或者手动按下按钮录制结束
+                override fun recordShouldEnd(time: Long) {
+                    LogUtils.dTag("录制activity", "停止")
+                    cameraXFragment.stopRecord(time)
+                    controllerPanel.showHideCameraSwitch(false)
+                    controllerPanel.showHideUseCaseSwitch(false)
+
+                }
+            })
         return page.root
     }
 
@@ -133,33 +161,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
         if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
             controllerPanel.showHideAll(true)
         }
-        controllerPanel.captureListener = //拍照，拍视频的UI 操作的各种状态处理
-            object : DefaultCaptureListener() {
-                override fun takePictures() {
-                    cameraXFragment.takePhoto()
-                }
-
-                //开始录制视频
-                override fun recordStart() {
-                    LogUtils.dTag("录制activity", "开始")
-                    cameraXFragment.startRecord()
-                    controllerPanel.showHideCameraSwitch(true)
-                    //录制视频时隐藏摄像头切换
-                    if (!cameraConfig.recordConfig.asPersistentRecording) {
-                        controllerPanel.showHideUseCaseSwitch(true)
-                    }
-                }
-
-                //1. 录制视频到达预定的时长结束
-                //2. 或者手动按下按钮录制结束
-                override fun recordShouldEnd(time: Long) {
-                    LogUtils.dTag("录制activity", "停止")
-                    cameraXFragment.stopRecord(time)
-                    controllerPanel.showHideCameraSwitch(false)
-                    controllerPanel.showHideUseCaseSwitch(false)
-
-                }
-            }
     }
 
     @CallSuper
@@ -173,7 +174,10 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     @CallSuper
     override fun cameraRotationChanged(rotation: Int, angle: Int) {
-        findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder).rotationChanged(rotation, angle)
+        findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder).rotationChanged(
+            rotation,
+            angle
+        )
     }
 
     //</editor-fold>

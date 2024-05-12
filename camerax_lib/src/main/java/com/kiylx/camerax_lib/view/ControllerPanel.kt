@@ -11,13 +11,11 @@ import com.kiylx.camerax_lib.main.buttons.CaptureListener
 
 interface IControllerPanel {
     var eventListener: IControllerPanelEventListener?
-    var captureListener: CaptureListener?
+//    var captureListener: CaptureListener?
 
     fun setBottomButtonTextColor(id: Int)
 
-    /**
-     * 显示或隐藏切换功能ui
-     */
+    /** 显示或隐藏切换功能ui */
     fun showHideCameraSwitch(hide: Boolean = true)
     fun showHideUseCaseSwitch(hide: Boolean = true)
     fun initAll()
@@ -42,7 +40,7 @@ class ControllerPanel(
     //底部切换拍照和录像的文本
     val bottomButtonList: MutableList<MaterialTextView> = mutableListOf()
     override var eventListener: IControllerPanelEventListener? = null
-    override var captureListener: CaptureListener? = null
+//    override var captureListener: CaptureListener? = null
 
     override fun initAll() {
         //底部切换拍照和录像的文本
@@ -64,12 +62,19 @@ class ControllerPanel(
             setBottomButtonTextColor(R.id.btn_take_photo)
             eventListener?.switchCaptureBtnType(takePhoto)
         }
-        //拍照和录像按钮
-        binding.fullCaptureBtn.setCaptureListener(captureListener)
         //切换摄像头
         binding.switchBtn.setOnClickListener {
             eventListener?.switchCamera()
         }
+    }
+
+    /**
+     * 设置拍照录像的监听器
+     *
+     * @param listener
+     */
+    fun setCaptureListener(listener: CaptureListener?) {
+        binding.fullCaptureBtn.setCaptureListener(listener)
     }
 
     override fun setBottomButtonTextColor(id: Int) {

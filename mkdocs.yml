@@ -1,0 +1,63 @@
+site_name: Recyclerview Adapter Helper
+site_description: Recyclerview Adapter Helper框架文档
+repo_url: https://github.com/knightwood/Recyclerview-Adapter-Helper
+
+site_author: knightwood
+copyright: Copyright &copy; 2018 - 2024 knightwood
+repo_name: GitHub
+docs_dir: 'docs'
+
+theme:
+#  name: bootstrap386
+  name: material
+  language: zh
+  features:
+    - navigation.top
+    - navigation.prune
+    - navigation.footer
+    - navigation.instant
+    - search.highlight
+    - search.suggest
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+plugins:
+#  - offline
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+      lang:
+        - en
+        - zh
+
+markdown_extensions:
+  - smarty
+  - toc:
+      permalink: true
+  - footnotes
+  - tables
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  - def_list
+  - md_in_html
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.details
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+nav:
+  - 简单使用: index.md
+  - 存储配置.md
+  - 相机配置.md
+  - 实现自定义相机.md

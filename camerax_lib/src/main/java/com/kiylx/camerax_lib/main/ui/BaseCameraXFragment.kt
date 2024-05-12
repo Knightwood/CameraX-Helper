@@ -103,7 +103,8 @@ open class BaseCameraXFragment : CameraXFragment() {
         binding.v.doOnAttach {
             val insets = ViewCompat.getRootWindowInsets(window.decorView)
                 ?.getInsets(WindowInsetsCompat.Type.systemBars()) ?: Insets.NONE
-            binding.findViewNull<LinearLayout>(R.id.top_container)?.updatePadding(top = insets.top, bottom = insets.bottom)
+            binding.findViewNull<LinearLayout>(R.id.top_container)
+                ?.updatePadding(top = insets.top, bottom = insets.bottom)
         }
     }
 
@@ -119,6 +120,32 @@ open class BaseCameraXFragment : CameraXFragment() {
         controllerPanel = ControllerPanel(requireActivity(), controllerPanelBinding)
         controllerPanel.initAll()
         controllerPanel.eventListener = controllerPanelEventListener
+        //拍照，拍视频的UI 操作的各种状态处理
+        (controllerPanel as ControllerPanel).setCaptureListener(object : DefaultCaptureListener() {
+            override fun takePictures() {
+                takePhoto()
+            }
+
+            //开始录制视频
+            override fun recordStart() {
+                LogUtils.dTag("录制activity", "开始")
+                startRecord()
+                controllerPanel.showHideCameraSwitch(true)
+                //录制视频时隐藏摄像头切换
+                if (!cameraConfig.recordConfig.asPersistentRecording) {
+                    controllerPanel.showHideUseCaseSwitch(true)
+                }
+            }
+
+            //1. 录制视频到达预定的时长结束
+            //2. 或者手动按下按钮录制结束
+            override fun recordShouldEnd(time: Long) {
+                LogUtils.dTag("录制activity", "停止")
+                stopRecord(time)
+                controllerPanel.showHideCameraSwitch(false)
+                controllerPanel.showHideUseCaseSwitch(false)
+            }
+        })
         super.onCreate(savedInstanceState)
         return binding.root
     }
@@ -143,32 +170,6 @@ open class BaseCameraXFragment : CameraXFragment() {
 
         if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
             controllerPanel.showHideAll(true)
-        }
-        //拍照，拍视频的UI 操作的各种状态处理
-        controllerPanel.captureListener = object : DefaultCaptureListener() {
-            override fun takePictures() {
-                takePhoto()
-            }
-
-            //开始录制视频
-            override fun recordStart() {
-                LogUtils.dTag("录制activity", "开始")
-                startRecord()
-                controllerPanel.showHideCameraSwitch(true)
-                //录制视频时隐藏摄像头切换
-                if (!cameraConfig.recordConfig.asPersistentRecording) {
-                    controllerPanel.showHideUseCaseSwitch(true)
-                }
-            }
-
-            //1. 录制视频到达预定的时长结束
-            //2. 或者手动按下按钮录制结束
-            override fun recordShouldEnd(time: Long) {
-                LogUtils.dTag("录制activity", "停止")
-                stopRecord(time)
-                controllerPanel.showHideCameraSwitch(false)
-                controllerPanel.showHideUseCaseSwitch(false)
-            }
         }
     }
 
