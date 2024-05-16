@@ -308,6 +308,19 @@ abstract class CameraXManager(
                     }
                     whichInstance = WhichInstanceBind.VIDEO
                 }
+                CaptureMode.noneUseCase->{
+                  try {
+                        camera = cameraProvider.bindToLifecycle(
+                            lifeOwner,
+                            cameraSelector,
+                            preview,
+                        )
+                    } catch (exc: Exception) {
+                        Log.e(TAG, "Use case binding failed", exc)
+                    }
+                    whichInstance = WhichInstanceBind.NONE
+                    currentStatus = TakeVideoState.none
+                }
             }
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)

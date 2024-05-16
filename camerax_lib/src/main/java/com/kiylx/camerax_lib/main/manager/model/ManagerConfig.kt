@@ -2,12 +2,13 @@ package com.kiylx.camerax_lib.main.manager.model
 
 import android.os.Parcelable
 import android.util.Size
+import android.view.Surface
 import androidx.camera.core.ImageCapture
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
-import kotlinx.parcelize.Parcelize
-import android.view.Surface
+import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.NONE_USE_CASE
 import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
+import kotlinx.parcelize.Parcelize
 
 
 @Parcelize
@@ -52,6 +53,7 @@ class CaptureMode {
         const val takePhoto = ManagerUtil.TAKE_PHOTO_CASE
         const val takeVideo = ManagerUtil.TAKE_VIDEO_CASE
         const val imageAnalysis = ManagerUtil.IMAGE_ANALYZER_CASE
+        const val noneUseCase =NONE_USE_CASE
     }
 }
 

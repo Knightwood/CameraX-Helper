@@ -13,10 +13,12 @@ import com.permissionx.guolindev.callback.RequestCallback
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+
 const val KEY_CAMERA_EVENT_ACTION = "key_camera_event_action"
 const val KEY_CAMERA_EVENT_EXTRA = "key_camera_event_extra"
 const val CAMERA_CONFIG = "camera_config"   //相机的配置
@@ -30,6 +32,7 @@ class ManagerUtil {
         const val TAKE_PHOTO_CASE = 0
         const val TAKE_VIDEO_CASE = 1
         const val IMAGE_ANALYZER_CASE = 2
+        const val NONE_USE_CASE = -1
 
         //图像的比例
         const val RATIO_4_3_VALUE = 4.0 / 3.0
