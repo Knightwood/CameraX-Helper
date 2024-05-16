@@ -167,10 +167,6 @@ open class BaseCameraXFragment : CameraXFragment() {
     override fun initCameraFinished(cameraXManager: CameraXManager) {
         //focusView初始化触摸对焦
         this.setupTouchFocus(binding.focusView)
-
-        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
-            controllerPanel.showHideAll(true)
-        }
     }
 
     @CallSuper

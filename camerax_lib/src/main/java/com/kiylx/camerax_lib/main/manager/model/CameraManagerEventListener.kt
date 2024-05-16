@@ -12,6 +12,13 @@ interface CameraManagerEventListener {
     fun initCameraStart(cameraXManager: CameraXManager) {}
 
     /**
+     * manager在绑定生命周期后，
+     * 调用cameraProviderFuture.addListener方法后触发
+     * cameraProviderFuture.addListener方法发生在线程池
+     */
+    fun initCameraStarting(cameraXManager: CameraXManager) {}
+
+    /**
      * manager 触发初始化之后，并且相机初始化完成
      */
     fun initCameraFinished(cameraXManager: CameraXManager) {}

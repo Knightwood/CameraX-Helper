@@ -158,9 +158,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
         //focusView初始化触摸对焦
         cameraXFragment.setupTouchFocus(findViewById(R.id.focus_view))
-        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
-            controllerPanel.showHideAll(true)
-        }
     }
 
     @CallSuper

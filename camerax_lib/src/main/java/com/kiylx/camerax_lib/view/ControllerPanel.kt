@@ -18,6 +18,13 @@ interface IControllerPanel {
     /** 显示或隐藏切换功能ui */
     fun showHideCameraSwitch(hide: Boolean = true)
     fun showHideUseCaseSwitch(hide: Boolean = true)
+
+    /**
+     * 显示隐藏拍照按钮，相册等
+     *
+     * @param hide
+     */
+    fun showHideControllerButton(hide: Boolean = true)
     fun initAll()
 
     /**
@@ -90,7 +97,14 @@ class ControllerPanel(
 
     override fun showHideCameraSwitch(hide: Boolean) {
         binding.switchBtn.visibility =
-            if (hide) View.GONE else View.VISIBLE
+            if (hide) View.INVISIBLE else View.VISIBLE
+    }
+
+    override fun showHideControllerButton(hide: Boolean) {
+        binding.fullCaptureBtn.visibility =
+            if (hide) View.INVISIBLE else View.VISIBLE
+        binding.photoViewBtn.visibility =
+            if (hide) View.INVISIBLE else View.VISIBLE
     }
 
     override fun showHideUseCaseSwitch(hide: Boolean) {

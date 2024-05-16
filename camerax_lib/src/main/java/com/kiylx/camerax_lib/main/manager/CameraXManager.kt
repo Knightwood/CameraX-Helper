@@ -9,7 +9,12 @@ import android.util.Log
 import android.util.Range
 import android.util.Size
 import androidx.annotation.CallSuper
-import androidx.camera.core.*
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.core.ZoomState
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.Recorder
 import androidx.camera.video.VideoCapture
@@ -24,7 +29,14 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
-import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.model.CameraManagerEventListener
+import com.kiylx.camerax_lib.main.manager.model.CaptureMode
+import com.kiylx.camerax_lib.main.manager.model.DisplayRotation
+import com.kiylx.camerax_lib.main.manager.model.FlashModel
+import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.SensorRotation
+import com.kiylx.camerax_lib.main.manager.model.TakeVideoState
+import com.kiylx.camerax_lib.main.manager.model.WhichInstanceBind
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -188,10 +200,13 @@ abstract class CameraXManager(
                     }
                     lastStreamState = streamState
                 }
+                //cameraProviderFuture.addListener是异步的，必须在这里调用才是正确的时机
+                cameraListener?.initCameraFinished(this)
             },
             ContextCompat.getMainExecutor(context)
         )
-        cameraListener?.initCameraFinished(this)
+        cameraListener?.initCameraStarting(this)//(2)表明正在初始化
+       // cameraListener?.initCameraFinished(this) (1) 在这里调用会导致时机不正确，因为cameraProviderFuture.addListener是异步的
     }
 
     /**
@@ -251,17 +266,22 @@ abstract class CameraXManager(
             //目前一次无法绑定拍照和摄像一起
             when (captureMode) {
                 CaptureMode.imageAnalysis -> {
-                    //LEVEL_3（或更好）的相机设备才支持“预览”、“视频拍摄”、“图像分析” 三个同时绑定。这里暂定，未来可能会增加更多种绑定
-                    imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
-                    camera = cameraProvider.bindToLifecycle(
-                        lifeOwner,
-                        cameraSelector,
-                        preview,
-                        imageAnalyzer,
-                        imageCapture
-                    )
-                    currentStatus = TakeVideoState.imageDetection
-                    whichInstance = WhichInstanceBind.IMAGE_DETECTION
+                    try {
+                        //LEVEL_3（或更好）的相机设备才支持“预览”、“视频拍摄”、“图像分析” 三个同时绑定。这里暂定，未来可能会增加更多种绑定
+                        imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
+                        camera = cameraProvider.bindToLifecycle(
+                            lifeOwner,
+                            cameraSelector,
+                            preview,
+                            imageAnalyzer,
+                            imageCapture
+                        )
+                        currentStatus = TakeVideoState.imageDetection
+                        whichInstance = WhichInstanceBind.IMAGE_DETECTION
+                    }catch (e: Exception){
+                        Log.e(TAG, "bind imageAnalyzer failed", e)
+                    }
+
                 }
 
                 CaptureMode.takePhoto -> {

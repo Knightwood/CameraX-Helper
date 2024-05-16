@@ -22,41 +22,41 @@ abstract class BasicActivity : AppCompatActivity() {
         //屏幕方向这个可选
         //this.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setScreenOrientation()
-        Log.e(tag,"onCreate")
+        Log.d(tag,"onCreate")
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        Log.e(tag,"onConfigurationChanged")
+        Log.d(tag,"onConfigurationChanged")
     }
     override fun onRestart() {
         super.onRestart()
-        Log.e(tag,"onRestart")
+        Log.d(tag,"onRestart")
     }
     override fun onStart() {
         super.onStart()
-        Log.e(tag,"onStart")
+        Log.d(tag,"onStart")
     }
     override fun onResume() {
         super.onResume()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        Log.e(tag,"onResume")
+        Log.d(tag,"onResume")
     }
 
     override fun onPause() {
         super.onPause()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        Log.e(tag,"onPause")
+        Log.d(tag,"onPause")
     }
 
     override fun onStop() {
         super.onStop()
-        Log.e(tag,"onStop")
+        Log.d(tag,"onStop")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(tag,"onDestroy")
+        Log.d(tag,"onDestroy")
     }
 
 

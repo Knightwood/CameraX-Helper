@@ -19,7 +19,7 @@ import com.kiylx.camerax_lib.main.ui.CameraXFragmentEventListener
 class CameraExampleActivity2 : AppCompatActivity(), CameraXFragmentEventListener,
     CaptureResultListener {
     lateinit var cameraConfig: ManagerConfig
-    var cameraXFragment: BaseCameraXFragment ?=null
+    var cameraXFragment: BaseCameraXFragment? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fragment_container)
@@ -58,11 +58,11 @@ class CameraExampleActivity2 : AppCompatActivity(), CameraXFragmentEventListener
     }
 
     override fun onVideoRecorded(saveFileData: SaveFileData?) {
-        
+
     }
 
     override fun onPhotoTaken(saveFileData: SaveFileData?) {
-        
+
     }
 
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
@@ -72,5 +72,10 @@ class CameraExampleActivity2 : AppCompatActivity(), CameraXFragmentEventListener
 
     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
         //可选
+
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+            cameraXFragment?.controllerPanel?.showHideCameraSwitch(true)
+            cameraXFragment?.controllerPanel?.showHideControllerButton(true)
+        }
     }
 }

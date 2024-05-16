@@ -23,9 +23,7 @@ import kotlinx.coroutines.flow.flow
 
 class CameraExampleActivity : BaseCameraXActivity() {
 
-    /**
-     * 这里直接构建了配置，我没有使用intent传入配置。
-     */
+    /** 这里直接构建了配置，我没有使用intent传入配置。 */
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         //视频录制配置(可选)
@@ -56,14 +54,14 @@ class CameraExampleActivity : BaseCameraXActivity() {
             }, 500)
         }
     }
-
+    lateinit var analyzer: FaceContourDetectionProcessor
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
         super.cameraHolderInitStart(cameraHolder)
         val cameraPreview = cameraHolder.cameraPreview
 
         //示例1
         //生成图像分析器
-        val analyzer = FaceContourDetectionProcessor(
+        analyzer = FaceContourDetectionProcessor(
             cameraPreview,
             findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder),
         )
@@ -100,61 +98,68 @@ class CameraExampleActivity : BaseCameraXActivity() {
 //        setUpAnalyzer(tensorFlowLink)//设置分析器
 
     }
-        /**
-         * 拍完照片
-         */
-        override fun onPhotoTaken(saveFileData: SaveFileData?) {
-            super.onPhotoTaken(saveFileData)
-            Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
-            cameraXF.indicateTakePhoto()//拍照闪光
+
+    override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
+        super.cameraHolderInitFinish(cameraHolder)
+        if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+            controllerPanel.showHideUseCaseSwitch(true)
+            controllerPanel.showHideControllerButton(true)
         }
-
-        /**
-         * 录完视频
-         */
-        override fun onVideoRecorded(saveFileData: SaveFileData?) {
-            super.onVideoRecorded(saveFileData)
-            saveFileData?.let {
-                Log.d(TAG, "onVideoRecorded: $it")
-            }
-        }
-
-
-        var stopAnalyzer = false
-
-        /**
-         * 每隔20ms从预览视图中获取bitmap
-         * 然后运行图像分析，绘制矩形框
-         * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
-         */
-        suspend fun runFaceDetection(interval: Long = 20L) {
-            if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
-                Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
-                return
-            } else {
-                BitmapProcessor.analyzeListener = AnalyzeResultListener {
-                    // when analyze success
-                }
-                flow<Boolean> {
-                    while (true) {
-                        delay(interval)
-                        emit(stopAnalyzer)
-                        if (stopAnalyzer) {
-                            break
-                        }
-                    }
-                }.collect {
-                    cameraXF.provideBitmap()?.let { originalBitmap ->
-                        //识别图像
-                        BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
-                            //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
-                            BitmapProcessor.onSuccess(faces,  findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder))
-                        }
-                    }
-
-                }
-            }
-        }
-
-
     }
+
+    /** 拍完照片 */
+    override fun onPhotoTaken(saveFileData: SaveFileData?) {
+        super.onPhotoTaken(saveFileData)
+        Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
+        cameraXF.indicateTakePhoto()//拍照闪光
+    }
+
+    /** 录完视频 */
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {
+        super.onVideoRecorded(saveFileData)
+        saveFileData?.let {
+            Log.d(TAG, "onVideoRecorded: $it")
+        }
+    }
+
+
+    var stopAnalyzer = false
+
+    /**
+     * 每隔20ms从预览视图中获取bitmap 然后运行图像分析，绘制矩形框
+     * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
+     */
+    suspend fun runFaceDetection(interval: Long = 20L) {
+        if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
+            Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
+            return
+        } else {
+            BitmapProcessor.analyzeListener = AnalyzeResultListener {
+                // when analyze success
+            }
+            flow<Boolean> {
+                while (true) {
+                    delay(interval)
+                    emit(stopAnalyzer)
+                    if (stopAnalyzer) {
+                        break
+                    }
+                }
+            }.collect {
+                cameraXF.provideBitmap()?.let { originalBitmap ->
+                    //识别图像
+                    BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
+                        //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
+                        BitmapProcessor.onSuccess(
+                            faces,
+                            findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder)
+                        )
+                    }
+                }
+
+            }
+        }
+    }
+
+
+}
