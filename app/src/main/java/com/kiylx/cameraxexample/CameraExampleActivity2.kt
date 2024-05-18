@@ -5,10 +5,10 @@ import android.os.Bundle
 import android.util.Size
 import androidx.appcompat.app.AppCompatActivity
 import com.kiylx.camerax_lib.main.manager.CameraHolder
-import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.UseCaseMode
 import com.kiylx.camerax_lib.main.manager.video.CameraRecordQuality
 import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
@@ -50,8 +50,8 @@ class CameraExampleActivity2 : AppCompatActivity(), CameraXFragmentEventListener
         //整体的配置
         return ManagerConfig().apply {
             this.recordConfig = videoRecordConfig
-            this.captureMode =
-                if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
+            this.useCaseMode =
+                if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
             this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
         }

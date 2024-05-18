@@ -4,8 +4,11 @@ import android.os.Parcelable
 import android.util.Size
 import android.view.Surface
 import androidx.camera.core.ImageCapture
+import com.kiylx.camerax_lib.main.manager.IUseCaseHelper
 import com.kiylx.camerax_lib.main.manager.ManagerUtil
+import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.CUSTOM_USE_CASE_GROUP
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.NONE_USE_CASE
+import com.kiylx.camerax_lib.main.manager.UseCaseHolder
 import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import kotlinx.parcelize.Parcelize
@@ -14,52 +17,54 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class ManagerConfig(
     var flashMode: Int = FlashModel.CAMERA_FLASH_OFF,
-
-    var size: Size = Size(1280, 720),//android R以下，设置预览，拍照的默认分辨率
-
     /**
-     * 查看[CaptureMode]
+     * android R以下时，在少数display为null的情况下，设置预览，拍照的默认分辨率
      */
-    var captureMode: Int = CaptureMode.takePhoto,
+    var size: Size = Size(1280, 720),
+
+    /** 指定这次相机使用的用例，例如拍照，录像，图像识别等 查看[UseCaseMode] */
+    var useCaseMode: Int = UseCaseMode.takePhoto,
 
     /**
-     * 指定图像分析、拍照、录制的旋转角度,默认可能为[Surface.ROTATION_0]。
-     * 默认值是根据display的旋转方向而定
+     * 指定图像分析、拍照、录制的旋转角度,默认可能为[Surface.ROTATION_0]。 默认值是根据display的旋转方向而定
      * 因此，如果在此指定值，默认值将不会使用
      */
     var rotation: Int = -1,
 
-    /**
-     * 视频录制配置
-     */
+    /** 视频录制配置 */
     var recordConfig: VideoRecordConfig = VideoRecordConfig(),
-    /**
-     * 拍照配置
-     */
+    /** 拍照配置 */
     var imageCaptureConfig: ImageCaptureConfig = ImageCaptureConfig()
 
 ) : Parcelable {
 
     fun isUsingImageAnalyzer(): Boolean {
-        return captureMode == CaptureMode.imageAnalysis
+        return useCaseMode == UseCaseMode.imageAnalysis
     }
 }
 
-/**
- * 拍摄模式
- */
-class CaptureMode {
+/** 指定相机绑定何种用例 */
+class UseCaseMode {
     companion object {
         const val takePhoto = ManagerUtil.TAKE_PHOTO_CASE
         const val takeVideo = ManagerUtil.TAKE_VIDEO_CASE
         const val imageAnalysis = ManagerUtil.IMAGE_ANALYZER_CASE
-        const val noneUseCase =NONE_USE_CASE
+
+        /** 除了预览画面用例，不使用其他任何用例 */
+        const val noneUseCase = NONE_USE_CASE
+
+        /**
+         * 自定义用例组合，需要实现[IUseCaseHelper]接口，在[IUseCaseHelper.initCustomUseCaseList]方法中实现自定义用例组合的初始化
+         * 使用[IUseCaseHelper.provideCustomUseCaseList]方法提供自定义用例组合
+         *
+         * 且在相机初始化之前调用[UseCaseHolder.setInitImpl]方法，提供[IUseCaseHelper]接口实现
+         * */
+        const val customUseCaseGroup = CUSTOM_USE_CASE_GROUP
+
     }
 }
 
-/**
- *闪光灯模式
- */
+/** 闪光灯模式 */
 class FlashModel {
     companion object {
         const val CAMERA_FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO

@@ -15,6 +15,8 @@ Android10 以下，大家都很熟悉。
 2024-05-09
 - 将mlkit和tensorflow拆分出来，新增`BaseCameraXFragment`实现相机，提供自定义布局功能等。
 - 下一步计划：1.文档已经过于陈旧，需要大改。2.实现在compose中使用相机
+2024-05-18
+- 文档正在施工 [地址](https://knightwood.github.io/CameraX-mlkit-FaceDetection/)
 
 # 截图
 

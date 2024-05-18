@@ -111,8 +111,8 @@ class CameraHolder(
         val captureConfig = cameraConfig.imageCaptureConfig
 
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
-        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
-            setCamera(CaptureMode.takePhoto)
+        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_ANALYZER) {
+            setCamera(UseCaseMode.takePhoto)
         }
 
         // 设置拍照的元数据
@@ -160,7 +160,7 @@ class CameraHolder(
         val outputOptions = pair.first
         val saveFileData = pair.second
 
-        currentStatus = TakeVideoState.takePhoto
+        currentStatus = ManagerRunningState.TAKING_PHOTO
         // 设置拍照监听回调，当拍照动作被触发的时候
         // Setup image capture listener which is triggered after photo has been taken
         imageCapture.takePicture(
@@ -170,11 +170,11 @@ class CameraHolder(
                     handler.post {
                         captureResultListener?.onPhotoTaken(null)
                     }
-                    currentStatus = TakeVideoState.none
+                    currentStatus = ManagerRunningState.IDLE
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    currentStatus = TakeVideoState.none
+                    currentStatus = ManagerRunningState.IDLE
                     output.savedUri?.let {
                         saveFileData.uri = it
                     }
@@ -191,21 +191,21 @@ class CameraHolder(
      */
     fun takePhotoInMem(callback: ImageCapture.OnImageCapturedCallback) {
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
-        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_DETECTION) {
-            setCamera(CaptureMode.takePhoto)
+        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_ANALYZER) {
+            setCamera(UseCaseMode.takePhoto)
         }
-        currentStatus = TakeVideoState.takePhoto
+        currentStatus = ManagerRunningState.TAKING_PHOTO
         imageCapture.takePicture(cameraExecutor, callback)
-        currentStatus = TakeVideoState.none
+        currentStatus = ManagerRunningState.IDLE
     }
 
     /**
      * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
      *
-     * 绑定图像识别，是靠配置参数里的[ManagerConfig.captureMode]
+     * 绑定图像识别，是靠配置参数里的[ManagerConfig.useCaseMode]
      */
     private fun imageAnalyze() {
-        if (cameraConfig.captureMode == CaptureMode.imageAnalysis) {
+        if (cameraConfig.useCaseMode == UseCaseMode.imageAnalysis) {
             //几种情况：
             // A：绑定图像识别，再进行拍照或录视频
             // 1.使用了图像识别，此时，是绑定了图像识别和拍照的用例的。点击拍照，是不需要解绑再去绑定拍照用例的；拍照后，不需要恢复图像识别用例绑定
@@ -215,14 +215,14 @@ class CameraHolder(
             // 3.仅绑定了拍照，此时，拍照后不需要恢复图像识别用例绑定
             // 4.仅绑定了视频拍摄，此时，录制视频后不需要恢复图像识别用例绑定
             handler.post {
-                setCamera(CaptureMode.imageAnalysis)
+                setCamera(UseCaseMode.imageAnalysis)
             }
         }
     }
 
     /** 翻转相机时，还需要翻转叠加层 */
     override fun switchCamera() {
-        if (currentStatus == TakeVideoState.takeVideo && !cameraConfig.recordConfig.asPersistentRecording) {
+        if (currentStatus == ManagerRunningState.RECORDING && !cameraConfig.recordConfig.asPersistentRecording) {
             //如果未开启持久录制，录制视频时得先停下来
             stopRecord()
         }
@@ -245,7 +245,7 @@ class CameraHolder(
 
         if (whichInstance != WhichInstanceBind.VIDEO)//如果当前绑定的不是视频捕获实例，绑定他
             setCamera(ManagerUtil.TAKE_VIDEO_CASE)
-        currentStatus = TakeVideoState.takeVideo
+        currentStatus = ManagerRunningState.RECORDING
 
         val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context, recordConfig)
         val videoFile = onceRecorder.saveFileData
@@ -260,7 +260,7 @@ class CameraHolder(
                 override fun accept(t: VideoRecordEvent) {
                     if (t is VideoRecordEvent.Finalize) {
                         //t.outputResults.outputUri
-                        currentStatus = TakeVideoState.none
+                        currentStatus = ManagerRunningState.IDLE
                         imageAnalyze()
                         if (t.hasError()) {
                             handler.post {
@@ -286,7 +286,7 @@ class CameraHolder(
      */
     fun stopRecord() {
         //这里是不是会自动的unbind VideoCapture
-        if (currentStatus == TakeVideoState.takeVideo) {
+        if (currentStatus == ManagerRunningState.RECORDING) {
             recording?.stop()
             recording = null
         }

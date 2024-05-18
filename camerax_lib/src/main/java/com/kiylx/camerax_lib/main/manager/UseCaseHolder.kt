@@ -2,12 +2,16 @@ package com.kiylx.camerax_lib.main.manager
 
 import android.util.Size
 import android.view.Surface
-import androidx.camera.core.*
-import androidx.camera.core.impl.utils.ResolutionSelectorUtil
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.core.UseCase
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.video.Recorder
+import com.kiylx.camerax_lib.main.manager.UseCaseHolder.resolutionSelector
+import com.kiylx.camerax_lib.main.manager.UseCaseHolder.setInitImpl
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
 import java.util.concurrent.ExecutorService
@@ -38,9 +42,7 @@ interface IUseCaseHelper {
         cameraConfig: ManagerConfig,
     ): ImageAnalysis
 
-    /**
-     * setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用
-     */
+    /** setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用 */
     fun initImageCapture(
         cameraExecutor: ExecutorService,
         screenAspectRatio: Int,
@@ -48,6 +50,23 @@ interface IUseCaseHelper {
         size: Size,
         cameraConfig: ManagerConfig,
     ): ImageCapture
+
+    /**
+     * 初始化自定义的用例组合
+     */
+    fun initCustomUseCaseList(
+        cameraExecutor: ExecutorService,
+        screenAspectRatio: Int,
+        rotation: Int = Surface.ROTATION_0,
+        size: Size,
+        cameraConfig: ManagerConfig,
+        selectAnalyzer: ImageAnalysis.Analyzer,
+    )
+
+    /**
+     * Provide custom use case list
+     */
+    fun provideCustomUseCaseList(): List<UseCase>
 }
 
 /**
@@ -58,9 +77,7 @@ object UseCaseHolder : IUseCaseHelper {
     var caseHelper: IUseCaseHelper = this
         internal set
 
-    /**
-     * 分辨率与纵横比筛选，用于相机预览和拍照
-     */
+    /** 分辨率与纵横比筛选，用于相机预览和拍照 */
     var resolutionSelector = ResolutionSelector.Builder()
         //分辨率筛选
         .setResolutionFilter { supportedSizes, rotationDegrees ->
@@ -127,9 +144,7 @@ object UseCaseHolder : IUseCaseHelper {
         return imageAnalyzer
     }
 
-    /**
-     * setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用
-     */
+    /** setTargetResolution(size)和setTargetAspectRatio(screenAspectRatio)不能同时使用 */
     override fun initImageCapture(
         cameraExecutor: ExecutorService,
         screenAspectRatio: Int,
@@ -151,5 +166,21 @@ object UseCaseHolder : IUseCaseHelper {
             .setResolutionSelector(resolutionSelector)
             .build()
         return imageCapture
+    }
+
+    override fun initCustomUseCaseList(
+        cameraExecutor: ExecutorService,
+        screenAspectRatio: Int,
+        rotation: Int,
+        size: Size,
+        cameraConfig: ManagerConfig,
+        selectAnalyzer: ImageAnalysis.Analyzer
+    ) {
+        // 自定义usecase组合
+    }
+
+    override fun provideCustomUseCaseList(): List<UseCase> {
+        //提供自定义usecase组合
+        return emptyList()
     }
 }

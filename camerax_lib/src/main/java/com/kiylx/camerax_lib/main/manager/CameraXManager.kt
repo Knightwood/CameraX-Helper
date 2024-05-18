@@ -30,12 +30,12 @@ import androidx.lifecycle.LiveData
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasBackCamera
 import com.kiylx.camerax_lib.main.manager.ManagerUtil.Companion.hasFrontCamera
 import com.kiylx.camerax_lib.main.manager.model.CameraManagerEventListener
-import com.kiylx.camerax_lib.main.manager.model.CaptureMode
 import com.kiylx.camerax_lib.main.manager.model.DisplayRotation
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.ManagerRunningState
 import com.kiylx.camerax_lib.main.manager.model.SensorRotation
-import com.kiylx.camerax_lib.main.manager.model.TakeVideoState
+import com.kiylx.camerax_lib.main.manager.model.UseCaseMode
 import com.kiylx.camerax_lib.main.manager.model.WhichInstanceBind
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -70,7 +70,7 @@ abstract class CameraXManager(
     lateinit var cameraSelector: CameraSelector
         internal set
     var lensFacing = CameraSelector.LENS_FACING_BACK
-    var currentStatus: Int = TakeVideoState.none//指示当前状态
+    var currentStatus: Int = ManagerRunningState.IDLE//指示当前状态
     var whichInstance: WhichInstanceBind = WhichInstanceBind.NONE//记录当前绑定的哪一个相机实例
 
     var deviceOrientationMode = 0
@@ -113,9 +113,7 @@ abstract class CameraXManager(
         context.lifecycle.addObserver(this)
     }
 
-    /**
-     * 设置曝光补偿
-     */
+    /** 设置曝光补偿 */
     fun setExposure(value: Int) {
         try {
             camera?.cameraControl?.setExposureCompensationIndex(value)
@@ -124,17 +122,14 @@ abstract class CameraXManager(
         }
     }
 
-    /**
-     * 查询曝光补偿范围
-     */
+    /** 查询曝光补偿范围 */
     fun queryExposureRange(): Range<Int> =
         camera?.cameraInfo?.exposureState?.exposureCompensationRange ?: Range(0, 0)
 
     /**
      * 曝光值(EV)=(曝光补偿)exposure_compensation_index * (步长)compensation_step
      *
-     * 注：
-     * compensation_step 的 step_size 取值通常为 ⅓ 或者 ½，较少情况下，有些设备可能会支持 1 或者甚至 ¼。
+     * 注： compensation_step 的 step_size 取值通常为 ⅓ 或者 ½，较少情况下，有些设备可能会支持 1 或者甚至 ¼。
      * 所能支持的最大曝光值一般是 2 EV 或者 3 EV。
      */
     fun queryExposureState() = camera?.cameraInfo?.exposureState
@@ -160,7 +155,7 @@ abstract class CameraXManager(
     }
 
     private fun destroy() {
-        cameraExecutor.awaitTermination(1,TimeUnit.SECONDS)
+        cameraExecutor.awaitTermination(1, TimeUnit.SECONDS)
         handler.removeCallbacksAndMessages(null)
     }
 
@@ -186,7 +181,7 @@ abstract class CameraXManager(
                     displayRotation = DisplayRotation(context, displayRotationListener)
                 }
                 //setUpPinchToZoom()
-                setCamera(cameraConfig.captureMode)//绑定实例
+                setCamera(cameraConfig.useCaseMode)//绑定实例
 
                 // Attach the viewfinder's surface provider to preview use case
                 preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
@@ -206,18 +201,19 @@ abstract class CameraXManager(
             ContextCompat.getMainExecutor(context)
         )
         cameraListener?.initCameraStarting(this)//(2)表明正在初始化
-       // cameraListener?.initCameraFinished(this) (1) 在这里调用会导致时机不正确，因为cameraProviderFuture.addListener是异步的
+        // cameraListener?.initCameraFinished(this) (1) 在这里调用会导致时机不正确，因为cameraProviderFuture.addListener是异步的
     }
 
-    /**
-     * 重新构建用例，并且绑定用例
-     */
+    /** 重新构建用例，并且绑定用例 */
     @CallSuper
     open fun reBindUseCase() {
         initUseCase()
-        setCamera(cameraConfig.captureMode)
+        setCamera(cameraConfig.useCaseMode)
     }
 
+    /**
+     * 初始化全部的用例
+     * */
     fun initUseCase() {
         val screenAspectRatio: Int//屏幕缩放比率
         val size: Size//屏幕尺寸
@@ -251,21 +247,54 @@ abstract class CameraXManager(
         if (cameraConfig.rotation > 0) {
             rotation = cameraConfig.rotation
         }
-        preview = UseCaseHolder.caseHelper.initPreView(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
-        imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
-        imageCapture = UseCaseHolder.caseHelper.initImageCapture(cameraExecutor,screenAspectRatio, rotation, size,cameraConfig)
-        videoCapture = UseCaseHolder.caseHelper.initVideoCapture(cameraExecutor, screenAspectRatio, rotation, size,cameraConfig)
+        preview = UseCaseHolder.caseHelper.initPreView(
+            cameraExecutor,
+            screenAspectRatio,
+            rotation,
+            size,
+            cameraConfig
+        )
+        imageAnalyzer = UseCaseHolder.caseHelper.initImageAnalyzer(
+            cameraExecutor,
+            screenAspectRatio,
+            rotation,
+            size,
+            cameraConfig
+        )
+        imageCapture = UseCaseHolder.caseHelper.initImageCapture(
+            cameraExecutor,
+            screenAspectRatio,
+            rotation,
+            size,
+            cameraConfig
+        )
+        videoCapture = UseCaseHolder.caseHelper.initVideoCapture(
+            cameraExecutor,
+            screenAspectRatio,
+            rotation,
+            size,
+            cameraConfig
+        )
+        //初始化自定义用例
+        UseCaseHolder.caseHelper.initCustomUseCaseList(
+            cameraExecutor,
+            screenAspectRatio,
+            rotation,
+            size,
+            cameraConfig,
+            selectAnalyzer()
+        )
     }
 
     /** 绑定相机实例之类的 */
-    internal fun setCamera(captureMode: Int) {
+    internal fun setCamera(useCaseMode: Int) {
         //再次重新绑定前应该先解绑 , imageAnalyzer
         cameraProvider.unbindAll()
         try {
             val lifeOwner = context
             //目前一次无法绑定拍照和摄像一起
-            when (captureMode) {
-                CaptureMode.imageAnalysis -> {
+            when (useCaseMode) {
+                UseCaseMode.imageAnalysis -> {
                     try {
                         //LEVEL_3（或更好）的相机设备才支持“预览”、“视频拍摄”、“图像分析” 三个同时绑定。这里暂定，未来可能会增加更多种绑定
                         imageAnalyzer.setAnalyzer(cameraExecutor, selectAnalyzer())
@@ -276,15 +305,15 @@ abstract class CameraXManager(
                             imageAnalyzer,
                             imageCapture
                         )
-                        currentStatus = TakeVideoState.imageDetection
-                        whichInstance = WhichInstanceBind.IMAGE_DETECTION
-                    }catch (e: Exception){
+                        currentStatus = ManagerRunningState.IMAGE_ANALYZING
+                        whichInstance = WhichInstanceBind.IMAGE_ANALYZER
+                    } catch (e: Exception) {
                         Log.e(TAG, "bind imageAnalyzer failed", e)
                     }
 
                 }
 
-                CaptureMode.takePhoto -> {
+                UseCaseMode.takePhoto -> {
                     try {
                         camera = cameraProvider.bindToLifecycle(
                             lifeOwner, cameraSelector, preview, imageCapture
@@ -295,7 +324,7 @@ abstract class CameraXManager(
                     whichInstance = WhichInstanceBind.PICTURE
                 }
 
-                CaptureMode.takeVideo -> {
+                UseCaseMode.takeVideo -> {
                     try {
                         camera = cameraProvider.bindToLifecycle(
                             lifeOwner,
@@ -308,8 +337,9 @@ abstract class CameraXManager(
                     }
                     whichInstance = WhichInstanceBind.VIDEO
                 }
-                CaptureMode.noneUseCase->{
-                  try {
+
+                UseCaseMode.noneUseCase -> {
+                    try {
                         camera = cameraProvider.bindToLifecycle(
                             lifeOwner,
                             cameraSelector,
@@ -319,7 +349,24 @@ abstract class CameraXManager(
                         Log.e(TAG, "Use case binding failed", exc)
                     }
                     whichInstance = WhichInstanceBind.NONE
-                    currentStatus = TakeVideoState.none
+                    currentStatus = ManagerRunningState.IDLE
+                }
+
+                UseCaseMode.customUseCaseGroup -> {
+                    try {
+                        //绑定自定义用例组合
+                        val arr = UseCaseHolder.caseHelper.provideCustomUseCaseList().toTypedArray()
+
+                        camera = cameraProvider.bindToLifecycle(
+                            lifeOwner,
+                            cameraSelector,
+                            *arr
+                        )
+                    } catch (exc: Exception) {
+                        Log.e(TAG, "custom use case binding failed", exc)
+                    }
+                    whichInstance = WhichInstanceBind.CUSTOM_USE_CASE_GROUP
+                    currentStatus = ManagerRunningState.CUSTOM_USE_CASE_GROUP_RUNNING
                 }
             }
         } catch (exc: Exception) {
@@ -386,14 +433,12 @@ abstract class CameraXManager(
             CameraSelector.LENS_FACING_FRONT
         }
         setCameraSelector(lensFacing)
-        setCamera(cameraConfig.captureMode)//绑定实例
+        setCamera(cameraConfig.useCaseMode)//绑定实例
         initZoomState()//翻转相机后，相机实例发生变化，所以重新获取缩放状态
         cameraListener?.switchCamera(lensFacing)
     }
 
-    /**
-     * 基于当前放大缩小
-     */
+    /** 基于当前放大缩小 */
     fun changeZoom() {
         // 放大缩小
         val currentZoomRatio = zoomState?.value!!.zoomRatio

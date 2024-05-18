@@ -61,3 +61,5 @@ nav:
   - 存储配置.md
   - 相机配置.md
   - 实现自定义相机.md
+  - 图像分析.md
+  - CaptureButton.md
