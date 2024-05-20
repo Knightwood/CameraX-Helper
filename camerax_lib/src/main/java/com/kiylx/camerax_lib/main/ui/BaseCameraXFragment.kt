@@ -66,7 +66,9 @@ import com.kiylx.camerax_lib.view.IFlashButtonState
  * @constructor Create empty Base camera x fragment
  */
 class BaseCameraXViewHolder(v: View) : ViewHolder(v) {
-    val focusView: FocusImageView = findView(R.id.focus_view)
+    val focusView: FocusImageView? = findViewNull(R.id.focus_view)
+    val graphicOverlayView :GraphicOverlayView? =findViewNull<GraphicOverlayView>(R.id.graphicOverlay_finder)
+    val flashLightView :FlashButton? =findViewNull(R.id.btn_flush_switch)
 }
 
 open class BaseCameraXFragment : CameraXFragment() {
@@ -74,20 +76,8 @@ open class BaseCameraXFragment : CameraXFragment() {
     val cameraXF: CameraXF by lazy { CameraXF(this) }//
 
     lateinit var mBaseHandler: Handler
-    lateinit var binding: BaseCameraXViewHolder
+    lateinit var xViewHolder: BaseCameraXViewHolder
     lateinit var controllerPanel: IControllerPanel
-    var controllerPanelEventListener = object : IControllerPanelEventListener {
-        override fun switchCamera() {
-            //要保持闪光灯上一次的模式
-            if (canSwitchCamera()) {
-                this@BaseCameraXFragment.switchCamera()
-            }
-        }
-
-        override fun switchCaptureBtnType(type: Int) {
-            //这里可以监听到切换按钮的模式
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,10 +90,10 @@ open class BaseCameraXFragment : CameraXFragment() {
         // 2. 设置 System bar 透明
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
-        binding.v.doOnAttach {
+        xViewHolder.v.doOnAttach {
             val insets = ViewCompat.getRootWindowInsets(window.decorView)
                 ?.getInsets(WindowInsetsCompat.Type.systemBars()) ?: Insets.NONE
-            binding.findViewNull<LinearLayout>(R.id.top_container)
+            xViewHolder.findViewNull<LinearLayout>(R.id.top_container)
                 ?.updatePadding(top = insets.top, bottom = insets.bottom)
         }
     }
@@ -114,12 +104,28 @@ open class BaseCameraXFragment : CameraXFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentCameraxExampleBinding.inflate(inflater, container, false)
-        val controllerPanelBinding = BottomControllerPanelBinding.bind(binding.root)//处理merge标签
+
+        //自定义的布局文件
+        val viewRoot = FragmentCameraxExampleBinding.inflate(inflater, container, false)
+        //处理merge标签
+        val controllerPanelBinding = BottomControllerPanelBinding.bind(viewRoot.root)
         //底部控制面板交互功能
         controllerPanel = ControllerPanel(requireActivity(), controllerPanelBinding)
+        //初始化
         controllerPanel.initAll()
-        controllerPanel.eventListener = controllerPanelEventListener
+        //事件监听
+        controllerPanel.eventListener = object : IControllerPanelEventListener {
+            override fun switchCamera() {
+                //要保持闪光灯上一次的模式
+                if (canSwitchCamera()) {
+                    this@BaseCameraXFragment.switchCamera()
+                }
+            }
+
+            override fun switchCaptureBtnType(type: Int) {
+                //这里可以监听到切换按钮的模式
+            }
+        }
         //拍照，拍视频的UI 操作的各种状态处理
         (controllerPanel as ControllerPanel).setCaptureListener(object : DefaultCaptureListener() {
             override fun takePictures() {
@@ -146,18 +152,19 @@ open class BaseCameraXFragment : CameraXFragment() {
                 controllerPanel.showHideUseCaseSwitch(false)
             }
         })
+
         super.onCreate(savedInstanceState)
-        return binding.root
+        return viewRoot.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding = BaseCameraXViewHolder(view)
+        xViewHolder = BaseCameraXViewHolder(view)
         super.onViewCreated(view, savedInstanceState)
         configFlashBtn()
     }
 
     open fun configFlashBtn() { //闪光灯按钮
-        binding.findView<FlashButton>(R.id.btn_flush_switch).stateInference = IFlashButtonState {
+        xViewHolder.flashLightView?.stateInference = IFlashButtonState {
             cameraXF.setFlashMode(it)
         }
     }
@@ -166,19 +173,17 @@ open class BaseCameraXFragment : CameraXFragment() {
     @CallSuper
     override fun initCameraFinished(cameraXManager: CameraXManager) {
         //focusView初始化触摸对焦
-        this.setupTouchFocus(binding.focusView)
+        xViewHolder.focusView?.let { this.setupTouchFocus(it) }
     }
 
     @CallSuper
     override fun switchCamera(lensFacing: Int) {
-        binding.findViewNull<GraphicOverlayView>(R.id.graphicOverlay_finder)
-            ?.toggleSelector(lensFacing)
+        xViewHolder.graphicOverlayView?.toggleSelector(lensFacing)
     }
 
     @CallSuper
     override fun cameraRotationChanged(rotation: Int, angle: Int) {
-        binding.findViewNull<GraphicOverlayView>(R.id.graphicOverlay_finder)
-            ?.rotationChanged(rotation, angle)
+        xViewHolder.graphicOverlayView?.rotationChanged(rotation, angle)
     }
 
     override fun onStop() {

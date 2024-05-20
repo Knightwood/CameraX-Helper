@@ -56,19 +56,6 @@ abstract class BaseCameraXActivity : BasicActivity(),
         configFlashButton()
     }
 
-    var controllerPanelEventListener = object : IControllerPanelEventListener {
-        override fun switchCamera() {
-            //要保持闪光灯上一次的模式
-            if (cameraXFragment.canSwitchCamera()) {
-                cameraXFragment.switchCamera()
-            }
-        }
-
-        override fun switchCaptureBtnType(type: Int) {
-            //这里可以监听到切换按钮的模式
-        }
-    }
-
     open fun configFlashButton() {
         //闪光灯按钮
         findViewById<FlashButton>(R.id.btn_flush_switch).stateInference = IFlashButtonState {
@@ -96,7 +83,18 @@ abstract class BaseCameraXActivity : BasicActivity(),
         //底部控制面板交互功能
         controllerPanel = ControllerPanel(this, controllerPanelBinding)
         controllerPanel.initAll()
-        controllerPanel.eventListener = controllerPanelEventListener
+        controllerPanel.eventListener = object : IControllerPanelEventListener {
+            override fun switchCamera() {
+                //要保持闪光灯上一次的模式
+                if (cameraXFragment.canSwitchCamera()) {
+                    cameraXFragment.switchCamera()
+                }
+            }
+
+            override fun switchCaptureBtnType(type: Int) {
+                //这里可以监听到切换按钮的模式
+            }
+        }
         //拍照，拍视频的UI 操作的各种状态处理
         (controllerPanel as ControllerPanel).setCaptureListener(
             object : DefaultCaptureListener() {

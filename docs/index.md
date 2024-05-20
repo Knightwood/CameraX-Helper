@@ -71,6 +71,31 @@ dependencies {
 
 同时呢，如果给相机配置图像分析，则需要在`cameraHolderInitStart`中配置。
 ```kotlin
+
+    /** 拍完照片 */
+    override fun onPhotoTaken(saveFileData: SaveFileData?) {
+        super.onPhotoTaken(saveFileData)
+        Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
+        cameraXF.indicateTakePhoto()//拍照闪光
+    }
+    
+    /** 录完视频 */
+    override fun onVideoRecorded(saveFileData: SaveFileData?) {
+        super.onVideoRecorded(saveFileData)
+        saveFileData?.let {
+            Log.d(TAG, "onVideoRecorded: $it")
+        }
+    }
+
+     //FaceContourDetectionProcessor是ImageAnalysis.Analyzer的实现
+     var analyzer: FaceContourDetectionProcessor? = null
+
+    /**
+     * Camera holder init start
+     * 此函数会在相机初始化之前回调，所以适合在这里初始化图像分析
+     *
+     * @param cameraHolder
+     */
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
         super.cameraHolderInitStart(cameraHolder)
         val cameraPreview = cameraHolder.cameraPreview
@@ -116,6 +141,9 @@ dependencies {
     }
 ```
 图片
+
+| ![](.\assert\1.jpg) | ![](.\assert\2.jpg) |
+|---------------------|---------------------|
 
 ## 自定义相机
 
