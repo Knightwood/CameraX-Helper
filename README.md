@@ -23,6 +23,8 @@ Android10 以下，大家都很熟悉。
 
 <img src="screenshots/1.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
 
+# [最新文档地址](https://knightwood.github.io/CameraX-mlkit-FaceDetection/)
+
 # 用法
 `camerax_lib` module 中提供了`BaseCameraXActivity`和`CameraXFragment`类，后者持有`cameraHolder`实现相机功能，
 前者则持有`CameraXFragment`,提供更进一步的封装。
@@ -31,12 +33,24 @@ Android10 以下，大家都很熟悉。
 'CameraX'版本：1.3.0
 _长期维护中_
 
-- 使用时可直接将`camerax_lib` module集成到项目，进行修改，**不建议dependencies中引入打包好的aar**
-~~版本号~~ [![Tag](https://jitpack.io/v/Knightwood/SimpleCameraX.svg)](https://jitpack.io/#Knightwood/SimpleCameraX)
+
+使用：
+
+1. 克隆代码到本地
+```shell
+  git clone git@github.com:Knightwood/CameraX-mlkit-FaceDetection.git
 ```
- dependencies {
-	        implementation 'com.github.Knightwood:SimpleCameraX:Tag'
-	}
+2. 引入依赖
+   在AndroidStudio中，File->New->Import Module...  
+   将`camerax_lib`、`camerax_analyzer`、`camerax_analyzer_tensorflow`三个module导入到项目中。  
+   如果不需要mlkit或tensorflow，可以不导入`camerax_analyzer`、`camerax_analyzer_tensorflow` 这两个module。
+3. app module的build.gradle文件添加依赖
+```kotlin
+dependencies {
+    implementation(project(":camerax_lib"))
+    implementation(project(":camerax_analyzer")) //可选
+    implementation(project(":camerax_analyzer_tensorflow")) //可选
+}
 ```
 
 
@@ -78,9 +92,18 @@ class CameraExampleActivity : BaseCameraXActivity() {
     val useImageDetection = intent.getBooleanExtra(ImageDetection, false)    //是否使用图像分析
     return ManagerConfig().apply {
       this.recordConfig = videoRecordConfig 
-//    这里制定了打开相机时的默认模式，图像分析、拍照、录像等。
-      this.captureMode =
-        if (useImageDetection) CaptureMode.imageAnalysis else CaptureMode.takePhoto
+        //这里使用了默认的用例组合
+        this.useCaseBundle =
+            if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
+        
+        //当然，也可以使用自定义的用例组合
+//        this.useCaseBundle =  //通过调用UseCaseMode.customGroup方法自定义了一个可以预览，录像，图像分析的用例组合
+//            UseCaseMode.customGroup(
+//                UseCaseHexStatus.USE_CASE_PREVIEW,
+//                UseCaseHexStatus.USE_CASE_IMAGE_ANALYZE,
+//                UseCaseHexStatus.USE_CASE_VIDEO_CAPTURE
+//            )
+        
       this.flashMode = FlashModel.CAMERA_FLASH_AUTO
       this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
     }

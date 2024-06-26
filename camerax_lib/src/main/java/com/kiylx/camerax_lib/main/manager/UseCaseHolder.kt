@@ -5,7 +5,6 @@ import android.view.Surface
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
-import androidx.camera.core.UseCase
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -51,22 +50,22 @@ interface IUseCaseHelper {
         cameraConfig: ManagerConfig,
     ): ImageCapture
 
-    /**
-     * 初始化自定义的用例组合
-     */
-    fun initCustomUseCaseList(
-        cameraExecutor: ExecutorService,
-        screenAspectRatio: Int,
-        rotation: Int = Surface.ROTATION_0,
-        size: Size,
-        cameraConfig: ManagerConfig,
-        selectAnalyzer: ImageAnalysis.Analyzer,
-    )
+//    /**
+//     * 初始化自定义的用例组合
+//     */
+//    fun initCustomUseCaseList(
+//        cameraExecutor: ExecutorService,
+//        screenAspectRatio: Int,
+//        rotation: Int = Surface.ROTATION_0,
+//        size: Size,
+//        cameraConfig: ManagerConfig,
+//        selectAnalyzer: ImageAnalysis.Analyzer,
+//    )
 
-    /**
-     * Provide custom use case list
-     */
-    fun provideCustomUseCaseList(): List<UseCase>
+//    /**
+//     * Provide custom use case list
+//     */
+//    fun provideCustomUseCaseList(): List<UseCase>
 }
 
 /**
@@ -168,19 +167,19 @@ object UseCaseHolder : IUseCaseHelper {
         return imageCapture
     }
 
-    override fun initCustomUseCaseList(
-        cameraExecutor: ExecutorService,
-        screenAspectRatio: Int,
-        rotation: Int,
-        size: Size,
-        cameraConfig: ManagerConfig,
-        selectAnalyzer: ImageAnalysis.Analyzer
-    ) {
-        // 自定义usecase组合
-    }
+//    override fun initCustomUseCaseList(
+//        cameraExecutor: ExecutorService,
+//        screenAspectRatio: Int,
+//        rotation: Int,
+//        size: Size,
+//        cameraConfig: ManagerConfig,
+//        selectAnalyzer: ImageAnalysis.Analyzer
+//    ) {
+//        // 自定义usecase组合
+//    }
 
-    override fun provideCustomUseCaseList(): List<UseCase> {
-        //提供自定义usecase组合
-        return emptyList()
-    }
+//    override fun provideCustomUseCaseList(): List<UseCase> {
+//        //提供自定义usecase组合
+//        return emptyList()
+//    }
 }

@@ -55,9 +55,9 @@ interface ICameraXF {
 
     /**
      * 设置相机绑定何种实例
-     * 注意，此方法不会改变[ManagerConfig]中的[ManagerConfig.useCaseMode]变量值，
-     * 因此在这之后使用[reBindUseCase]方法，会根据[ManagerConfig.useCaseMode]重新绑定用例。
-     * 不过，你完全可以在使用此方法前，自己改变[ManagerConfig.useCaseMode]的值。
+     * 注意，此方法不会改变[ManagerConfig]中的[ManagerConfig.useCaseBundle]变量值，
+     * 因此在这之后使用[reBindUseCase]方法，会根据[ManagerConfig.useCaseBundle]重新绑定用例。
+     * 不过，你完全可以在使用此方法前，自己改变[ManagerConfig.useCaseBundle]的值。
      * @param mode 默认： [UseCaseMode.takePhoto]
      */
     fun setCameraUseCase(mode: Int = UseCaseMode.takePhoto)

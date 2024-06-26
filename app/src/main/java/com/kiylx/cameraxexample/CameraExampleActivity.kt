@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.flow
 
 class CameraExampleActivity : BaseCameraXActivity() {
 
+
     /** 这里直接构建了配置，我没有使用intent传入配置。 */
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
@@ -38,7 +39,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
         //整体的配置
         return ManagerConfig().apply {
             this.recordConfig = videoRecordConfig
-            this.useCaseMode =
+            //这里指定了用例组合，当然你也可以调用UseCaseMode.customGroup方法自定义用例组合
+            this.useCaseBundle =
                 if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
             //android R以下时，在少数display为null的情况下，设置预览，拍照的默认分辨率

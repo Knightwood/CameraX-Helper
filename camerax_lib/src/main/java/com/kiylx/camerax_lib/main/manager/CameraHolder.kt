@@ -3,12 +3,20 @@ package com.kiylx.camerax_lib.main.manager
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.util.Log
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.MirrorMode
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzerProvider
-import com.kiylx.camerax_lib.main.manager.model.*
+import com.kiylx.camerax_lib.main.manager.model.CameraManagerEventListener
+import com.kiylx.camerax_lib.main.manager.model.CaptureResultListener
+import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
+import com.kiylx.camerax_lib.main.manager.model.UseCaseHexStatus
+import com.kiylx.camerax_lib.main.manager.model.UseCaseMode
 import com.kiylx.camerax_lib.main.manager.photo.ImageCaptureHelper
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorder
 import com.kiylx.camerax_lib.main.manager.video.OnceRecorderHelper
@@ -40,7 +48,9 @@ class CameraHolder(
 
     override fun selectAnalyzer(): ImageAnalysis.Analyzer = analyzer
 
-    /** 检查权限，通过后执行block块初始化相机 */
+    /**
+     * 检查权限，通过后执行block块初始化相机
+     */
     override fun checkPerm(block: () -> Unit) {
         PermissionX.init(context).permissions(ManagerUtil.REQUIRED_PERMISSIONS.asList())
             .explainReasonBeforeRequest()//在第一次请求权限之前就先弹出一个对话框向用户解释自己需要哪些权限，然后才会进行权限申请。
@@ -90,8 +100,7 @@ class CameraHolder(
     }
 
     /**
-     * 可以启用或停用手电筒（手电筒应用）
-     * 启用手电筒后，无论闪光灯模式设置如何，手电筒在拍照和拍视频时都会保持开启状态。
+     * 可以启用或停用手电筒（手电筒应用） 启用手电筒后，无论闪光灯模式设置如何，手电筒在拍照和拍视频时都会保持开启状态。
      * 仅当手电筒被停用时，ImageCapture 中的 flashMode 才会起作用。
      */
     fun useTorch(b: Boolean) {
@@ -103,7 +112,9 @@ class CameraHolder(
         }
     }
 
-    /** 拍照处理方法(这里只是拍照，录制视频另外有方法) 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照 拍照前会检查用例绑定 */
+    /**
+     * 拍照处理方法(这里只是拍照，录制视频另外有方法) 图像分析和拍照都绑定了拍照用例，所以，拍照后不需要重新绑定图像分析或拍照 拍照前会检查用例绑定
+     */
     fun takePhoto(imageCaptureConfig: ImageCaptureConfig? = null) {
         if (imageCaptureConfig != null) {
             cameraConfig.imageCaptureConfig = imageCaptureConfig
@@ -111,7 +122,7 @@ class CameraHolder(
         val captureConfig = cameraConfig.imageCaptureConfig
 
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
-        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_ANALYZER) {
+        if (!UseCaseHexStatus.canTakePicture(useCaseBundle)) {
             setCamera(UseCaseMode.takePhoto)
         }
 
@@ -160,7 +171,7 @@ class CameraHolder(
         val outputOptions = pair.first
         val saveFileData = pair.second
 
-        currentStatus = ManagerRunningState.TAKING_PHOTO
+        useCaseRunning = true
         // 设置拍照监听回调，当拍照动作被触发的时候
         // Setup image capture listener which is triggered after photo has been taken
         imageCapture.takePicture(
@@ -170,11 +181,11 @@ class CameraHolder(
                     handler.post {
                         captureResultListener?.onPhotoTaken(null)
                     }
-                    currentStatus = ManagerRunningState.IDLE
+                    useCaseRunning = false
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    currentStatus = ManagerRunningState.IDLE
+                    useCaseRunning = false
                     output.savedUri?.let {
                         saveFileData.uri = it
                     }
@@ -191,21 +202,23 @@ class CameraHolder(
      */
     fun takePhotoInMem(callback: ImageCapture.OnImageCapturedCallback) {
         //当前，既不是拍照，也不是图像识别的话，要拍照，就得先去绑定拍照的实例
-        if (whichInstance != WhichInstanceBind.PICTURE && whichInstance != WhichInstanceBind.IMAGE_ANALYZER) {
+        if (!UseCaseHexStatus.canTakePicture(useCaseBundle)) {
             setCamera(UseCaseMode.takePhoto)
         }
-        currentStatus = ManagerRunningState.TAKING_PHOTO
+        useCaseRunning = true
+//        currentStatus = ManagerRunningState.TAKING_PHOTO
         imageCapture.takePicture(cameraExecutor, callback)
-        currentStatus = ManagerRunningState.IDLE
+//        currentStatus = ManagerRunningState.IDLE
+        useCaseRunning = false
     }
 
     /**
      * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
      *
-     * 绑定图像识别，是靠配置参数里的[ManagerConfig.useCaseMode]
+     * 绑定图像识别，是靠配置参数里的[ManagerConfig.useCaseBundle]
      */
     private fun imageAnalyze() {
-        if (cameraConfig.useCaseMode == UseCaseMode.imageAnalysis) {
+        if (UseCaseHexStatus.canAnalyze(cameraConfig.useCaseBundle)) {
             //几种情况：
             // A：绑定图像识别，再进行拍照或录视频
             // 1.使用了图像识别，此时，是绑定了图像识别和拍照的用例的。点击拍照，是不需要解绑再去绑定拍照用例的；拍照后，不需要恢复图像识别用例绑定
@@ -220,20 +233,25 @@ class CameraHolder(
         }
     }
 
-    /** 翻转相机时，还需要翻转叠加层 */
+    /**
+     * 翻转相机时，还需要翻转叠加层
+     */
     override fun switchCamera() {
-        if (currentStatus == ManagerRunningState.RECORDING && !cameraConfig.recordConfig.asPersistentRecording) {
+        if (UseCaseHexStatus.canTakeVideo(useCaseBundle) && recording != null && !cameraConfig.recordConfig.asPersistentRecording) {
             //如果未开启持久录制，录制视频时得先停下来
             stopRecord()
         }
         super.switchCamera()
     }
 
-    /** 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null */
+    /**
+     * 提供视频录制，暂停，恢复，停止等功能。每一次录制完成，都会置为null
+     */
     private var recording: Recording? = null
 
     /**
      * 开始录制
+     *
      * @param videoRecordConfig 将覆盖原有配置
      */
     @SuppressLint("UnsafeOptInUsageError")
@@ -243,10 +261,10 @@ class CameraHolder(
         }
         val recordConfig = cameraConfig.recordConfig
 
-        if (whichInstance != WhichInstanceBind.VIDEO)//如果当前绑定的不是视频捕获实例，绑定他
-            setCamera(ManagerUtil.TAKE_VIDEO_CASE)
-        currentStatus = ManagerRunningState.RECORDING
-
+        if (!UseCaseHexStatus.canTakeVideo(useCaseBundle))//如果当前绑定的不是视频捕获实例，绑定他
+            setCamera(UseCaseMode.takeVideo)
+//        currentStatus = ManagerRunningState.RECORDING
+        useCaseRunning = true
         val onceRecorder: OnceRecorder = OnceRecorderHelper.newOnceRecorder(context, recordConfig)
         val videoFile = onceRecorder.saveFileData
 
@@ -260,7 +278,9 @@ class CameraHolder(
                 override fun accept(t: VideoRecordEvent) {
                     if (t is VideoRecordEvent.Finalize) {
                         //t.outputResults.outputUri
-                        currentStatus = ManagerRunningState.IDLE
+//                        currentStatus = ManagerRunningState.IDLE
+                        useCaseRunning = false
+
                         imageAnalyze()
                         if (t.hasError()) {
                             handler.post {
@@ -286,7 +306,7 @@ class CameraHolder(
      */
     fun stopRecord() {
         //这里是不是会自动的unbind VideoCapture
-        if (currentStatus == ManagerRunningState.RECORDING) {
+        if (UseCaseHexStatus.canTakeVideo(useCaseBundle) && recording != null) {
             recording?.stop()
             recording = null
         }

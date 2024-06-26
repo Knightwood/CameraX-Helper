@@ -50,7 +50,7 @@ class CameraExampleActivity2 : AppCompatActivity(), CameraXFragmentEventListener
         //整体的配置
         return ManagerConfig().apply {
             this.recordConfig = videoRecordConfig
-            this.useCaseMode =
+            this.useCaseBundle =
                 if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
             this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值

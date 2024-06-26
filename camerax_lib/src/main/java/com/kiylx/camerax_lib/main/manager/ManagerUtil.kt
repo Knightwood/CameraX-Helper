@@ -30,11 +30,11 @@ class ManagerUtil {
         const val PHOTO_EXTENSION = ".jpg"
         const val VIDEO_EXTENSION = ".mp4"
 
-        const val TAKE_PHOTO_CASE = 0
-        const val TAKE_VIDEO_CASE = 1
-        const val IMAGE_ANALYZER_CASE = 2
-        const val NONE_USE_CASE = -1
-        const val CUSTOM_USE_CASE_GROUP =-2
+//        const val TAKE_PHOTO_CASE = 0
+//        const val TAKE_VIDEO_CASE = 1
+//        const val IMAGE_ANALYZER_CASE = 2
+//        const val NONE_USE_CASE = -1
+//        const val CUSTOM_USE_CASE_GROUP =-2
 
         //图像的比例
         const val RATIO_4_3_VALUE = 4.0 / 3.0

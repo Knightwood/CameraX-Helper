@@ -381,7 +381,7 @@ open class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     }
 
     override fun getCurrentStatus(): Int {
-        return cameraHolder.currentStatus
+        return cameraHolder.useCaseBundle
     }
 
     override fun startRecord(recordConfig: VideoRecordConfig?) {
