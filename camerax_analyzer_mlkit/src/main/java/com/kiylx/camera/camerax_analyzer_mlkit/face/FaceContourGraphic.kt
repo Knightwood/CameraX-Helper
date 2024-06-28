@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.face
+package com.kiylx.camera.camerax_analyzer_mlkit.face
 
 import android.graphics.Canvas
 import android.graphics.Color

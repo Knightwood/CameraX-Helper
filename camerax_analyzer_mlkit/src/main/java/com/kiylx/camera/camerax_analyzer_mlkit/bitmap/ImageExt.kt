@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.bitmap
+package com.kiylx.camera.camerax_analyzer_mlkit.bitmap
 
 import android.annotation.SuppressLint
 import android.content.Context

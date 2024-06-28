@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.luminosity
+package com.kiylx.camera.camerax_analyzer_mlkit.luminosity
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy

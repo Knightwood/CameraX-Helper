@@ -8,6 +8,8 @@ import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.databinding.BottomControllerPanelBinding
 import com.kiylx.camerax_lib.main.buttons.CameraButton
 import com.kiylx.camerax_lib.main.buttons.CaptureListener
+import com.kiylx.camerax_lib.main.manager.model.UseCaseMode.Companion.takePhoto
+import com.kiylx.camerax_lib.view.ControllerPanelUseCaseMode.Companion.recordVideo
 
 interface IControllerPanel {
     var eventListener: IControllerPanelEventListener?
@@ -15,7 +17,9 @@ interface IControllerPanel {
 
     fun setBottomButtonTextColor(id: Int)
 
-    /** 显示或隐藏切换功能ui */
+    /**
+     * 显示或隐藏切换功能ui
+     */
     fun showHideCameraSwitch(hide: Boolean = true)
     fun showHideUseCaseSwitch(hide: Boolean = true)
 
@@ -33,6 +37,7 @@ interface IControllerPanel {
      * @param hide
      */
     fun showHideAll(hide: Boolean)
+    fun switchBetweenCaptureAndRecord(mode: Int = ControllerPanelUseCaseMode.recordVideo)
 }
 
 /**
@@ -57,21 +62,37 @@ class ControllerPanel(
 
         //点击切换到录像
         binding.btnRecordVideo.setOnClickListener {
-            binding.fullCaptureBtn.buttonMode = CameraButton.BUTTON_STATE_ONLY_RECORDER
-            binding.fullCaptureBtn.visibility = View.VISIBLE
-            setBottomButtonTextColor(R.id.btn_record_video)
-            eventListener?.switchCaptureBtnType(recordVideo)
+            switch2Record()
         }
         //点击切换到拍照
         binding.btnTakePhoto.setOnClickListener {
-            binding.fullCaptureBtn.buttonMode = CameraButton.BUTTON_STATE_ONLY_CAPTURE
-            binding.fullCaptureBtn.visibility = View.VISIBLE
-            setBottomButtonTextColor(R.id.btn_take_photo)
-            eventListener?.switchCaptureBtnType(takePhoto)
+            switch2TakePhoto()
         }
         //切换摄像头
         binding.switchBtn.setOnClickListener {
             eventListener?.switchCamera()
+        }
+    }
+
+    private fun switch2Record() {
+        binding.fullCaptureBtn.buttonMode = CameraButton.BUTTON_STATE_ONLY_RECORDER
+        binding.fullCaptureBtn.visibility = View.VISIBLE
+        setBottomButtonTextColor(R.id.btn_record_video)
+        eventListener?.switchCaptureBtnType(recordVideo)
+    }
+
+    private fun switch2TakePhoto() {
+        binding.fullCaptureBtn.buttonMode = CameraButton.BUTTON_STATE_ONLY_CAPTURE
+        binding.fullCaptureBtn.visibility = View.VISIBLE
+        setBottomButtonTextColor(R.id.btn_take_photo)
+        eventListener?.switchCaptureBtnType(takePhoto)
+    }
+
+    override fun switchBetweenCaptureAndRecord(mode: Int) {
+        if (mode == recordVideo) {
+            switch2Record()
+        } else {
+            switch2TakePhoto()
         }
     }
 
@@ -117,13 +138,21 @@ class ControllerPanel(
     }
 
     companion object {
+
+    }
+}
+
+class ControllerPanelUseCaseMode{
+    companion object{
         const val takePhoto = 0
         const val recordVideo = 1
     }
 }
 
 interface IControllerPanelEventListener {
-    /** notify camera switch button clicked */
+    /**
+     * notify camera switch button clicked
+     */
     fun switchCamera()
 
     /**

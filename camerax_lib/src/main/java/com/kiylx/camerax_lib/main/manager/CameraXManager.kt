@@ -194,7 +194,7 @@ abstract class CameraXManager(
                     displayRotation = DisplayRotation(context, displayRotationListener)
                 }
                 //setUpPinchToZoom()
-                setCamera(cameraConfig.useCaseBundle)//绑定实例
+                setCamera(cameraConfig.useCaseMode)//绑定实例
 
                 // Attach the viewfinder's surface provider to preview use case
                 preview?.setSurfaceProvider(cameraPreview.surfaceProvider)
@@ -223,7 +223,7 @@ abstract class CameraXManager(
     @CallSuper
     open fun reBindUseCase() {
         initUseCase()
-        setCamera(cameraConfig.useCaseBundle)
+        setCamera(cameraConfig.useCaseMode)
     }
 
     /**
@@ -303,6 +303,7 @@ abstract class CameraXManager(
 
     /**
      * 绑定相机实例之类的
+     * @param useCaseBundle 用例组合 [ManagerConfig.useCaseMode]
      */
     internal fun setCamera(useCaseBundle: Int) {
         this.useCaseBundle = useCaseBundle
@@ -460,7 +461,7 @@ abstract class CameraXManager(
             CameraSelector.LENS_FACING_FRONT
         }
         setCameraSelector(lensFacing)
-        setCamera(cameraConfig.useCaseBundle)//绑定实例
+        setCamera(cameraConfig.useCaseMode)//绑定实例
         initZoomState()//翻转相机后，相机实例发生变化，所以重新获取缩放状态
         cameraListener?.switchCamera(lensFacing)
     }

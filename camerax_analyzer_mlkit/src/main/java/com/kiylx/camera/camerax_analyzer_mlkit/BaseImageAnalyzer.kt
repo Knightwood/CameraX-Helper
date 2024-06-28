@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer
+package com.kiylx.camera.camerax_analyzer_mlkit
 
 import android.annotation.SuppressLint
 import android.graphics.Matrix

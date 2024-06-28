@@ -19,7 +19,7 @@ android {
             //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
 //            abiFilters += listOf("armeabi", "armeabi-v7a", "arm64-v8a")
             //noinspection ChromeOsAbiSupport
-            abiFilters += listOf("armeabi-v7a")
+            abiFilters += rootProject.ext["abi"] as List<String>
         }
     }
 
@@ -58,7 +58,7 @@ dependencies {
     implementation ("com.google.android.material:material:1.9.0")
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation(project(":camerax_lib"))
-    implementation(project(":camerax_analyzer"))
+    implementation(project(":camerax_analyzer_mlkit"))
     implementation(project(":camerax_analyzer_tensorflow"))
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 

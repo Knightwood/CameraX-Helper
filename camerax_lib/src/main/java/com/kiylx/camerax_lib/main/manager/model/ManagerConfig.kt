@@ -18,9 +18,10 @@ data class ManagerConfig(
     var size: Size = Size(1280, 720),
 
     /**
-     * 指定这次相机使用的用例，例如拍照，录像，图像识别等 查看[UseCaseMode]
+     * 指定这次相机使用的用例组合，例如拍照，录像，图像识别等 查看[UseCaseMode]
+     * 也可以使用[UseCaseMode.customGroup] 生成自定义的用例组合
      */
-    var useCaseBundle: Int = UseCaseMode.takePhoto,
+    var useCaseMode: Int = UseCaseMode.takePhoto,
 
     /**
      * 指定图像分析、拍照、录制的旋转角度,默认可能为[Surface.ROTATION_0]。 默认值是根据display的旋转方向而定
@@ -40,7 +41,13 @@ data class ManagerConfig(
 ) : Parcelable {
 
     fun isUsingImageAnalyzer(): Boolean {
-        return UseCaseHexStatus.canAnalyze(useCaseBundle)
+        return UseCaseHexStatus.canAnalyze(useCaseMode)
+    }
+    fun isUsingVideoRecorder(): Boolean {
+        return UseCaseHexStatus.canTakeVideo(useCaseMode)
+    }
+    fun isUsingImageCapture(): Boolean {
+        return UseCaseHexStatus.canTakePicture(useCaseMode)
     }
 }
 
@@ -75,12 +82,14 @@ class UseCaseMode {
 //         * 且在相机初始化之前调用[UseCaseHolder.setInitImpl]方法，提供[IUseCaseHelper]接口实现
 //         */
 //        const val customUseCaseGroup = CUSTOM_USE_CASE_GROUP
-
-        fun customGroup(vararg useCaseMode: Int): Int {
-            var result: Int = useCaseMode[0]
-            if (useCaseMode.size > 1) {
-                for (i in 1 until  useCaseMode.size) {
-                    result = UseCaseHexStatus.addUseCase(result, useCaseMode[i])
+        /**
+         * @param useCaseHexState 需要组合在一起使用的用例 [UseCaseHexStatus]
+         */
+        fun customGroup(vararg useCaseHexState: Int): Int {
+            var result: Int = useCaseHexState[0]
+            if (useCaseHexState.size > 1) {
+                for (i in 1 until  useCaseHexState.size) {
+                    result = UseCaseHexStatus.addUseCase(result, useCaseHexState[i])
                 }
             }
             return result

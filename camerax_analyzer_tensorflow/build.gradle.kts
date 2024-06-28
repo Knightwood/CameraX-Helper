@@ -1,6 +1,8 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("maven-publish")
+
 }
 
 android {
@@ -10,6 +12,13 @@ android {
     defaultConfig {
         minSdk = 23
         consumerProguardFiles("consumer-rules.pro")
+
+        ndk {
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+//            abiFilters += listOf("armeabi", "armeabi-v7a", "arm64-v8a")
+            //noinspection ChromeOsAbiSupport
+            abiFilters += rootProject.ext["abi"] as List<String>
+        }
     }
 
     buildTypes {
@@ -28,6 +37,12 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -40,4 +55,19 @@ dependencies {
     api("org.tensorflow:tensorflow-lite:2.9.0")
 
     compileOnly(project(":camerax_lib"))
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                groupId = "com.github.Knightwood"
+                artifactId = "camerax_analyzer_tensorflow"
+                version = rootProject.ext["version"].toString()
+                afterEvaluate {
+                    from(components["release"])
+                }
+            }
+        }
+    }
 }

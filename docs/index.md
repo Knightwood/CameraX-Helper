@@ -7,7 +7,7 @@
 include(":app") // 示例
 include(":camerax_lib")// 相机库，实现拍照，录像，图像分析接口等
 include(":compose_camerax") // compose版相机库
-include(":camerax_analyzer") // 集成mlkit，绘制人脸坐标，分析亮度等
+include(":camerax_analyzer_mlkit") // 集成mlkit，绘制人脸坐标，分析亮度等
 include(":camerax_analyzer_tensorflow") // 集成TensorFlowList，使用tflite模型运行分析
 ````
 
@@ -18,17 +18,26 @@ include(":camerax_analyzer_tensorflow") // 集成TensorFlowList，使用tflite�
 
 1. 克隆代码到本地
 ```shell
-  git clone git@github.com:Knightwood/CameraX-mlkit-FaceDetection.git
+  git clone git@github.com:Knightwood/CameraX-Helper.git
 ```
 2. 引入依赖
    在AndroidStudio中，File->New->Import Module...  
-   将`camerax_lib`、`camerax_analyzer`、`camerax_analyzer_tensorflow`三个module导入到项目中。  
-   如果不需要mlkit或tensorflow，可以不导入`camerax_analyzer`、`camerax_analyzer_tensorflow` 这两个module。  
+   将`camerax_lib`、`camerax_analyzer_mlkit`、`camerax_analyzer_tensorflow`三个module导入到项目中。  
+   如果不需要mlkit或tensorflow，可以不导入`camerax_analyzer`、`camerax_analyzer_tensorflow` 这两个module。
+
+   复制项目的build.gradle.kts文件中的ext
+   ```kotlin
+    ext {
+        this["version"] = "1.3.1"
+        this["abi"] = listOf("arm64-v8a") //listOf("armeabi", "armeabi-v7a", "arm64-v8a")
+    }
+   ```
+
 3. app module的build.gradle文件添加依赖
 ```kotlin
 dependencies {
-    implementation(project(":camerax_lib"))
-    implementation(project(":camerax_analyzer")) //可选
+    implementation(project(":camerax_lib_mlkit"))
+    implementation(project(":camerax_analyzer_mlkit")) //可选
     implementation(project(":camerax_analyzer_tensorflow")) //可选
 }
 ```

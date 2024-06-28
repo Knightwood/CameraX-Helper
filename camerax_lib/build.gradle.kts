@@ -18,7 +18,8 @@ android {
             //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
 //            abiFilters += listOf("armeabi", "armeabi-v7a", "arm64-v8a")
             //noinspection ChromeOsAbiSupport
-            abiFilters += listOf("armeabi-v7a")
+//            abiFilters += listOf("armeabi-v7a")
+            abiFilters += rootProject.ext["abi"] as List<String>
         }
     }
 
@@ -67,7 +68,7 @@ dependencies {
     api("com.github.Knightwood:SimpleStore:1.0")
 
     // CameraX core library
-    val camerax_version ="1.3.0"
+    val camerax_version ="1.3.4"
 
     // CameraX Camera2 extensions
     api ("androidx.camera:camera-camera2:$camerax_version")
@@ -78,7 +79,7 @@ dependencies {
     // If you want to additionally use the CameraX View class
     api ("androidx.camera:camera-view:$camerax_version")
     // If you want to additionally add CameraX ML Kit Vision Integration
-    api ("androidx.camera:camera-mlkit-vision:1.4.0-alpha02")
+    api ("androidx.camera:camera-mlkit-vision:1.4.0-beta02")
     // If you want to additionally use the CameraX Extensions library
     api ("androidx.camera:camera-extensions:$camerax_version")
     api("com.blankj:utilcodex:1.31.0")
@@ -89,8 +90,8 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                groupId = "com.github.knightwood"
-                artifactId = "SimpleCameraX"
+                groupId = "com.github.Knightwood"
+                artifactId = "camerax_lib"
                 version = rootProject.ext["version"].toString()
                 afterEvaluate {
                     from(components["release"])

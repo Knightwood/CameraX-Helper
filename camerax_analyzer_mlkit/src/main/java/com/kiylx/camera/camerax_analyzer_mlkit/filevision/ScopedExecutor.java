@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kiylx.camera.camerax_analyzer.filevision;
+package com.kiylx.camera.camerax_analyzer_mlkit.filevision;
 
 import androidx.annotation.NonNull;
 import java.util.concurrent.Executor;

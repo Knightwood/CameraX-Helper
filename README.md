@@ -1,118 +1,145 @@
-# CameraXlib
+# CameraX-Helper
 
-集成了拍照，录制视频，人脸识别等的camerax库。
+可以组合任意用例，实现拍照，录制视频，人脸检测、识别。可在图像分析的同时录制视频或拍照。
+已适配存储，可使用saf、mediaStore、file等，仅需要一行简单的配置。
+有activity、fragment实现的相机界面，可以直接集成使用，也可以自由定制ui界面，实现自定义相机。
 
-适配了Android10以上的分区存储，可以将图片和视频存储到app私有目录，相册和相册下文件夹，其他SAF能授予文件夹权限的位置。
-Android10 以下，大家都很熟悉。
-
-- 内置人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
-- 内置人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
+介绍：
+- 人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
+- 人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
 - 可以拍照，录制，暂停/继续录制，双指缩放，点按对焦，闪光灯，手电筒。
+- 可以组合任意的用例，比如 预览+图像分析+拍照 、预览+图像分析+录视频。
+- 支持以file、mediaStore、saf等存储方式，配置简单。
 - 自定义配置相机功能，例如拍照时水平翻转或垂直翻转，分辨率和宽高比；视频的镜像翻转，文件或时长限制，视频清晰度等。
 
 * 示例代码在app目录下。
+
+2024-06-28
+- 可任意组合不同用例。
+
+2024-05-18
+- 文档正在施工 [地址](https://knightwood.github.io/CameraX-mlkit-FaceDetection/)
 
 2024-05-09
 - 将mlkit和tensorflow拆分出来，新增`BaseCameraXFragment`实现相机，提供自定义布局功能等。
 - 下一步计划：1.文档已经过于陈旧，需要大改。2.实现在compose中使用相机
 
-2024-05-18
-- 文档正在施工 [地址](https://knightwood.github.io/CameraX-mlkit-FaceDetection/)
 
 # 截图
 
 <img src="screenshots/1.jpg" width="50%"/><img src="screenshots/2.jpg" width="50%"/>
 
-# [最新文档地址](https://knightwood.github.io/CameraX-mlkit-FaceDetection/)
+# [最新文档地址](https://knightwood.github.io/CameraX-Helper/)
 
 # 用法
-`camerax_lib` module 中提供了`BaseCameraXActivity`和`CameraXFragment`类，后者持有`cameraHolder`实现相机功能，
+
+`camerax_lib` module 中提供了`BaseCameraXActivity`和`CameraXFragment`类，后者持有`cameraHolder`
+实现相机功能，
 前者则持有`CameraXFragment`,提供更进一步的封装。
 
 整体的相机实现示例可以看app module下的`CameraExampleActivity`类。
-'CameraX'版本：1.3.0
+'CameraX'版本：1.3.4
 _长期维护中_
-
 
 使用：
 
 1. 克隆代码到本地
+
 ```shell
-  git clone git@github.com:Knightwood/CameraX-mlkit-FaceDetection.git
+  git clone git@github.com:Knightwood/CameraX-Helper.git
 ```
+
 2. 引入依赖
    在AndroidStudio中，File->New->Import Module...  
-   将`camerax_lib`、`camerax_analyzer`、`camerax_analyzer_tensorflow`三个module导入到项目中。  
-   如果不需要mlkit或tensorflow，可以不导入`camerax_analyzer`、`camerax_analyzer_tensorflow` 这两个module。
+   将`camerax_lib`、`camerax_analyzer_mlkit`、`camerax_analyzer_tensorflow`三个module导入到项目中。  
+   如果不需要mlkit或tensorflow，可以不导入`camerax_analyzer_mlkit`、`camerax_analyzer_tensorflow` 这两个module。
+
+    复制项目的build.gradle.kts文件中的ext
+       ```kotlin
+        ext {
+            this["version"] = "1.3.1"
+            this["abi"] = listOf("arm64-v8a") //listOf("armeabi", "armeabi-v7a", "arm64-v8a")
+        }
+        ```
+
 3. app module的build.gradle文件添加依赖
+
 ```kotlin
 dependencies {
-    implementation(project(":camerax_lib"))
-    implementation(project(":camerax_analyzer")) //可选
+    implementation(project(":camerax_lib_mlkit"))
+    implementation(project(":camerax_analyzer_mlkit")) //可选
     implementation(project(":camerax_analyzer_tensorflow")) //可选
 }
 ```
 
-
 ## 配置
+
 以`CameraExampleActivity`为例
+
 ### 屏幕方向
+
 ```html
 //首先是配置：
 //屏幕方向这个可选，可以固定竖屏、横屏、不设置。
 //需要在清单文件的相机activity中添加如下配置，另持有相机的activity在旋转屏幕时不被销毁重建
 android:configChanges="orientation|screenSize"
 ```
+
 ### `CameraExampleActivity` 相机示例，配置存储，拍照，录像，分析器等
+
 #### 相机配置：
+
 例如可以从`MainActivity`启动`CameraExampleActivity`完成拍照和录制
 所以，相机的配置可以通过intent传入。
 一共有三种模式：拍照，录制，图像分析。
 
 示例：
+
 ```kotlin
 class CameraExampleActivity : BaseCameraXActivity() {
     // CameraExampleActivity中通过重写configAll 可配置相机一些内容，intent中的键值对为自定义的内容，与库无关
     // 接收到intent，对相机进行配置
-  override fun configAll(intent: Intent): ManagerConfig {
-    //视频录制配置(可选)
-    val videoRecordConfig = VideoRecordConfig(
-      quality = CameraRecordQuality.HD,//设置视频拍摄质量
+    override fun configAll(intent: Intent): ManagerConfig {
+        //视频录制配置(可选)
+        val videoRecordConfig = VideoRecordConfig(
+            quality = CameraRecordQuality.HD,//设置视频拍摄质量
 //            fileSizeLimit=100.mb, //文件大小限制。
 //            durationLimitMillis =1000*15, //录制时长限制，单位毫秒
-      //...省略
-    )
-    //拍照配置(可选)
-    val imageCaptureConfig =ImageCaptureConfig(
-      horizontalMirrorMode= MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //水平翻转
-      verticalMirrorMode = MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //垂直翻转
-      //...省略
-    )
-    //整体的配置
-    val useImageDetection = intent.getBooleanExtra(ImageDetection, false)    //是否使用图像分析
-    return ManagerConfig().apply {
-      this.recordConfig = videoRecordConfig 
-        //这里使用了默认的用例组合
-        this.useCaseBundle =
-            if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
-        
-        //当然，也可以使用自定义的用例组合
-//        this.useCaseBundle =  //通过调用UseCaseMode.customGroup方法自定义了一个可以预览，录像，图像分析的用例组合
+            //...省略
+        )
+        //拍照配置(可选)
+        val imageCaptureConfig = ImageCaptureConfig(
+            horizontalMirrorMode = MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //水平翻转
+            verticalMirrorMode = MirrorMode.MIRROR_MODE_ON_FRONT_ONLY, //垂直翻转
+            //...省略
+        )
+        //整体的配置
+        val useImageDetection = intent.getBooleanExtra(ImageDetection, false)    //是否使用图像分析
+        return ManagerConfig().apply {
+            this.recordConfig = videoRecordConfig
+            //这里使用了默认的用例组合
+            this.useCaseMode =
+                if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
+
+            //当然，也可以使用自定义的用例组合
+//        this.useCaseMode =  //通过调用UseCaseMode.customGroup方法自定义了一个可以预览，录像，图像分析的用例组合
 //            UseCaseMode.customGroup(
 //                UseCaseHexStatus.USE_CASE_PREVIEW,
 //                UseCaseHexStatus.USE_CASE_IMAGE_ANALYZE,
 //                UseCaseHexStatus.USE_CASE_VIDEO_CAPTURE
 //            )
-        
-      this.flashMode = FlashModel.CAMERA_FLASH_AUTO
-      this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
+
+            this.flashMode = FlashModel.CAMERA_FLASH_AUTO
+            this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
+        }
     }
-  }
 }
 ```
 
 #### 存储配置：
+
 全局的统一配置类: `CameraXStoreConfig`，若不进行配置，则默认存储到相册`CameraX`文件夹下
+
 1. 调用CameraXStoreConfig.configPhoto()配置图片存储位置
 2. 调用CameraXStoreConfig.configVideo()配置录制存储位置，使用方式与配置图片没有区别，仅方法名称不同
 
@@ -120,67 +147,73 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
 ```kotlin
 class CameraExampleActivity : BaseCameraXActivity() {
-    
+
     //对于拍摄和录制，可以分别配置存储位置，如果不进行配置，则默认存储到相册文件夹。
     //例如：对于拍照的存储配置
-  fun initPhotoStore() {
-    val relativePath = "fff"
-    //使用file绝对路径存储
-    CameraXStoreConfig.configPhoto(
-      IStore.FileStoreConfig(
-        application.cacheDir.absolutePath,
-        relativePath
-      )
-    )
-    //使用MediaStore存储
-    CameraXStoreConfig.configPhoto(
-      IStore.MediaStoreConfig(
-        saveCollection = FileLocate.IMAGE.uri,
-        mediaFolder = Environment.DIRECTORY_DCIM,
-        targetFolder = relativePath
-      )
-    )
-    //使用SAF框架存储到任意文件夹
-    StoreX.with(this).safHelper.requestOneFolder { it ->
-      //使用SAF框架获取某一个文件夹的授权和uri，然后配置存储
-      CameraXStoreConfig.configPhoto(
-        IStore.SAFStoreConfig(it)
-      )
+    fun initPhotoStore() {
+        val relativePath = "fff"
+        //使用file绝对路径存储
+        CameraXStoreConfig.configPhoto(
+            IStore.FileStoreConfig(
+                application.cacheDir.absolutePath,
+                relativePath
+            )
+        )
+        //使用MediaStore存储
+        CameraXStoreConfig.configPhoto(
+            IStore.MediaStoreConfig(
+                saveCollection = FileLocate.IMAGE.uri,
+                mediaFolder = Environment.DIRECTORY_DCIM,
+                targetFolder = relativePath
+            )
+        )
+        //使用SAF框架存储到任意文件夹
+        StoreX.with(this).safHelper.requestOneFolder { it ->
+            //使用SAF框架获取某一个文件夹的授权和uri，然后配置存储
+            CameraXStoreConfig.configPhoto(
+                IStore.SAFStoreConfig(it)
+            )
+        }
     }
-  }
 
 //视频的存储配置同拍照的存储配置相同，不过是把名称从`configPhoto`换成`configVideo`.可以参考app示例中的MainActivity
 
 }
 ```
+
 完成配置即可使用相机功能。
 
+## `UseCaseHolder`
 
-##  `UseCaseHolder`
 * `UseCaseHolder` 类初始化预览，拍照用例，录像用例，图像分析用例
 * 提供设置初始化用例方法
 * 提供分辨率和纵横比筛选方式
 
 ### 指定预览与拍照所需要的分辨率与纵横比筛选
-  指定[resolutionSelector]，提供预览与拍照所需要的分辨率与纵横比筛选
+
+指定[resolutionSelector]，提供预览与拍照所需要的分辨率与纵横比筛选
+
 ```kotlin
     //不提供自己的实现，仅指定筛选条件用于预览和拍照
-    UseCaseHolder.resolutionSelector = ResolutionSelector.Builder()
-        //分辨率筛选
-        .setResolutionFilter { supportedSizes, rotationDegrees ->
-            supportedSizes
-        }
-        //纵横比选择策略 16:9 比例
-        .setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY)
-        //分辨率策略选择最高可用分辨率
-        .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
-        //设置允许的分辨率模式。
-        .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
-        .build()
+UseCaseHolder.resolutionSelector = ResolutionSelector.Builder()
+    //分辨率筛选
+    .setResolutionFilter { supportedSizes, rotationDegrees ->
+        supportedSizes
+    }
+    //纵横比选择策略 16:9 比例
+    .setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY)
+    //分辨率策略选择最高可用分辨率
+    .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+    //设置允许的分辨率模式。
+    .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
+    .build()
 ```
+
 ### 提供自己所需要的初始化UseCase
+
 如默认的初始化不满足需要，可以调用[setInitImpl]方法，提供自己所需要的初始化
 示例：使某个类继承自IUseCaseHelper，并实现初始化预览，拍照用例，录像用例，图像分析用例的方法
+
   ```
   class IMPL:IUseCaseHelper{
   	........省略
@@ -208,10 +241,12 @@ class CameraExampleActivity : BaseCameraXActivity() {
 3. 或者可以自己实现一个activity,内部放置一个`CameraXFragment`实现相机功能
 
 ## 示例相机
+
 CameraExampleActivity 继承自 BaseCameraXActivity，
 后者在内部维护了一个cameraxFragment，此类持有了cameraholder实现相机功能，
 BaseCameraXActivity还生成了一个CameraXF类实现ICameraXF接口，功能委托给CameraXFragment，
 如此可屏蔽fragment相关实现，方便相机操作，还可以获取cameraholder，此类可提供更多的相机操作
+
 ```
 class CameraXF(private val cameraXF: CameraXFragment) : ICameraXF by cameraXF
 
@@ -346,7 +381,8 @@ class CameraExampleActivity : BaseCameraXActivity() {
 
 ## 其他介绍
 
-* `CameraXFragment`实现` ICameraXF`接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
+* `CameraXFragment`实现` ICameraXF`
+  接口，对外提供各种相机方法，实际上各类相机操作实现是由内部的`cameraHolder`实现。
 * `ICameraXF`接口则是为了屏蔽fragment的相关方法
 * `CameraXFragment`内部创建`CameraHolder`
 
@@ -439,18 +475,21 @@ interface CaptureResultListener {
 ## 人脸检测
 
 ### google ml-kit教程：
+
 #### ml-kit的检测器
+
 * 定义一个类，在类里加载ml-kit的检测器，然后，提供图像即可进行处理，本示例不包含连接到相机分析流部分
 
 ````kotlin
-val process=BaseImageAnalyzer()
+val process = BaseImageAnalyzer()
 //传入bitmap调用分析
-process.processBitmap(bitmap){list->
-    
+process.processBitmap(bitmap) { list ->
+
 }
 //这个类里维护了ml-kit 分析器
 class BaseImageAnalyzer {
     private val executor = ScopedExecutor(TaskExecutors.MAIN_THREAD)
+
     //ml-kit的人脸检测器
     private val detector: FaceDetector
 
@@ -473,9 +512,10 @@ class BaseImageAnalyzer {
     fun stop() {
         detector.close()
     }
+
     //使用检测器开始处理图片
     fun processBitmap(bitmap: Bitmap, listener: OnSuccessListener<List<Face>>) {
-      detector.process(InputImage.fromBitmap(bitmap, 0))
+        detector.process(InputImage.fromBitmap(bitmap, 0))
             .addOnSuccessListener(executor, listener)
             .addOnFailureListener(
                 executor,
@@ -489,61 +529,72 @@ class BaseImageAnalyzer {
 }
 
 ````
+
 #### 连接到相机分析流
-需要使类继承自ImageAnalysis.Analyzer，重写ImageAnalysis.Analyzer 的analyze方法，将此类作为analyzer usecase 绑定到相机后，相机自动调用其analyze方法，提供分析数据
+
+需要使类继承自ImageAnalysis.Analyzer，重写ImageAnalysis.Analyzer 的analyze方法，将此类作为analyzer
+usecase 绑定到相机后，相机自动调用其analyze方法，提供分析数据
+
 * camerax绑定用例示例(在CameraXManager类中，不需要手动调用)：
+
 ```kotlin
 cameraProvider.bindToLifecycle(lifeOwner, cameraSelector, preview, imageAnalyzer)
 ```
+
 * 继承ImageAnalysis.Analyzer，并调用ml-kit示例：
-继承ImageAnalysis.Analyzer，在analyze方法中调用ml-kit的检测器，将相机数据交给ml-kit做人脸检测，检测器部分和上面是一样的。
+  继承ImageAnalysis.Analyzer，在analyze方法中调用ml-kit的检测器，将相机数据交给ml-kit做人脸检测，检测器部分和上面是一样的。
+
 ```kotlin
 class BaseImageAnalyzer : ImageAnalysis.Analyzer {
-  private val executor = ScopedExecutor(TaskExecutors.MAIN_THREAD)
-  //mlkit的人脸检测器
-  private val detector: FaceDetector
-    //...省略初始化detector和其他东西
-  
-  //重写ImageAnalysis.Analyzer 的analyze方法
-  @SuppressLint("UnsafeExperimentalUsageError", "UnsafeOptInUsageError")
-  override fun analyze(imageProxy: ImageProxy) {
-    val mediaImage = imageProxy.image
-    val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+    private val executor = ScopedExecutor(TaskExecutors.MAIN_THREAD)
 
-    mediaImage?.let {
-      //检测
-      detector.detectInImage(InputImage.fromMediaImage(it, rotationDegrees))
-        .addOnSuccessListener { results ->
-          onSuccess(
-            imageProxy,
-            results,
-            graphicOverlay,
-          )
-        }
-        .addOnFailureListener {
-          graphicOverlay.clear()
-          graphicOverlay.postInvalidate()
-          onFailure(it)
-        }
-        .addOnCompleteListener {
-          imageProxy.close()
+    //mlkit的人脸检测器
+    private val detector: FaceDetector
+    //...省略初始化detector和其他东西
+
+    //重写ImageAnalysis.Analyzer 的analyze方法
+    @SuppressLint("UnsafeExperimentalUsageError", "UnsafeOptInUsageError")
+    override fun analyze(imageProxy: ImageProxy) {
+        val mediaImage = imageProxy.image
+        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+
+        mediaImage?.let {
+            //检测
+            detector.detectInImage(InputImage.fromMediaImage(it, rotationDegrees))
+                .addOnSuccessListener { results ->
+                    onSuccess(
+                        imageProxy,
+                        results,
+                        graphicOverlay,
+                    )
+                }
+                .addOnFailureListener {
+                    graphicOverlay.clear()
+                    graphicOverlay.postInvalidate()
+                    onFailure(it)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
         }
     }
-  }
 }
 ```
+
 ### 本库中ml-kit使用：
+
 * 使用google ml-kit 并连接到相机分析流示例：
-还是以CameraExampleActivity 为例：
+  还是以CameraExampleActivity 为例：
 
 1. 需要在配置相机时，指定模式为CaptureMode.imageAnalysis
+
 ````kotlin
     override fun configAll(intent: Intent): ManagerConfig {
-        //....省略
+    //....省略
     return ManagerConfig().apply {
         this.captureMode = CaptureMode.imageAnalysis//设置为分析图像模式
         this.size = Size(1920, 1080)//拍照，预览的分辨率，期望值，不一定会用这个值
-  }
+    }
 }
 
 ````
@@ -551,96 +602,101 @@ class BaseImageAnalyzer : ImageAnalysis.Analyzer {
 2. 在cameraHolderInitStart方法中，调用 cameraHolder.changeAnalyzer()设置图像分析器，这样即可完成上面所说将分析器绑定到相机
 
 * 示例1 使用ml-kit处理图像，绘制人脸边框和“特征点”的连线
-   FaceContourDetectionProcessor继承自BaseImageAnalyzer，实现了绘制人脸图像框体，点位连线等的内容
+  FaceContourDetectionProcessor继承自BaseImageAnalyzer，实现了绘制人脸图像框体，点位连线等的内容
+
 ```kotlin
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
-        super.cameraHolderInitStart(cameraHolder)
-        val cameraPreview = cameraHolder.cameraPreview
-  
-        //使用mlkit进行人脸检测，并绘制人脸框体和点位
-        val analyzer = FaceContourDetectionProcessor(
-            cameraPreview,
-            page.graphicOverlayFinder,
-        ).also {
-            cameraHolder.changeAnalyzer(it)//设置图像分析器
-        }
-        //监听分析结果
-        (analyzer as FaceContourDetectionProcessor).analyzeListener =
-            AnalyzeResultListener {
-                // when analyze success
-            }
+    super.cameraHolderInitStart(cameraHolder)
+    val cameraPreview = cameraHolder.cameraPreview
+
+    //使用mlkit进行人脸检测，并绘制人脸框体和点位
+    val analyzer = FaceContourDetectionProcessor(
+        cameraPreview,
+        page.graphicOverlayFinder,
+    ).also {
+        cameraHolder.changeAnalyzer(it)//设置图像分析器
     }
+    //监听分析结果
+    (analyzer as FaceContourDetectionProcessor).analyzeListener =
+        AnalyzeResultListener {
+            // when analyze success
+        }
+}
 
 ```
 
 * 示例2 还是使用ml-kit处理图像，得到包含人脸信息的照片，然后将其交给tensorflow lite模型处理，得到面部特征点。
+
 ```kotlin
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
-        super.cameraHolderInitStart(cameraHolder)
-        //加载tensorflow lite模型，这里仅做演示
-        val model = FaceDetection.create(
-            this.assets,
-            TestFileDecActivity.TF_OD_API_MODEL_FILE,
-            TestFileDecActivity.TF_OD_API_LABELS_FILE,
-            TestFileDecActivity.TF_OD_API_IS_QUANTIZED
-        )
-        //TensorFlowLink继承自ImageAnalysis.Analyzer，将其作为分析器设置给相机即可拿到分析流
-        val tensorFlowLink = TensorFlowLink {image: ImageProxy ->
-            //获取图像
-            val bitmap= image.toBitmap()
-            //这里使用了ml-kit分析是否包含面部数据，如果包含，则将面部图像裁剪下来
-            MyFileProcessor.process(bitmap){
-                it?.let {
-                    //将裁剪后的面部图像转换成特定尺寸bitmap
-                    val tmp = FaceDetection.convertBitmap(it)
-                    //将处理好的面部图像交给模型处理，获取特征点
-                    val masks = model.detectionBitmap(tmp)
-                }
+    super.cameraHolderInitStart(cameraHolder)
+    //加载tensorflow lite模型，这里仅做演示
+    val model = FaceDetection.create(
+        this.assets,
+        TestFileDecActivity.TF_OD_API_MODEL_FILE,
+        TestFileDecActivity.TF_OD_API_LABELS_FILE,
+        TestFileDecActivity.TF_OD_API_IS_QUANTIZED
+    )
+    //TensorFlowLink继承自ImageAnalysis.Analyzer，将其作为分析器设置给相机即可拿到分析流
+    val tensorFlowLink = TensorFlowLink { image: ImageProxy ->
+        //获取图像
+        val bitmap = image.toBitmap()
+        //这里使用了ml-kit分析是否包含面部数据，如果包含，则将面部图像裁剪下来
+        MyFileProcessor.process(bitmap) {
+            it?.let {
+                //将裁剪后的面部图像转换成特定尺寸bitmap
+                val tmp = FaceDetection.convertBitmap(it)
+                //将处理好的面部图像交给模型处理，获取特征点
+                val masks = model.detectionBitmap(tmp)
             }
-           
-        }.also {
-            cameraHolder.changeAnalyzer(it)//设置图像分析器
         }
 
+    }.also {
+        cameraHolder.changeAnalyzer(it)//设置图像分析器
     }
+
+}
 
 ```
+
 ### 除使用相机的分析流之外，还可以手动获取相机图片进行分析
+
 示例：CameraExampleActivity文件中
+
 ```kotlin
   /**
-     * 每隔20ms从预览视图中获取bitmap
-     * 然后运行图像分析，绘制矩形框
-     * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
-     */
-    suspend fun runFaceDetection(interval: Long = 20L) {
-        if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
-            Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
-            return
-        } else {
-            BitmapProcessor.analyzeListener = AnalyzeResultListener {
-                // when analyze success
+ * 每隔20ms从预览视图中获取bitmap
+ * 然后运行图像分析，绘制矩形框
+ * 但是这种方式分析图象后，绘制框体会有延迟、卡顿感，不如直接使用图像分析流畅
+ */
+suspend fun runFaceDetection(interval: Long = 20L) {
+    if (cameraConfig.isUsingImageAnalyzer() || stopAnalyzer) {
+        Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
+        return
+    } else {
+        BitmapProcessor.analyzeListener = AnalyzeResultListener {
+            // when analyze success
+        }
+        flow<Boolean> {
+            while (true) {
+                delay(interval)
+                emit(stopAnalyzer)
+                if (stopAnalyzer) {
+                    break
+                }
             }
-            flow<Boolean> {
-                while (true) {
-                    delay(interval)
-                    emit(stopAnalyzer)
-                    if (stopAnalyzer) {
-                        break
-                    }
+        }.collect {
+            cameraXF.provideBitmap()?.let { originalBitmap ->
+                //识别图像
+                BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
+                    //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
+                    BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
                 }
-            }.collect {
-                cameraXF.provideBitmap()?.let { originalBitmap ->
-                    //识别图像
-                    BitmapProcessor.process(originalBitmap) { faces: List<Face> ->
-                        //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
-                        BitmapProcessor.onSuccess(faces, page.graphicOverlayFinder)
-                    }
-                }
+            }
 
-            }
         }
     }
+}
 ```
 
 ## 面部识别，特征点计算
@@ -648,9 +704,11 @@ class BaseImageAnalyzer : ImageAnalysis.Analyzer {
 > 来源
 
 > [文章链接](https://medium.com/@estebanuri/real-time-face-recognition-with-android-tensorflow-lite-14e9c6cc53a5)
+
 * TestFileDecActivity
 * 若需要连接到相机分析流，请看上面章节
 * 加载tensorflow lite模型，运行检测，请看`FaceDetection.kt`文件
+
 ```
 //使用TensorFlow Lite 模型的处理器
 private val model = FaceDetection.create(
@@ -760,17 +818,19 @@ https://discuss.tensorflow.org/t/tensorflow-lite-aar-2-9-0-android-integration/1
 详情参考https://tensorflow.google.cn/lite/inference_with_metadata/overview?hl=zh-cn
 
 ## 工具类 DataSize，使用时数字加上".单位"
+
 [来源](https://github.com/forJrking/KotlinSkillsUpgrade/blob/main/kup/src/main/java/com/example/kup/DataSize.kt)
 简化单位换算
 例如：
+
 ```kotlin
 //原来的方式
 val tenMegabytes = 10 * 1024 * 1024//10mb
 //简化后，会自动换算为bytes
-val tenMegabytes =10.mb
+val tenMegabytes = 10.mb
 //其他例子：
-    100.mb
-    100.kb
-    100.gb
-    100.bytes
+100.mb
+100.kb
+100.gb
+100.bytes
 ```

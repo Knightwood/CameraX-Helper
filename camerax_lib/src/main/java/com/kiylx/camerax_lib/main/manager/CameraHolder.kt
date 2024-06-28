@@ -215,10 +215,10 @@ class CameraHolder(
     /**
      * 如果绑定了图像识别，录视频后，可以调用它来恢复图像识别实例绑定，其他情况不需要这么做
      *
-     * 绑定图像识别，是靠配置参数里的[ManagerConfig.useCaseBundle]
+     * 绑定图像识别，是靠配置参数里的[ManagerConfig.useCaseMode]
      */
     private fun imageAnalyze() {
-        if (UseCaseHexStatus.canAnalyze(cameraConfig.useCaseBundle)) {
+        if (UseCaseHexStatus.canAnalyze(cameraConfig.useCaseMode)) {
             //几种情况：
             // A：绑定图像识别，再进行拍照或录视频
             // 1.使用了图像识别，此时，是绑定了图像识别和拍照的用例的。点击拍照，是不需要解绑再去绑定拍照用例的；拍照后，不需要恢复图像识别用例绑定

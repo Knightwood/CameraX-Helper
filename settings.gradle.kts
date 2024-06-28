@@ -31,5 +31,5 @@ rootProject.name = "CameraxExample"
 include(":app")
 include(":camerax_lib")
 include(":compose_camerax")
-include(":camerax_analyzer")
+include(":camerax_analyzer_mlkit")
 include(":camerax_analyzer_tensorflow")

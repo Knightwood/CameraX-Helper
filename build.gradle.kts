@@ -6,5 +6,6 @@ plugins {
 }
 
 ext {
-    this["version"] = "1.2.0"
+    this["version"] = "1.3.1"
+    this["abi"] = listOf("arm64-v8a") //listOf("armeabi", "armeabi-v7a", "arm64-v8a")
 }

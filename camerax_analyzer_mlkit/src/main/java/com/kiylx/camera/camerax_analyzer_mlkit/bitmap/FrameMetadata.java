@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kiylx.camera.camerax_analyzer.bitmap;
+package com.kiylx.camera.camerax_analyzer_mlkit.bitmap;
 
 /** Describing a frame info. */
 public class FrameMetadata {

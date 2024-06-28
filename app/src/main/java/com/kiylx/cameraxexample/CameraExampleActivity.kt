@@ -4,7 +4,7 @@ import android.content.Intent
 import android.util.Log
 import android.util.Size
 import com.google.mlkit.vision.face.Face
-import com.kiylx.camera.camerax_analyzer.face.FaceContourDetectionProcessor
+import com.kiylx.camera.camerax_analyzer_mlkit.face.FaceContourDetectionProcessor
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.CameraHolder
 import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
@@ -17,6 +17,7 @@ import com.kiylx.camerax_lib.main.store.ImageCaptureConfig
 import com.kiylx.camerax_lib.main.store.SaveFileData
 import com.kiylx.camerax_lib.main.store.VideoRecordConfig
 import com.kiylx.camerax_lib.main.ui.BaseCameraXActivity
+import com.kiylx.camerax_lib.view.ControllerPanelUseCaseMode
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -24,7 +25,9 @@ import kotlinx.coroutines.flow.flow
 class CameraExampleActivity : BaseCameraXActivity() {
 
 
-    /** 这里直接构建了配置，我没有使用intent传入配置。 */
+    /**
+     * 这里直接构建了配置，我没有使用intent传入配置。
+     */
     override fun configAll(intent: Intent): ManagerConfig {
         val useImageDetection = intent.getBooleanExtra(ImageDetection, false)
         //视频录制配置(可选)
@@ -40,7 +43,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
         return ManagerConfig().apply {
             this.recordConfig = videoRecordConfig
             //这里指定了用例组合，当然你也可以调用UseCaseMode.customGroup方法自定义用例组合
-            this.useCaseBundle =
+            this.useCaseMode =
                 if (useImageDetection) UseCaseMode.imageAnalysis else UseCaseMode.takePhoto
             this.flashMode = FlashModel.CAMERA_FLASH_AUTO
             //android R以下时，在少数display为null的情况下，设置预览，拍照的默认分辨率
@@ -57,6 +60,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
             }, 500)
         }
     }
+
     lateinit var analyzer: FaceContourDetectionProcessor
     override fun cameraHolderInitStart(cameraHolder: CameraHolder) {
         super.cameraHolderInitStart(cameraHolder)
@@ -105,19 +109,29 @@ class CameraExampleActivity : BaseCameraXActivity() {
     override fun cameraHolderInitFinish(cameraHolder: CameraHolder) {
         super.cameraHolderInitFinish(cameraHolder)
         if (cameraConfig.isUsingImageAnalyzer()) {//使用了图像分析
+            if (cameraConfig.isUsingVideoRecorder()) {
+                controllerPanel.switchBetweenCaptureAndRecord(ControllerPanelUseCaseMode.recordVideo)
+            } else {
+                if (!cameraConfig.isUsingImageCapture()) {
+                    controllerPanel.showHideControllerButton(true)
+                }
+            }
             controllerPanel.showHideUseCaseSwitch(true)
-            controllerPanel.showHideControllerButton(true)
         }
     }
 
-    /** 拍完照片 */
+    /**
+     * 拍完照片
+     */
     override fun onPhotoTaken(saveFileData: SaveFileData?) {
         super.onPhotoTaken(saveFileData)
         Log.d("CameraXFragment", "onPhotoTaken： $saveFileData")
         cameraXF.indicateTakePhoto()//拍照闪光
     }
 
-    /** 录完视频 */
+    /**
+     * 录完视频
+     */
     override fun onVideoRecorded(saveFileData: SaveFileData?) {
         super.onVideoRecorded(saveFileData)
         saveFileData?.let {

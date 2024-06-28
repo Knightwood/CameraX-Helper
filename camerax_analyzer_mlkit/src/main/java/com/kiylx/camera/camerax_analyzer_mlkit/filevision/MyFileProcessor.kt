@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.filevision
+package com.kiylx.camera.camerax_analyzer_mlkit.filevision
 
 import android.content.ContentResolver
 import android.graphics.Bitmap
@@ -14,7 +14,7 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.kiylx.camera.camerax_analyzer.bitmap.BitmapUtils
+import com.kiylx.camera.camerax_analyzer_mlkit.bitmap.BitmapUtils
 import kotlin.math.abs
 
 /**

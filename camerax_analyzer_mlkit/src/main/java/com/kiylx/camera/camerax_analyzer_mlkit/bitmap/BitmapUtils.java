@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kiylx.camera.camerax_analyzer.bitmap;
+package com.kiylx.camera.camerax_analyzer_mlkit.bitmap;
 
 import android.content.ContentResolver;
 import android.graphics.Bitmap;

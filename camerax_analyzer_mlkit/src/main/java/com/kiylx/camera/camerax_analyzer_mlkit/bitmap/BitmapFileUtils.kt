@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.bitmap
+package com.kiylx.camera.camerax_analyzer_mlkit.bitmap
 
 import android.graphics.Bitmap
 import android.text.TextUtils
@@ -10,8 +10,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 /**

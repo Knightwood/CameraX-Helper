@@ -1,4 +1,4 @@
-package com.kiylx.camera.camerax_analyzer.face
+package com.kiylx.camera.camerax_analyzer_mlkit.face
 
 import android.graphics.Matrix
 import android.util.Log
@@ -10,7 +10,7 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
-import com.kiylx.camera.camerax_analyzer.BaseImageAnalyzer
+import com.kiylx.camera.camerax_analyzer_mlkit.BaseImageAnalyzer
 import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import java.io.IOException
 
