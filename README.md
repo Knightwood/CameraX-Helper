@@ -1,18 +1,21 @@
 # CameraX-Helper
 
-可以组合任意用例，实现拍照，录制视频，人脸检测、识别。可在图像分析的同时录制视频或拍照。
+可以组合任意用例，实现拍照，录制视频，人脸检测、识别、活体检测。可在图像分析的同时录制视频或拍照。
 已适配存储，可使用saf、mediaStore、file等，仅需要一行简单的配置。
 有activity、fragment实现的相机界面，可以直接集成使用，也可以自由定制ui界面，实现自定义相机。
 
 介绍：
 - 人脸检测，图像绘制，并预留出来了改变分析器使用其他图像分析的方法。
-- 人脸识别，使用tensorflow进行检测，并输出特征点。请查看TestFileDecActivity文件
+- 人脸识别，使用tensorflow lite，并输出特征点。活体检测，仅支持打印攻击和重放攻击。请查看TestFileDecActivity文件
 - 可以拍照，录制，暂停/继续录制，双指缩放，点按对焦，闪光灯，手电筒。
 - 可以组合任意的用例，比如 预览+图像分析+拍照 、预览+图像分析+录视频。
 - 支持以file、mediaStore、saf等存储方式，配置简单。
 - 自定义配置相机功能，例如拍照时水平翻转或垂直翻转，分辨率和宽高比；视频的镜像翻转，文件或时长限制，视频清晰度等。
 
 * 示例代码在app目录下。
+
+2024-07-03
+- 活体检测
 
 2024-06-28
 - 可任意组合不同用例。
@@ -618,7 +621,7 @@ class BaseImageAnalyzer : ImageAnalysis.Analyzer {
     }
     //监听分析结果
     (analyzer as FaceContourDetectionProcessor).analyzeListener =
-        AnalyzeResultListener {
+        AnalyzeResultListener {bitmap:Bitmap?,faces:List<Face> ->
             // when analyze success
         }
 }
@@ -674,9 +677,6 @@ suspend fun runFaceDetection(interval: Long = 20L) {
         Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
         return
     } else {
-        BitmapProcessor.analyzeListener = AnalyzeResultListener {
-            // when analyze success
-        }
         flow<Boolean> {
             while (true) {
                 delay(interval)
@@ -729,6 +729,46 @@ StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
                 }
             }
         }
+```
+
+## 活体检测
+来源：[模型实现](https://github.com/syaringan357/Android-MobileFaceNet-MTCNN-FaceAntiSpoofing)
+[模型训练](https://github.com/yaojieliu/CVPR2019-DeepTreeLearningForZeroShotFaceAntispoofing)
+which only supports print attack and replay attack. 
+If you have other requirements, please use this source code to retrain.
+
+1. 如果你使用了mlkit进行检测，则已经处理好了，直接设置AnalyzeResultListener，就可以在回调中得到面部区域信息和图片，
+   此时直接调用crop方法即可裁剪。
+
+```kotlin
+//监听分析结果
+(analyzer as FaceContourDetectionProcessor).analyzeListener =
+  AnalyzeResultListener { it, faces: List<Face> ->
+    //裁剪图像，或许需要优化裁剪的尺寸
+    it?.cropImage(faces)?.let { bitmap: Bitmap? ->
+      if (bitmap != null) {
+        // when analyze success
+        lifecycleScope.launch {
+          val score = antiHelper.anti(bitmap)
+          tv.setText("为假的可能性：$score")
+        }
+      }
+    }
+  }
+```
+
+2. 如果没使用mlkit分析，直接调用`MyFileProcessor.process`方法即可。
+```kotlin
+
+MyFileProcessor.process(it){croped->
+    croped?.let{tmp->
+        lifecycleScope.launch {
+            val score = FaceAntiSpoofingHolder.instance(application)
+                .anti(tmp)
+            page.tvAnti.setText("为假的可能性：$score")
+        }
+    }
+}
 ```
 
 # CameraButton

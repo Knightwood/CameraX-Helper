@@ -9,7 +9,6 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
 import com.kiylx.camera.camerax_analyzer_mlkit.BaseImageAnalyzer
 import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import java.io.IOException
@@ -87,7 +86,7 @@ class FaceContourDetectionProcessor(
         overlayView.postInvalidate()
         if (results.isNotEmpty()) {
             if (System.currentTimeMillis() - timeLast > backPress) {
-                analyzeListener?.isSuccess()
+                analyzeListener?.isSuccess(imageProxy.toBitmap(),results)
                 timeLast = System.currentTimeMillis()
             }
         }

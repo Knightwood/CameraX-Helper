@@ -6,12 +6,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.updatePadding
+import androidx.lifecycle.lifecycleScope
 import com.kiylx.camera.camerax_analyzer_mlkit.filevision.MyFileProcessor
+import com.kiylx.camera.camerax_analyzer_tensorflow.faceantispoofing.FaceAntiSpoofingHolder
 import com.kiylx.camera.camerax_analyzer_tensorflow.facedetection.FaceDetection
 import com.kiylx.camerax_lib.main.manager.util.setWindowEdgeToEdge
 import com.kiylx.camerax_lib.main.manager.util.statusBarTheme
 import com.kiylx.cameraxexample.databinding.ActivityTestFileDecBinding
 import com.kiylx.store_lib.StoreX
+import kotlinx.coroutines.launch
 
 class TestFileDecActivity : AppCompatActivity() {
     private lateinit var model: FaceDetection
@@ -29,12 +32,7 @@ class TestFileDecActivity : AppCompatActivity() {
         findViewById<Button>(R.id.select).setOnClickListener {
             selectFileShow()
         }
-        model = FaceDetection.create(
-            this.assets,
-            TF_OD_API_MODEL_FILE,
-            TF_OD_API_LABELS_FILE,
-            TF_OD_API_IS_QUANTIZED
-        )
+        model = FaceDetection.getInstance(application)
     }
 
 
@@ -42,6 +40,13 @@ class TestFileDecActivity : AppCompatActivity() {
         StoreX.with(this).safHelper.selectFile(fileType = "image/*") { uri ->
             val imageView = findViewById<ImageView>(R.id.imageView)
             MyFileProcessor.process(contentResolver, uri) {
+                it?.let {tmp->
+                    lifecycleScope.launch {
+                        val score = FaceAntiSpoofingHolder.getInstance(application)
+                            .anti(tmp)
+                        page.tvAnti.setText("为假的可能性：$score")
+                    }
+                }
                 imageView.setImageBitmap(it)
                 //处理bitmap,获取面部特征点
                 it?.let { it1 ->
@@ -52,7 +57,10 @@ class TestFileDecActivity : AppCompatActivity() {
                         )
                     //获取特征点
                     val masks = model.detectionBitmap(tmp)
-                    page.tvMasks.setText("特征点:\n" + masks.joinToString(), TextView.BufferType.NORMAL)
+                    page.tvMasks.setText(
+                        "特征点:\n" + masks.joinToString(),
+                        TextView.BufferType.NORMAL
+                    )
                 }
             }
         }
@@ -60,12 +68,5 @@ class TestFileDecActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MAINACTIVITY"
-
-        // MobileFaceNet
-        private const val TF_OD_API_INPUT_SIZE = 112
-        const val TF_OD_API_IS_QUANTIZED = false
-        const val TF_OD_API_MODEL_FILE = "mobile_face_net.tflite"
-        const val TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt"
-
     }
 }

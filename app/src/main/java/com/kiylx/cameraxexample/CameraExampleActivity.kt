@@ -1,13 +1,23 @@
 package com.kiylx.cameraxexample
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.os.Bundle
 import android.util.Log
 import android.util.Size
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.setMargins
+import androidx.lifecycle.lifecycleScope
+import com.blankj.utilcode.util.SizeUtils
 import com.google.mlkit.vision.face.Face
+import com.kiylx.camera.camerax_analyzer_mlkit.face.AnalyzeResultListener
 import com.kiylx.camera.camerax_analyzer_mlkit.face.FaceContourDetectionProcessor
+import com.kiylx.camera.camerax_analyzer_mlkit.filevision.MyFileProcessor
+import com.kiylx.camera.camerax_analyzer_mlkit.filevision.cropImage
+import com.kiylx.camera.camerax_analyzer_tensorflow.faceantispoofing.FaceAntiSpoofingHolder
 import com.kiylx.camerax_lib.R
 import com.kiylx.camerax_lib.main.manager.CameraHolder
-import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import com.kiylx.camerax_lib.main.manager.model.FlashModel
 import com.kiylx.camerax_lib.main.manager.model.ManagerConfig
@@ -21,9 +31,29 @@ import com.kiylx.camerax_lib.view.ControllerPanelUseCaseMode
 import com.kiylx.cameraxexample.graphic2.BitmapProcessor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 
 class CameraExampleActivity : BaseCameraXActivity() {
+    private lateinit var antiHelper: FaceAntiSpoofingHolder
+    lateinit var tv: TextView
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        antiHelper = FaceAntiSpoofingHolder.getInstance(application)
 
+        //实际上，你可以使用provideView方法提供自己的布局和控制面板，
+        //这里只是为了简单的展示结果
+        tv = TextView(this)
+        val lp = ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+        )
+        lp.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        lp.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+        lp.setMargins(SizeUtils.dp2px(55f))
+        tv.textSize = 18f
+        tv.layoutParams = lp
+        (rootPage as ConstraintLayout).addView(tv)
+    }
 
     /**
      * 这里直接构建了配置，我没有使用intent传入配置。
@@ -75,8 +105,20 @@ class CameraExampleActivity : BaseCameraXActivity() {
         setUpAnalyzer(analyzer)//设置分析器
         //监听分析结果
         (analyzer as FaceContourDetectionProcessor).analyzeListener =
-            AnalyzeResultListener {
-                // when analyze success
+            AnalyzeResultListener { it, faces: List<Face> ->
+                MyFileProcessor.process(it){croped->
+
+                }
+                //裁剪图像，或许需要优化裁剪的尺寸
+                it?.cropImage(faces)?.let { bitmap: Bitmap? ->
+                    if (bitmap != null) {
+                        // when analyze success
+                        lifecycleScope.launch {
+                            val score = antiHelper.anti(bitmap)
+                            tv.setText("为假的可能性：$score")
+                        }
+                    }
+                }
             }
 
         //示例2
@@ -151,9 +193,6 @@ class CameraExampleActivity : BaseCameraXActivity() {
             Log.d(TAG, "runFaceDetection: 已使用图像分析或stopAnalyzer==true")
             return
         } else {
-            BitmapProcessor.analyzeListener = AnalyzeResultListener {
-                // when analyze success
-            }
             flow<Boolean> {
                 while (true) {
                     delay(interval)
@@ -169,7 +208,7 @@ class CameraExampleActivity : BaseCameraXActivity() {
                         //上面依据识别成功，得到了返回数据，我们在这里调用了一个普通方法来使用识别出来的数据
                         BitmapProcessor.onSuccess(
                             faces,
-                            findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder)
+                            findViewById<GraphicOverlayView>(R.id.graphicOverlay_finder),
                         )
                     }
                 }

@@ -37,16 +37,20 @@ abstract class BaseCameraXActivity : BasicActivity(),
 
     internal lateinit var cameraXFragment: CameraXFragment//相机功能实现者
 
-    /** 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment */
+    /**
+     * 简化功能调用，复杂功能直接使用cameraHolder或cameraXFragment
+     */
     val cameraXF: CameraXF by lazy { CameraXF(cameraXFragment) }//
 
     lateinit var cameraConfig: ManagerConfig
     lateinit var mBaseHandler: Handler
     lateinit var controllerPanel: IControllerPanel
+    lateinit var rootPage: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(provideView(savedInstanceState))
+        rootPage= provideView(savedInstanceState)
+        setContentView(rootPage)
         mBaseHandler = Handler(Looper.getMainLooper())
         cameraConfig = configAll(intent)
         setCameraFragment()
@@ -68,6 +72,7 @@ abstract class BaseCameraXActivity : BasicActivity(),
             this.findViewById<LinearLayout>(R.id.top_container).updatePadding(top = it.top)
         }
     }
+
 
     /**
      * 重写此方法提供自定义布局，提供底部的控制面板交互功能
@@ -223,7 +228,9 @@ abstract class BaseCameraXActivity : BasicActivity(),
         }
     }
 
-    /** 使用intent初始化ManagerConfig */
+    /**
+     * 使用intent初始化ManagerConfig
+     */
     abstract fun configAll(intent: Intent): ManagerConfig
 
     companion object {

@@ -5,7 +5,6 @@ import android.view.View
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.mlkit.vision.face.Face
 import com.kiylx.camera.camerax_analyzer_mlkit.filevision.FileVisionProcessor
-import com.kiylx.camerax_lib.main.manager.analyer.base.AnalyzeResultListener
 import com.kiylx.camerax_lib.main.manager.analyer.graphic_view.GraphicOverlayView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +12,6 @@ import kotlin.math.abs
 
 object BitmapProcessor {
     private val imageProcessor: FileVisionProcessor = FileVisionProcessor()
-    var analyzeListener: AnalyzeResultListener? = null
 
     fun stop() {
         imageProcessor.stop()
@@ -44,7 +42,6 @@ object BitmapProcessor {
                     graphicOverlay.add(faceGraphic)
                     graphicOverlay.postInvalidate()
                 }
-                analyzeListener?.isSuccess()
             }
         }
     }

@@ -96,6 +96,7 @@ open class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
     val cameraPreviewView: PreviewView by lazy {
         requireView().findViewById(R.id.camera_preview)
     }
+    lateinit var rootPage: View
 
     //相机的配置：存储路径，闪光灯模式，
     internal lateinit var cameraConfig: ManagerConfig
@@ -130,8 +131,8 @@ open class CameraXFragment : Fragment(), CameraManagerEventListener, ICameraXF {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val root = provideView(inflater, container, savedInstanceState)
-        return root
+        rootPage = provideView(inflater, container, savedInstanceState)
+        return rootPage
     }
 
     /**

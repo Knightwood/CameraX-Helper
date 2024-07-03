@@ -1,5 +1,6 @@
 package com.kiylx.camera.camerax_analyzer_tensorflow.facedetection
 
+import android.app.Application
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -192,8 +193,25 @@ class FaceDetection private constructor(
         private val IMAGE_MEAN = 128.0f
         private val IMAGE_STD = 128.0f
 
+        // MobileFaceNet
+        const val TF_OD_API_IS_QUANTIZED = false
+        const val TF_OD_API_MODEL_FILE = "mobile_face_net.tflite"
+        const val TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap.txt"
+
         @Volatile
         private var instance: FaceDetection? = null
+
+        fun getInstance(ctx: Application):FaceDetection{
+            return instance ?: synchronized(this) {
+                instance ?: FaceDetection(
+                    ctx.assets,
+                    TF_OD_API_MODEL_FILE,
+                    TF_OD_API_LABELS_FILE,
+                    TF_OD_API_IS_QUANTIZED,
+                ).also { instance = it }
+            }
+        }
+
         fun create(
             assetManager: AssetManager,
             modelFilename: String,
