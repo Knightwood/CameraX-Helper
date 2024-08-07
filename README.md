@@ -69,9 +69,9 @@ _长期维护中_
 
 ```kotlin
 dependencies {
-    implementation(project(":camerax_lib_mlkit"))
-    implementation(project(":camerax_analyzer_mlkit")) //可选
-    implementation(project(":camerax_analyzer_tensorflow")) //可选
+    implementation(project(":camerax_lib"))
+    implementation(project(":camerax_analyzer_mlkit"))//可选
+    implementation(project(":camerax_analyzer_tensorflow"))//可选
 }
 ```
 

@@ -36,9 +36,9 @@ include(":camerax_analyzer_tensorflow") // 集成TensorFlowList，使用tflite�
 3. app module的build.gradle文件添加依赖
 ```kotlin
 dependencies {
-    implementation(project(":camerax_lib_mlkit"))
-    implementation(project(":camerax_analyzer_mlkit")) //可选
-    implementation(project(":camerax_analyzer_tensorflow")) //可选
+    implementation(project(":camerax_lib"))
+    implementation(project(":camerax_analyzer_mlkit"))//可选
+    implementation(project(":camerax_analyzer_tensorflow"))//可选
 }
 ```
 ## 屏幕方向及销毁重建
